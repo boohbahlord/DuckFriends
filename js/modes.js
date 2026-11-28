@@ -210,7 +210,7 @@ const MODES = [
   },
   {
     id: "l4dd",
-    push: { grenade: 3 }, // (how many KB_FAR the hammer and a grenade push a duck: push.js)
+    push: { melee: 1 }, // (a melee hit pushes its weapon's knock in world px, not the board's 5.76 times: push.js)
     ownDeath: true,
     l4map: true, // (it brings its own map, Downpour: layout.js' useMode turns to it; the owner cut the cabin as a zombie map, Nov 27)
     phoneOut: 1.15, // (on a phone, 15% more of the map each way, the owner's, Nov 18 15:18Z)

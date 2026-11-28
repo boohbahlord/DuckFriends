@@ -749,7 +749,11 @@ function planBuild(b) {
   for (const y of [RIM.y0, RIM.y1])
     for (let x = RIM.x0; x < RIM.x1; x += 400) {
       const e = Math.min(RIM.x1, x + 400);
-      put("fencex", x, y - 6, e - x, 12, FENCE_H, { solid: true, key: y + 6 });
+      put("fencex", x, y - 6, e - x, 12, FENCE_H, {
+        solid: true,
+        key: y + 6,
+        fy: 0, // (feet stop right at its line, north or south of it, where it's drawn standing: the owner's, Nov 28 04:05Z)
+      });
     }
   /* the road on out past the map's edges, a fence along its top on either side, as far as the camera ever shows (the
      owner's, Nov 17 12:28Z: the fence on either side of the road; nobody gets out there, so they're only drawn) */

@@ -82,6 +82,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
     R.give(r.state, r.me, "ak", "knife");
     R.give(r.state, r.me, "revolver", "knife");
     R.give(r.state, r.me, "medkit", "knife");
+    const h = r.state.hang;
+    h.l4a = { ...h.l4a, [r.me]: { ...h.l4a[r.me], g: 4 } }; // (none at the start since Nov 28: bought from the merchant)
     return { sl, now: [...R.slotsOf(r.state, r.me)] };
   });
   if (!same(kit.sl, ["knife", "handgun", "", "", "", ""]))

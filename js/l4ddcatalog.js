@@ -59,6 +59,7 @@ const SAY = {
     "Its grenades fly straight and go off on the first zombie or wall they hit, and kill every zombie in the blast.",
   medkit:
     "Puts your HP back to full. Held while you revive someone, it gets them up at once.",
+  bandage: "Gives back half the HP you've lost, at least 1. You can hold one.",
   safekeep:
     "A halo, used once. When you go down it gets you up: E while down, or by itself when nobody else is standing, and 6 seconds nothing hurts you after. If you die instead, you come back with your upgrades.",
   zebra:
@@ -143,6 +144,8 @@ const row = (ic, name, say, list, item = "") =>
 
 const weaponRow = (w) =>
   row(orbHTML(w), weaponName(w), SAY[w] || "", stats(w), w);
+/* what one does, in a line (a game message as it's switched to: l4ddbar.js) */
+export const noteOf = (w) => SAY[w] || "";
 /* a weapon's numbers in one line for the merchant's list: damage, rate, caliber and barrel, and its recoil as a word (only a gun that has recoil) */
 export const statLineOf = (w) => {
   const m = Object.fromEntries(stats(w));

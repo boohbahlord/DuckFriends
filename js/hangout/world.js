@@ -1127,9 +1127,10 @@ export function mountWorld(board, api) {
     if (me.vz != null) {
       if (me.z <= gnd) {
         ev.thud = Math.max(ev.thud || 0, me.top - gnd);
+        ev.side = me._fx == null ? 0 : Math.hypot(x - me._fx, y - me._fy); // (how far across it fell: its fall damage)
         me.z = gnd;
         me.vz = null;
-        me._ft = undefined;
+        me._ft = me._fx = undefined;
       }
       return;
     }
@@ -1570,6 +1571,8 @@ export function mountWorld(board, api) {
         // with its pull cut to roof / D, so it lasts D / roof times the roof's own fall)
         if (me._ft !== me.top) {
           me._ft = me.top;
+          me._fx = x; // (where the fall began)
+          me._fy = y;
           const D = me.top - floor(me, x, y),
             roof = L.floorStep();
           me._fg = L.fallsByFloors() && D > roof ? roof / D : 1;
@@ -1579,9 +1582,10 @@ export function mountWorld(board, api) {
         const gnd = floor(me, x, y);
         if (me.z <= gnd) {
           ev.thud = me.top - gnd;
+          ev.side = me._fx == null ? 0 : Math.hypot(x - me._fx, y - me._fy);
           me.z = gnd;
           me.vz = null;
-          me._ft = undefined;
+          me._ft = me._fx = undefined;
         }
       }
       const n0 = Math.hypot(ax, ay);

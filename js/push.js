@@ -1,15 +1,14 @@
 /* ---------- push and knock-back: one module for every body in every mode (the cornerstone's one module per mechanic,
    after 8f: 2) ----------
-   A push moves a body along a way a step at a time and stops before the first step it can't stand on. Each kind of body
-   gives its own steps (its units) and its own "can it stand there": a duck (boardfire.js shove: duck lengths on the
-   board's shares, Hangout's walls and the cabin's side) and a zombie (l4ddrules.js knockZ: world px, zOk). How far a
-   weapon pushes is guns.js ARMS knock (weaponuse.js knockOf) and, for the board's hammer and grenade, KB_FAR times the
-   mode's own number (push in modes.js; PUSH otherwise). Every push on a body is divided by its weight (the ratio,
-   pushTaken), and an immobile one is never pushed. */
+   How far every hit pushes is worked out here (meleePush, blastPush) and every body goes it over its weight (pushOn).
+   A push moves a body along a way a step at a time and stops before the first step it can't stand on (pushAlong). Each
+   kind of body gives its own steps (its units) and its own "can it stand there": a duck (boardfire.js shove: duck
+   lengths on the board's shares, Hangout's walls and the cabin's side), a zombie (l4ddrules.js knockZ: world px, zOk)
+   and a car (carpush.js: world px, carClear). */
 import { modeOf } from "./modes.js";
 import { baseMode } from "./sandboxrules.js";
 import { scaleOf } from "./duck.js";
-import { WEIGHT } from "./gamedefaults.js";
+import { WEIGHT, KNOCK } from "./gamedefaults.js";
 import { ARMS, DEAD_WEIGHT } from "./guns.js";
 import { overlapH } from "./heights.js";
 import { DUCK } from "./hangout/layoutbase.js";
@@ -44,21 +43,38 @@ export const pushTaken = (far, w) => (w === Infinity ? 0 : far / w);
    a hit still pushes it (Nov 21 14:52Z, "zero speed = can't move itself") */
 export const immobile = (o) => o.im === true;
 
-/* the hammer's knock-back, in duck lengths (a duck it hits is shoved this far, times the mode's number) */
-export const KB_FAR = 2.4;
-/* how many KB_FAR the board's hammer and a grenade push a duck, unless the mode says otherwise (modes.js push) */
-const PUSH = {
-  hammer: 1.5, // (50% farther than it was: the owner's, Nov 4)
-  axe: 0.75, // (the fire axe: half the hammer's, the owner's, Nov 23 00:32Z)
-  grenade: 2, // (twice the hammer's in the normal game: the owner's, Nov 3 17:15Z)
-};
 /* the lobby's Walking speed: how much faster or slower than normal every duck walks. The zombies of Quacky Zombies and
    the computers there go by it too, so the zombies stay as fast next to the ducks as the owner set them */
 const WALKS = { slow: 0.6, normal: 1, fast: 1.5 };
 export const walkOf = (s, id) =>
   (WALKS[s && s.options && s.options.walk] || 1) * walkK(s, id); // (id: a duck, as much slower as it's bigger: walkK)
-export const pushOf = (s, what) =>
-  KB_FAR * ({ ...PUSH, ...modeOf(baseMode(s.options)).push }[what] ?? 1);
+/* the one push (the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H: "one physics rule
+   for everything, by weight and stats"): a hit gives a push in world px, how far it moves a body of weight 1, and every
+   body goes that over its weight (pushOn). A melee hit's: its weapon's knock (guns.js ARMS: a blunt hit hard, a knife
+   almost nothing) times the swinger's weight, its Size (none: a thrown thing's, never the thrower's: 16:53Z). A blast's,
+   o of its reach out (0 its middle, 1 its edge): sideways more the farther out (half as far at its middle as at its
+   edge), and up higher the nearer the middle (h, duck sizes). A mode scales them (modes.js push; gamedefaults.js KNOCK otherwise). No bullet pushes (Nov 21
+   17:48Z) */
+const knockK = (s) => ({ ...KNOCK, ...modeOf(baseMode(s.options)).push });
+export const meleePush = (s, by, w) =>
+  ((ARMS[w] || ARMS.knife).knock || 0) * sizeOf(s, by) * knockK(s).melee;
+export const blastPush = (s, o) => ({
+  px: (knockK(s).blast * (1 + o)) / 2,
+  h: KNOCK.lift * (1 - o),
+});
+/* how far a push of px moves a body: a duck by its weight (weightOf), a zombie (alive or dead) 1, an immobile one never,
+   a car WEIGHT.CAR */
+export const pushOn = (s, kind, b, px) =>
+  pushTaken(
+    px,
+    kind === "duck"
+      ? weightOf(s, b)
+      : kind === "car"
+        ? WEIGHT.CAR
+        : immobile(b)
+          ? Infinity
+          : 1,
+  );
 /* the one loop: n steps from at ([x, y]); next(i, at) is step i's spot, ok(spot, at) says if the body can stand there,
    fix(spot) is where it's kept (a zombie's whole px). Returns where it stopped */
 export function pushAlong(at, n, next, ok, fix = (q) => q) {

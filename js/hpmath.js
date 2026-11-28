@@ -5,7 +5,6 @@
 import { modeOf } from "./modes.js";
 import { baseMode } from "./sandboxrules.js";
 
-const DUCK_STEP = 0.01; // (a duck's HP back on its own: in hundredths, regenOf below)
 /* a number kept to hundredths */
 export const hundredths = (n) => Math.round((+n || 0) * 100) / 100;
 
@@ -29,7 +28,7 @@ export const hpText = (n) => String(hundredths(n));
    100% fills to; store(s) is the state a heal changes. A mode names its breed in modes.js (hp); every other mode, and
    a breed without a heal of its own (Mad God Justin's), has the board's. Hurting stays with each weapon's rules */
 const HP_BREEDS = {};
-export const hpBreed = (k, b) => (HP_BREEDS[k] = { step: DUCK_STEP, ...b });
+export const hpBreed = (k, b) => (HP_BREEDS[k] = b);
 const breedOf = (s) =>
   HP_BREEDS[modeOf(baseMode(s.options)).hp] || HP_BREEDS.board;
 const healer = (s) => (breedOf(s).heal ? breedOf(s) : HP_BREEDS.board);
@@ -53,16 +52,12 @@ export function hpHealOf(s, id, amt, now) {
   return B.store(s) !== was;
 }
 
-/* ---------- HP back on its own (B7, the owner's, Nov 21 16:17Z: "HP regenerates as fast as it did, but it doesn't
-   wait for an entire health point until it comes back ... split into fractions or units of either a 10th or 100th
-   place ... for players. Now for NPC entities ... It can generate as a larger unit in chunks. If it even has
-   regeneration") ----------
-   What comes back at a time is a breed's step: a duck's HP (every HP breed's step) in hundredths, so its bar fills
-   smoothly at the speed it always came back; an NPC's in whole HP (NPC_STEP). regenOf(s, since, now, ms, npc): one HP
-   back every ms, how much has come back since `since` in whole steps, and the time that's counted to (the rest waits) */
-const NPC_STEP = 1;
-export function regenOf(s, since, now, ms, npc = false) {
-  const step = npc ? NPC_STEP : breedOf(s).step,
-    n = Math.floor((now - since) / (ms * step) + 1e-6);
-  return [hundredths(n * step), since + n * ms * step];
+/* ---------- HP back on its own: an NPC's only, in whole HP (the owner's, Nov 21 16:17Z: "Now for NPC entities ... It
+   can generate as a larger unit in chunks"); a player's never comes back by itself (the owner's, Nov 28 03:28Z: "health
+   doesnt regenerate anymore", only a bandage) ----------
+   regenOf(since, now, ms): one HP back every ms, how much has come back since `since`, and the time that's counted to
+   (the rest waits) */
+export function regenOf(since, now, ms) {
+  const n = Math.floor((now - since) / ms + 1e-6);
+  return [n, since + n * ms];
 }
