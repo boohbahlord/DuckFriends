@@ -13,7 +13,6 @@ import {
   PELLET_SPREAD,
   EFFECTS,
   GRENADE_FAR,
-  GRENADE_MS,
   KB_LAND,
   KB_MS,
   L4_OVER_MS,
@@ -62,6 +61,7 @@ import {
   shotKind,
   coneOf,
   roundAt,
+  nadeThrow,
 } from "./weaponuse.js";
 import { spreadAim } from "./heat.js";
 import { isSb, boardDuck, sbBoardK, sbItemMods } from "./sandboxrules.js";
@@ -167,7 +167,9 @@ import {
   drawOf,
   drawMost,
   drawFast,
+  cookedOff,
 } from "./bowdraw.js";
+import { NADE } from "./gamedefaults.js";
 
 /* ---------- the actions of a game: answers, moves, the specials, fights, the turn's end and the clock ---------- */
 export function act_submit({ state, s, a, now, me }) {
@@ -417,7 +419,7 @@ export function act_use({ state, s, a, now, me, boss }) {
     p = s.pos[a.id];
   if (!me || !p || p.x < 0 || !boardPhases(s).includes(s.phase)) return state;
   if (draws(sp)) {
-    if (cooks(sp) && isL4dd(s) && !drawOf(s, a.id, sp)) return state; // (a grenade let go after it went off in the hand: l4ddrules.js cookedOff)
+    if (cooks(sp) && !drawOf(s, a.id, sp)) return state; // (a grenade let go after it went off in the hand: bowdraw.js cookedOff)
     a = { ...a, dr: drawTaken(s, a.id, now, drawMost(sp), sp) }; // (the bow: how long it was drawn; a grenade: how long it cooked, bowdraw.js)
   }
   if (isL4dd(s)) return l4Use(s, a, now) ? s : state; // (Quacky Zombies: its own weapons, l4ddrules.js)
@@ -554,13 +556,25 @@ export function act_use({ state, s, a, now, me, boss }) {
         shot(s.fxN, "chair", dx * k * rx, dy * k * ry, { life: CHAIR_MS }), // (its reach: its picture's, boardfire.js sizeShots)
       ];
     } else if (sp === "zebra") throwCake(s, a.id, p, aim, now);
-    else if (sp === "grenade") {
-      const k = GRENADE_FAR / (GRENADE_MS / 1000) / dl;
+    else if (sp === "grenade")
       s.shots = [
         ...(s.shots || []),
-        shot(s.fxN, "grenade", dx * k * rx, dy * k * ry),
+        shot(s.fxN, "grenade", 0, 0, {
+          hz: hang.hz || 0, // (a board: its flat ground)
+          ...nadeThrow(
+            dx / dl,
+            dy / dl,
+            GRENADE_FAR,
+            NADE.T,
+            NADE.PEAK,
+            now + NADE.FUSE - Math.min(NADE.FUSE, a.dr || 0),
+            now,
+            [1 / rx, 1 / ry],
+          ),
+        }),
       ];
-    } else if (sp === "glauncher")
+    // (the maps' grenade, in duck lengths: cooked while held, an arc, it lies there till its fuse ends, weaponuse.js)
+    else if (sp === "glauncher")
       s.shots = [
         ...(s.shots || []),
         shot(s.fxN, "lgren", aim[0] * v, aim[1] * v, {
@@ -782,6 +796,9 @@ export function act_tick({ state, s, a, now, host }) {
   if (sbEnd) return s;
   if (inWorld(s) && modeOf(s.options.mode).timed && s.ends && now >= s.ends)
     return cabinOver(s, now, "Time's up in the cabin."); // (Hangout from Random or the vote: its time limit)
+  cookedOff(s, now, (a) =>
+    act_use({ state: s, s, a, now, me: s.players[a.id], boss: null }),
+  ); // (a grenade held to its fuse's end: every mode's, bowdraw.js)
   const shots = isL4dd(s) ? l4Shots(s, now) : moveShots(s, now),
     hung = isHang(s) && inWorld(s) && hangTick(s, now),
     jus =

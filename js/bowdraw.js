@@ -41,6 +41,15 @@ export function drawTaken(s, id, now, most = DRAW.FULL, w) {
   s.draw = d;
   return w && d0.w !== w ? 0 : Math.max(0, Math.min(most, now - d0.t));
 }
+/* the host's beat, every mode alike: a grenade held to its fuse's end goes off in the hand. use(a) is the mode's own
+   use of it ({ id, what, face }), which takes the draw, all of its fuse cooked (actplay.js act_use) */
+export function cookedOff(s, now, use) {
+  for (const id in s.draw || {}) {
+    const d = s.draw[id];
+    if (cooks(d.w) && cooks((s.pos[id] || {}).w) && now - d.t >= NADE.FUSE)
+      use({ id, what: d.w, face: 1 });
+  }
+}
 /* what a draw of dr ms adds: damage (+0.2 each whole step, up to +5), its crit chance (sure at full) and the arrow's
    speed (up to 40% faster): DRAW */
 export const drawDmg = (dr) =>

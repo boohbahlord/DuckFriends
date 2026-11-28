@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the profile
-actplay.js 848 a game's actions
+actplay.js 865 a game's actions
 actroom.js 754 the room's actions
 actsb.js 157 Sandbox's windows, saves and maps
 ammo.js 98 THE ONE AMMO RULE, every
@@ -18,13 +18,13 @@ beaks.js 138 beaks
 below.js 89 darker below
 blast.js 69 explosions: one module
 bloodpool.js 50 a pool of blood: the
-boardfire.js 1160 the board's weapons: hits, shots,
+boardfire.js 1155 the board's weapons: hits, shots,
 boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
 bots.js 1329 computers
-bowdraw.js 60 the bow, drawn to shoot
+bowdraw.js 69 the bow, drawn to shoot
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 330 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -119,7 +119,7 @@ l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 327 Dead Ducks Arcade's power box
 l4ddpowerui.js 276 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4882 the rules of Quacky Zombies
+l4ddrules.js 4865 the rules of Quacky Zombies
 l4ddsfx.js 512 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -181,7 +181,7 @@ roomrules.js 347 room governance: groups and permissions
 rooms.js 256 Play: create a room, and
 roundline.js 36 Dead Ducks Arcade's round line,
 router.js 112 screens
-rules.js 1669 the rules of Agree or
+rules.js 1664 the rules of Agree or
 sandbox.js 1348 Sandbox: the key windows
 sandboxrules.js 2033 Sandbox: which map it plays
 saybubble.js 78 a duck's speech bubble kept
@@ -263,7 +263,7 @@ vellum.js 28 The King's Festival
 vote.js 265 Vote Mode & Map: the
 voterules.js 323 the lobby's vote for the
 walkgrid.js 83 the walking grid: which 40-px
-weaponuse.js 207 using a weapon: one module
+weaponuse.js 199 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the

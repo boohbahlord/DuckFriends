@@ -742,14 +742,9 @@ export const DAGGER_SPEED = boardSpeed("dagger") * FASTER,
   DAGGER_G = 2.2,
   DAGGER_LIFE = 4500; // (it never flies over a duck's head: everything in its way is hit)
 export const daggerZ = (t) => DAGGER_Z + DAGGER_UP * t - (DAGGER_G * t * t) / 2; // (t in seconds)
-/* the grenade: thrown GRENADE_FAR duck lengths the way it aims, over an arc (its height in duck sizes), and it goes off
-   where it lands, GRENADE_MS later, in its rings (boardfire.js blast, blast.js) */
-export const GRENADE_MS = 900,
-  GRENADE_FAR = 8;
-export const grenadeZ = (t) => {
-  const u = Math.min(1, t / (GRENADE_MS / 1000));
-  return 0.45 * (1 - u) + 4.4 * u * (1 - u);
-}; // (t in seconds)
+/* the board's grenade: thrown GRENADE_FAR duck lengths the way it aims, the maps' own grenade otherwise (actplay.js,
+   weaponuse.js nadeThrow) */
+export const GRENADE_FAR = 8;
 export const PRESS = [
   "coffee",
   "watergun",

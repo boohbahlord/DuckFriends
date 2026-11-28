@@ -10,10 +10,8 @@ import { drawDmg } from "./bowdraw.js";
 import {
   DAGGER_LIFE,
   FASTER,
-  GRENADE_MS,
   boardPhases,
   daggerZ,
-  grenadeZ,
   isHang,
   logLine,
   playing,
@@ -25,6 +23,7 @@ import {
   swinging,
   swingMisses,
   nadeAt,
+  FLAT,
 } from "./weaponuse.js";
 import { meleePush, blastPush, pushOn, pushAlong, sizeOf } from "./push.js";
 
@@ -465,12 +464,7 @@ const nadeOn = (sh, t) => {
 const shotOn = (sh, t) => ({
   x: sh.x0 + (sh.vx * t) / 1000,
   y: sh.y0 + (sh.vy * t) / 1000,
-  z:
-    (sh.k === "dagger"
-      ? daggerZ(t / 1000)
-      : sh.k === "grenade"
-        ? grenadeZ(t / 1000)
-        : 0.41) * (sh.sc || 1), // (a bigger duck's from higher up: its hand, sizeShots)
+  z: (sh.k === "dagger" ? daggerZ(t / 1000) : 0.41) * (sh.sc || 1), // (a bigger duck's from higher up: its hand, sizeShots)
 });
 /* a grenade going off at (x, y): every duck in its rings takes its ring's damage (blast.js) and is thrown away from it,
    three times as far as the hammer throws one, higher the nearer it was (the owner's, Nov 21 17:48Z: "Explosions should
@@ -602,8 +596,9 @@ export function moveShots(s, now) {
     s.shots.filter((sh) => sh.k), // (one fired before aiming: gone)
     now,
     {
-      fuse: GRENADE_MS,
       U: [1, 1],
+      ...FLAT, // (a grenade: no heights here, the board's edges and the cabin's walls its walls)
+      wallAt: (x, y, z, sh) => FLAT.wallAt(x, y) || walled(sh, { x, y }),
       at: shotAt,
       walled,
       boom: (sh, at) => on() && blast(s, sh, at.x, at.y, now), // (a grenade hits nothing on its way)
