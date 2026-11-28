@@ -249,7 +249,7 @@ export function act_move({ state, s, a, now, me }) {
     const [lo, hi] = colBoundsAt(s, -1);
     x = Math.max(lo, Math.min(hi, x));
   } // (Duncelation: the defender from the circle)
-  if (isDn(s) && s.phase === "dunced" && isDefender(s, a.id)) return state; // the dunce stays on the podium
+  if (isDn(s) && s.phase === "dunced" && isDefender(s, a.id)) return keep; // the dunce stays on the podium
   if (isQuack(s) && ["choice", "accuse"].includes(s.phase) && s.done[a.id]) {
     x = was.x;
     y = was.y;
