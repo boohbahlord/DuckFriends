@@ -5,7 +5,7 @@
    action, every duck kept up (so a run doesn't change with when they go down). Headless Chromium has no graphics card:
    with GPU=1 (the default) it draws with SwiftShader, a stand-in that does the card's work on the processor, so the
    card's share is seen at all.
-   node tools/perf/frames.cjs [runs]   env: MAP (downpour|cabin), MODE (l4dd|surv), SECS (the window, 15), GPU (1|0), SLOW (4),
+   node tools/perf/frames.cjs [runs]   env: MAP (downpour|cabin), MODE (l4dd), SECS (the window, 15), GPU (1|0), SLOW (4),
    URL (a running server; without it I serve this folder myself) */
 const { chromium } = require("playwright");
 const http = require("http");
@@ -198,7 +198,7 @@ async function once(url) {
           window._r.send({ t: "hang", k: "cheat", do: "round", n: ROUND }),
         ROUND,
       ); // (cheat round 21, or ROUND: cheats.js)
-    await p.waitForTimeout(MODE === "surv" ? 40000 : 12000); // (the zombies in: a horde comes on its own in Survival)
+    await p.waitForTimeout(12000); // (the zombies in)
   }
   if (cssNow) await p.addStyleTag({ content: cssNow });
   /* WATCH: a css selector; what changes inside those elements during the window (attributes, text, children), counted

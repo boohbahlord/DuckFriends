@@ -1,5 +1,4 @@
-/* I want the playtester's test commands to work: in Survival on Downpour, `cheat gunmen criminals` and `soldiers` send
-   that wave at once, and `cheat goto canopy | station | chapel | X Y [Z]` puts my duck there (through the host, so the
+/* I want the playtester's test commands to work: in Dead Ducks Arcade on Downpour, `cheat goto canopy | station | chapel | X Y [Z]` puts my duck there (through the host, so the
    camera goes with it, and at the height of that roof). The first one used turns stats off (cheatflag.js). */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
@@ -22,7 +21,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
       options: {
         modePick: "host",
         mapPick: "host",
-        mode: "surv",
+        mode: "l4dd",
         map: "cabin",
         botWait: 1,
       },
@@ -53,13 +52,6 @@ const { url, fail, noErrors } = require("./lib.cjs");
     o.goto2 = await run("sudo cheat goto station");
     await w8(1200);
     o.station = [R.state.pos[R.me].z];
-    o.gm0 = Object.keys(
-      (R.state.hang.gm && R.state.hang.gm.list) || R.state.hang.gm || {},
-    ).length;
-    o.gun = await run("sudo cheat gunmen criminals");
-    await w8(2500);
-    o.sv = R.state.hang.sv && R.state.hang.sv.ph + " " + R.state.hang.sv.g;
-    o.gm1 = JSON.stringify(R.state.hang.gm || {}).slice(0, 200);
     o.after = await run("sudo cheat");
     o.bad = await run("sudo cheat goto nowhere");
     return o;
@@ -70,8 +62,6 @@ const { url, fail, noErrors } = require("./lib.cjs");
   if (!/Moved/.test(o.goto) || !(o.canopy[2] > 0))
     fail("cheatcmds: goto canopy " + JSON.stringify(o));
   if (!(o.station[0] > 0)) fail("cheatcmds: goto station " + JSON.stringify(o));
-  if (!/peak c/.test(o.sv))
-    fail("cheatcmds: criminals did not come " + JSON.stringify(o));
   if (!/counts no stats/.test(o.after))
     fail("cheatcmds: stats not off " + o.after);
   if (!/✗/.test(o.bad)) fail("cheatcmds: a bad place was taken " + o.bad);

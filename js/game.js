@@ -460,8 +460,6 @@ import { dunceDuck } from "./dunce.js";
 import { sayRead, sayPlace } from "./saybubble.js";
 import { FLAME } from "./fxart.js";
 
-import { gunLasers } from "./gunmenview.js";
-
 import { sbWalkOf } from "./sbspawn.js";
 
 import { hpOf, hpBarOf } from "./hpmath.js";
@@ -1901,7 +1899,6 @@ function drawDucks(now = clockNow()) {
       if (t > 0 && t < Infinity)
         lz.push([e[0], e[1], A[0] + ux * t, A[1] + uy * t]);
     }
-  if (isL4dd(s)) lz.push(...gunLasers()); // (Survival's soldiers: gunmenview.js)
   fxLasers(lz);
   heatDraw(heldAll, fxl, size);
   if (isL4dd(s)) laserFrame(s, heldAll, fxl, size, heard); // (the Laser Rifle's steam and fire: laserfx.js)
@@ -2909,7 +2906,6 @@ function paintNow(force) {
     }
     $(".phase", S).textContent =
       (isSb(s) && "Sandbox") || // (on every map)
-      (inWorld(s) && s.options.mode === "surv" && "Survival") ||
       (inWorld(s) && s.options.mode === "l4dd" && "Downpour") || // (Dead Ducks Arcade's map)
       (isLaw(s) && LAW_TITLES[s.phase]) ||
       (isDn(s) && DN_TITLES[s.phase]) ||

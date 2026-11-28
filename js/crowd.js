@@ -1,6 +1,6 @@
 /* ---------- crowds: walkers never stand in each other (the cornerstone, Nov 20: one module per mechanic) ----------
    Every walker that keeps out of the others goes through here: the zombies of Quacky Zombies, Survival and Sandbox,
-   Sandbox's NPCs on the maps (zombies.js), the gunmen and the friendly squad (gunmenrules.js). Two ways:
+   Sandbox's NPCs on the maps (zombies.js). Two ways:
    - crowdOf and into, the block test: a walker's step that takes it closer into another on its floor is refused
      (stepping away is always free), so the ones behind wait instead of walking in and being pushed out every heartbeat,
      which shook a crowd in place (the owner's, Nov 20 03:58Z: "zombies shouldnt viibrate on roof of gas pump").
@@ -38,7 +38,6 @@ const CROWD_BREEDS = {
     line: [2, 3],
   },
   npc: { cw: 64, ch: 64, passes: 2, block: 96, zero: ZERO }, // (Sandbox's NPCs walk as the zombies do, touching: zombies.js brainWalk)
-  gunman: { cw: 40, ch: 22, rx: 40, ry: 22, passes: 1, zero: () => [4, 2] }, // (the soldiers stick together)
 };
 
 /* every pair of walkers near enough to touch, each pair once (b numbered after a: b.i > a.i): the ones in a's cell of a
@@ -197,10 +196,6 @@ export function goRound(C, z, o, t, room, rx, ry, ok) {
    comes; done: near enough to its spot (room units) to come straight at it */
 const ROUTE_BREEDS = {
   zombie: { p: 0.05, far: 420, turn: 1.75, done: 1.5 },
-  /* the owner's, Nov 21 16:00Z: "5% of the criminals should try and do that. It's something that, unless the game
-     specifically specifies that things stick together as a group all the time, like the soldiers, then that should
-     be a thing" (the soldiers and the friendly squad: none) */
-  criminal: { p: 0.05, far: 420, turn: 1.75, done: 1.5 },
 };
 export const otherWay = (k) =>
   Math.random() < ROUTE_BREEDS[k].p ? { fl: Math.random() < 0.5 ? 1 : -1 } : {};

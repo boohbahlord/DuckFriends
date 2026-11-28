@@ -20,7 +20,6 @@ export const sbWorld = (o) =>
    board) */
 export const baseMode = (o) => {
   const w = sbWorld(o);
-  if (o && o.mode === "surv") return "l4dd"; // (Survival runs on Dead Ducks Arcade's engine: survrules.js)
   return w ? SB_WORLDS[w] : (o && o.mode) || "";
 };
 /* Sandbox on a world map (it runs as Hangout or Dead Ducks Arcade does there) */

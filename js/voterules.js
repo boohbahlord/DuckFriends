@@ -65,7 +65,7 @@ import { dodOn } from "./roomrules.js";
 const PICK_TIME = { mode: 65, map: 20 };
 export const ALL_IN = 6000; // a vote's clock once the majority has voted: 6 s, at normal speed
 export const DICE = "dice";
-const NO_MAP_VOTE = [...CABIN_MODES, "surv"]; // (Survival plays only Downpour: no map vote)
+const NO_MAP_VOTE = CABIN_MODES;
 const voteModes = (s) => {
   const all = modesFor(s)
       .map((m) => m.id)

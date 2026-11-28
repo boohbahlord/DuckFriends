@@ -1,29 +1,21 @@
-/* ---------- test commands: cheat round N, cheat give WEAPON, cheat gunmen SIDE, cheat goto PLACE ----------
+/* ---------- test commands: cheat round N, cheat give WEAPON, cheat goto PLACE ----------
    The owner's, Nov 21 00:31Z: "If you need to make codes in the terminal to make testing easier and more usage
    efficient, you can. Just have it to where that disables stats within a game when those certain things are turned on".
    The command line's cheat (shell.js) sends { t: 'hang', k: 'cheat', do, … }; the host runs it here. The first one used
-   marks the game (cheatflag.js): no stats, unlocks, records or jumps for the rest of it. Dead Ducks Arcade (Duck Cabin and Downpour) and Survival; jumping to a round is Dead Ducks
-   Arcade's alone (Survival and Sandbox have no rounds to jump to). */
+   marks the game (cheatflag.js): no stats, unlocks, records or jumps for the rest of it. Dead Ducks Arcade; Sandbox has
+   no rounds to jump to. */
 import { rule } from "./hangout/registry.js";
-import {
-  GO_MS,
-  cheatGunmen,
-  give,
-  kitOf,
-  merchantGo,
-  newRound,
-} from "./l4ddrules.js";
+import { GO_MS, give, kitOf, merchantGo, newRound } from "./l4ddrules.js";
 import { W, H, floorAt } from "./hangout/layout.js";
 import { DECKS } from "./hangout/stationmap.js";
 import { ARMS } from "./guns.js";
 import { isSb } from "./sandboxrules.js";
-import { isSurv } from "./survrules.js";
 import { may } from "./roomrules.js";
 import { cheated, markCheat } from "./cheatflag.js";
 
 const ROUND_MAX = 999;
 const game = (s) => s && s.hang && s.hang.l4;
-const noRounds = (s) => isSurv(s) || isSb(s);
+const noRounds = isSb;
 
 function act(s, a, now) {
   const L = game(s);
@@ -40,8 +32,6 @@ function act(s, a, now) {
     for (const id of ids)
       if (s.players[id] && kitOf(s, id) && give(s, id, a.w)) any = true;
     if (!any) return false;
-  } else if (a.do === "gunmen") {
-    if (!cheatGunmen(s, a.side, now)) return false;
   } else if (a.do === "goto") {
     const p = s.pos[a.id];
     if (!p || !(a.x >= 0 && a.x <= W && a.y >= 0 && a.y <= H)) return false;
@@ -95,8 +85,8 @@ export function cheatCmd(args, x, h) {
       ? "Test commands were used: this game counts no stats."
       : "No test commands used in this game."; // (anyone may ask)
   const s = h.needMay(x, "cansettings", "cheat");
-  if (!["l4dd", "surv"].includes(s.options.mode) || !game(s))
-    h.fail("✗ cheat works in Dead Ducks Arcade or Survival, during a game.");
+  if (s.options.mode !== "l4dd" || !game(s))
+    h.fail("✗ cheat works in Dead Ducks Arcade, during a game.");
   if (sub === "round") {
     const n = Math.floor(+rest[0]);
     if (noRounds(s)) h.fail("✗ cheat round: this mode has no rounds.");
@@ -119,15 +109,6 @@ export function cheatCmd(args, x, h) {
       room.send({ t: "hang", k: "cheat", do: "give", w, who: id });
     return `Gave ${w}. Stats are off for the rest of this game.`;
   }
-  if (sub === "gunmen") {
-    if (!isSurv(s)) h.fail("✗ cheat gunmen: Survival only.");
-    const side = { criminals: "c", soldiers: "s" }[
-      (rest[0] || "").toLowerCase()
-    ];
-    if (!side) h.fail("✗ cheat gunmen criminals | soldiers");
-    room.send({ t: "hang", k: "cheat", do: "gunmen", side });
-    return `${rest[0].toLowerCase()} are coming. Stats are off for the rest of this game.`;
-  }
   if (sub === "goto") {
     const spot = SPOTS[(rest[0] || "").toLowerCase()]
         ? spotOf(rest[0].toLowerCase())
@@ -141,6 +122,6 @@ export function cheatCmd(args, x, h) {
     return `Moved. Stats are off for the rest of this game.`;
   }
   h.fail(
-    "✗ usage: cheat round N | cheat give WEAPON [@player … | all] | cheat gunmen criminals|soldiers | cheat goto station|chapel|canopy|X Y [Z]",
+    "✗ usage: cheat round N | cheat give WEAPON [@player … | all] | cheat goto station|chapel|canopy|X Y [Z]",
   );
 }

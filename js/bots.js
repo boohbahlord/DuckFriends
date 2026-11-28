@@ -109,7 +109,6 @@ import { SPRINT as GAME_SPRINT } from "./gamedefaults.js";
 import { W, H, heightAt, standable, STEP } from "./hangout/layout.js";
 import { spotIn } from "./walkgrid.js";
 import { zombiesOf, wayTo, clearShot } from "./zombies.js";
-import { isSurv } from "./survrules.js";
 import { WANDER } from "./hangout/justin.js";
 import { NPC_RUN } from "./npcshared.js";
 import { anyOf, shuffle } from "./random.js";
@@ -835,7 +834,7 @@ function storyBot(s, id, now, wait, late, people, out) {
     }
   }
 }
-/* ---------- the computers on a walkable map: Quacky Zombies, Survival, Sandbox (TEST rooms) ----------
+/* ---------- the computers on a walkable map: Quacky Zombies, Sandbox (TEST rooms) ----------
    A computer goes to a downed teammate and holds E by it; otherwise it shoots the nearest zombie it can see (a ranged
    weapon with something left in it, the melee weapon up close, the medkit when it's hurt), backs away from one that's
    too close, throws a grenade into a crowd now and then, and keeps near the middle of the great room. With no zombie in
@@ -923,24 +922,14 @@ const nadeOk = (b, crowd, m, d, now) =>
   m.g > 0 &&
   d > b.nadeMin &&
   now - ((m.u || {}).grenade || 0) > b.nadeGap;
-/* the nearest downed teammate: down, not dead (the dead only with a defibrillator, and never the wild or Justin); with zs,
-   only one with no zombie within KEEP of it */
-function downMate(s, id, x, y, defib, zs) {
-  const l4p = s.hang.l4p || {},
-    dead = (t) => !!(l4p[t] || {}).ex,
-    body = (t) => !!(l4p[t] || {}).gh && dead(t) && !!(s.hang.ghost || {})[t];
+/* the nearest downed teammate: down, not dead for good; with zs, only one with no zombie within KEEP of it */
+function downMate(s, id, x, y, zs) {
+  const l4p = s.hang.l4p || {};
   return s.seat
     .filter(
-      (t) =>
-        t !== id &&
-        ((l4p[t] || {}).dn || body(t)) &&
-        (!dead(t) || (defib && !isWild(s, t) && !isHelper(s, t))) &&
-        s.pos[t],
+      (t) => t !== id && (l4p[t] || {}).dn && !(l4p[t] || {}).ex && s.pos[t],
     )
-    .map((t) => {
-      const q = body(t) ? s.hang.ghost[t] : s.pos[t]; // (Survival's ghost: its body, where it fell)
-      return { t, x: q.x * W, y: q.y * H, dead: dead(t) };
-    })
+    .map((t) => ({ t, x: s.pos[t].x * W, y: s.pos[t].y * H }))
     .filter(
       (t) => !zs || zs.every((z) => Math.hypot(z.x - t.x, z.y - t.y) > KEEP),
     )
@@ -978,13 +967,11 @@ export function l4Bot(s, id, now, out) {
     sl = m.sl,
     b = BOT_BREEDS.computer,
     send = (nx, ny, w, ax, ay) => out.push(moveOf(id, nx, ny, w, ax, ay));
-  /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done); in Survival with a
-     defibrillator, a dead player too (the defibrillator out in hand) */
-  const down = downMate(s, id, x, y, isSurv(s) && hasLeft(s, id, "defib"));
+  /* a teammate down: go to it and hold E (the hold goes on by itself until the revive is done) */
+  const down = downMate(s, id, x, y);
   if (down && Math.hypot(down.x - x, down.y - y) < b.revive) {
     const d = Math.hypot(down.x - x, down.y - y);
     if (d < L4.REACH * 0.9) {
-      if (down.dead) send(x, y, "defib", down.x - x, down.y - y); // (in hand first)
       holdE(s, id, down.t, out);
       return;
     }
@@ -1190,7 +1177,7 @@ function justinBot(s, id, now, out) {
       );
   let gun = others[0] || (guns.includes("shotgun") ? "shotgun" : "");
   /* a downed teammate with no zombie on it (nor on him): go and hold E by it */
-  const down = downMate(s, id, x, y, false, zs);
+  const down = downMate(s, id, x, y, zs);
   if (down && d0 > CLOSE && Math.hypot(down.x - x, down.y - y) < b.revive) {
     const d = Math.hypot(down.x - x, down.y - y);
     if (d < L4.REACH * 0.9) {

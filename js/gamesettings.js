@@ -332,11 +332,6 @@ export function openGameSettings(R, start = null) {
         mid = running(s), // (in a game: only Sandbox on the board takes a new map, at once, actroom.js; the rest waits)
         boardDis = dis || (mid && !sbOnBoard(s)),
         pickDis = dis || mid;
-      if (modeOf(o.mode).onlyMap)
-        return (
-          head("Map") +
-          `<div class="arm-body"><ul class="arm-list">${row('data-map="surv"', modeOf(o.mode).onlyMap, "", true, true)}</ul></div>`
-        ); // (Survival plays only Downpour: nothing else is offered, the owner's, Nov 20)
       return (
         head("Map") +
         `<div class="arm-body"><ul class="arm-list">${row('data-pick="map" data-v="random"', "Random", "", o.mapPick === "random", pickDis)}${

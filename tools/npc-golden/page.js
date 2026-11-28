@@ -5,11 +5,7 @@
 window.__golden = async (sc) => {
   const net = await import("../../js/net.js"),
     { botActions } = await import("../../js/bots.js"),
-    SVm = await import("../../js/survrules.js"),
-    AL = await import("../../js/allies.js"),
-    GMm = await import("../../js/gunmenrules.js"),
-    { W, H } = await import("../../js/hangout/layout.js"),
-    { ARMS } = await import("../../js/guns.js"); // (here with the others: an await once the run has begun let beat 0 part under load)
+    { W, H } = await import("../../js/hangout/layout.js"); // (here with the others: an await once the run has begun let beat 0 part under load)
   /* the room as text with every object's keys in name order: the order keys were added in (which module loaded first, so
      which activity or NPC came first) is not the game, and under a loaded machine it changes (Nov 22: bj and book,
      the NPC list) */
@@ -31,15 +27,9 @@ window.__golden = async (sc) => {
     }
     return (h >>> 0).toString(36);
   };
-  const sv0 = { ...SVm.SV },
-    fr0 = { ...AL.FR },
-    gm0 = { ...GMm.GM };
   window.__fake = true;
   window.__now = 1.8e12;
   window.__seed(sc.seed || 1);
-  Object.assign(SVm.SV, sc.sv || {});
-  Object.assign(AL.FR, sc.fr || {});
-  Object.assign(GMm.GM, sc.gm || {});
   const r = net.createLocalRoom({
     name: "G",
     test: true,
@@ -130,20 +120,6 @@ window.__golden = async (sc) => {
     if (r.state === was && !a.may)
       throw new Error("setup move did nothing: " + JSON.stringify(a));
   }
-  /* Survival: the next peak now (peakNow), or a rest now (restNow: where the friendly squad may come) */
-  if (sc.peakNow || sc.restNow) {
-    const s = r.state;
-    s.hang = {
-      ...s.hang,
-      sv: {
-        ...s.hang.sv,
-        ph: sc.restNow ? "tail" : "rest",
-        until: window.__now,
-        k: Math.max(1, s.hang.sv.k || 0),
-      },
-    };
-    delete s.hang.sv.wm; // (not waiting for the merchant: survrules.js)
-  }
   const out = { all: [], parts: [] },
     per = {}, // (beats in each phase)
     ever = new Set(); // (which NPCs came)
@@ -183,14 +159,6 @@ window.__golden = async (sc) => {
       if (!o.d) list.push([o.x / W, o.y / H]); // (Sandbox's on a map: world px, sbcabin.js)
     parkOn(list);
   };
-  /* "baitGm": { at: beat, k: kind ("sn" the sniper, "c" a criminal…) }: the same with Survival's gunmen of that kind
-     (world px), so they fight my duck up close */
-  const baitGm = () =>
-    parkOn(
-      ((r.state.hang && r.state.hang.gm && r.state.hang.gm.gb) || [])
-        .filter((o) => !o.d && (!sc.baitGm.k || o.k === sc.baitGm.k))
-        .map((o) => [o.x / W, o.y / H]),
-    );
   /* "fire": my duck has these weapons on its number keys and uses them in turn, each beat one, aimed at the nearest
      duck (the board modes' specials, rules.js "use"; the guns pinned in play there) */
   let shots = 0;
@@ -225,9 +193,9 @@ window.__golden = async (sc) => {
     });
     if (r.state !== was) shots++;
   };
-  /* "nade": { at, every, aim }: from beat at, every so many beats my duck throws a grenade at the nearest one of aim
-     ("gm": Survival's gunmen, "duck": another duck), with grenades in its kit on the maps and on its keys elsewhere, so
-     a blast's reach is pinned where the other runs never throw (Hangout, the gunmen: B6, before the rings) */
+  /* "nade": { at, every }: from beat at, every so many beats my duck throws a grenade at the nearest other duck, with
+     grenades in its kit on the maps and on its keys elsewhere, so a blast's reach is pinned where the other runs never
+     throw (Hangout: B6, before the rings) */
   const NADE = ["grenade"];
   const nade = () => {
     const s = r.state,
@@ -242,29 +210,16 @@ window.__golden = async (sc) => {
         ...s.players,
         [r.me]: { ...P, duck: { ...P.duck, keys: NADE } },
       };
-    let me = s.pos[r.me];
-    const them = (
-      N.aim === "gm"
-        ? ((s.hang && s.hang.gm && s.hang.gm.gb) || [])
-            .filter((o) => !o.d)
-            .map((o) => ({ x: o.x / W, y: o.y / H }))
-        : s.seat
-            .filter((id) => id !== r.me && s.pos[id] && s.pos[id].x >= 0)
-            .map((id) => s.pos[id])
-    ).sort(
-      (p, q) =>
-        Math.hypot(p.x - me.x, p.y - me.y) - Math.hypot(q.x - me.x, q.y - me.y),
-    )[0];
+    const me = s.pos[r.me];
+    const them = s.seat
+      .filter((id) => id !== r.me && s.pos[id] && s.pos[id].x >= 0)
+      .map((id) => s.pos[id])
+      .sort(
+        (p, q) =>
+          Math.hypot(p.x - me.x, p.y - me.y) -
+          Math.hypot(q.x - me.x, q.y - me.y),
+      )[0];
     if (!them) return;
-    if (N.aim === "gm") {
-      me = { ...me, x: them.x - ARMS.grenade.far / W, y: them.y };
-      s.pos = { ...s.pos, [r.me]: me };
-      const l4p = s.hang.l4p && s.hang.l4p[r.me];
-      if (l4p) {
-        if (hp0 === null) hp0 = l4p;
-        s.hang = { ...s.hang, l4p: { ...s.hang.l4p, [r.me]: hp0 } };
-      } // (and up, with its health kept, as bait keeps it)
-    } // (a grenade on the maps flies ARMS.grenade.far: my duck that far off, so it lands on them)
     const ax = them.x - me.x,
       ay = them.y - me.y;
     r.send({
@@ -280,16 +235,10 @@ window.__golden = async (sc) => {
     if (patches.length) patch();
     if (sc.nade) nade();
     if (sc.bait !== undefined && b >= sc.bait) bait();
-    if (sc.baitGm && b >= sc.baitGm.at) baitGm();
     if (sc.fire) fire();
     beat();
     const s = r.state;
     per[s.phase] = (per[s.phase] || 0) + 1;
-    for (const o of (s.hang && s.hang.gm && s.hang.gm.gb) || [])
-      ever.add(
-        { c: "criminal", s: "soldier", sn: "sniper", f: "friendly" }[o.k] ||
-          o.k,
-      );
     if (s.hang && s.hang.l4m) ever.add("merchant");
     if (s.seat.some((id) => s.players[id] && s.players[id].helper))
       ever.add("Justin");
@@ -321,11 +270,9 @@ window.__golden = async (sc) => {
       if (key !== "hang") p["s." + key] = hash(sorted(s[key]));
     out.parts.push(p);
   }
-  const g = (r.state.hang && r.state.hang.gm && r.state.hang.gm.gb) || [];
   out.seen = {
     phases: per,
     came: [...ever].sort().join(", "),
-    gunmen: g.length,
     swipes,
     shots,
     boardZombiesPeak: mzPeak,
@@ -340,9 +287,6 @@ window.__golden = async (sc) => {
   };
   if (window.__probe) out.seen.probe = window.__probe; // (counters a change can set while I look for what a run covers)
   window.__probe = null;
-  Object.assign(SVm.SV, sv0);
-  Object.assign(AL.FR, fr0);
-  Object.assign(GMm.GM, gm0);
   window.__fake = false;
   return out;
 };

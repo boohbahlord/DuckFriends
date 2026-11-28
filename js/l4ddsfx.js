@@ -17,8 +17,6 @@ import { heightAt, layoutVariant } from "./hangout/layout.js";
 import { OPENINGS, BUTLER, BOX, ptsOf } from "./l4ddrules.js";
 import { zombiesOf } from "./zombies.js";
 import { groundAt, stepOf } from "./ground.js";
-import { isSurv } from "./survrules.js";
-import { FILES } from "./sfxlist.js";
 
 const rnd = (a, b) => a + Math.random() * (b - a);
 export const SOUNDS = {};
@@ -37,8 +35,6 @@ const STRIDE = 44, // world px a duck walks for each footstep
   FALL = 50, // world px: landing this far below where it jumped from is a fall (a thud), not a jump
   CLIMB = [450, 800], // ms between one zombie's rattles, climbing the fence (Downpour)
   CLIMBS = 2, // rattles at once at most (the nearest climbers)
-  GM_SHOTS = 3, // Survival's gunmen: shots heard each time the state comes in, at most
-  GM_K = 0.8, // … each as loud as this much of a duck's
   NEAR_MOST = 40, // only the nearest this many walkers count for their steps and groans (Sandbox can have 800: grouping them all would cost too much each frame)
   WINDUPS = 3, // zombies' wind-up growls in a second at most (the nearest first: the tell of a swing, from its wu)
   WINDUP_K = 1; // (sound.js VOL.zwindup sets how quiet)
@@ -126,10 +122,6 @@ export function l4Hear(s, ctx) {
         const a = ctx.world.at(f.by);
         play("l4till", a ? { x: a.x, y: a.y } : {});
         rang.add(f.by);
-      } else if (f.n > st.fx && f.kind === "l4defib") {
-        /* Survival's defibrillator: the dead duck brought back, its shock where that duck lies */
-        const a = ctx.world.at((f.who || [])[0] || f.by);
-        play("defib", a ? { x: a.x, y: a.y } : {});
       }
     st.fx = s.fxN || 0;
   }
@@ -187,35 +179,9 @@ export function l4Hear(s, ctx) {
       play(mst === "here" ? "merchantIn" : "merchantOut", { x: mc.x, y: mc.y });
     st.mst = mst;
   }
-  /* Survival's gunmen (gunmenrules.js s.hang.gm.gb): a new last shot (sh[0]) is a shot, its gun's own sound where the
-     gunman stands, a little quieter than a duck's; a few at most each time, so a firefight never drowns everything */
-  const gb = (h.gm && h.gm.gb) || [],
-    shot = st.gmShot || (st.gmShot = {});
-  let shots = 0;
-  for (const o of gb) {
-    const t = (o.sh && o.sh[0]) || 0;
-    if (shot[o.i] === t) continue;
-    shot[o.i] = t;
-    if (!t || st.first || o.d || shots++ >= GM_SHOTS) continue; // (not the shots already fired as I first look)
-    play(FILES[o.hw] ? o.hw : "handgun", {
-      x: o.x,
-      y: o.y,
-      k: GM_K,
-      yield: true,
-    });
-  }
-  /* Survival has no rounds (its L.r is only a horde's level), so no new round's swell and no bell: a horde coming is
-     many zombies groaning far off, and its last one down the air letting go (s.hang.sv's phases: survrules.js) */
-  const sv = isSurv(s) && h.sv;
-  if (sv && sv.ph !== st.sv) {
-    if (!st.first && !L.over)
-      if (sv.ph === "peak") play("svHorde");
-      else if (sv.ph === "tail" && st.sv === "peak") play("svCalm");
-    st.sv = sv.ph;
-  }
   /* a new round (not the first look at the game, nor once it's over) */
   if (L && L.r !== st.r) {
-    if (st.r >= 0 && L.r > st.r && L.r > 0 && !L.over && !isSurv(s)) {
+    if (st.r >= 0 && L.r > st.r && L.r > 0 && !L.over) {
       play("l4round"); // (everywhere alike: no x, y)
       if (layoutVariant() === "l4gs" && play("churchBell"))
         bellAt = performance.now(); // (Downpour: the church bell rings the round in, the owner's, Nov 17 12:28Z)
@@ -223,8 +189,8 @@ export function l4Hear(s, ctx) {
     st.r = L.r;
   }
   /* every zombie of the round down (all of them came, none left standing): one chime, the last note of What the duck?
-     (the owner's, Nov 17 12:28Z; not in Survival, which has svCalm above) */
-  if (L && L.r > 0 && L.n > 0 && L.made >= L.n && st.clr !== L.r && !sv) {
+     (the owner's, Nov 17 12:28Z) */
+  if (L && L.r > 0 && L.n > 0 && L.made >= L.n && st.clr !== L.r) {
     const up = zombiesOf(s).some((z) => z.st !== 3);
     if (!up) {
       if (!st.first) play("cleared"); // (not for a round already done as I first look)

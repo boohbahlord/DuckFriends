@@ -93,7 +93,6 @@ export const STAT_MODES = [
   ["trivia", "Trivia"],
   ["l4dd", "Dead Ducks Arcade"],
   ["l4r16", "Round 16 Start"], // (Quacky Zombies with the Round 16 Start setting: its own stats, the owner's)
-  ["surv", "Survival"], // (games, its best time survived in titles (seconds), zombies killed)
 ];
 /* which stats a game counts toward: its mode's, or Round 16 Start's for Quacky Zombies starting on round 13 or later */
 export const statMode = (s) => {

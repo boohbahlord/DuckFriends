@@ -8,54 +8,6 @@
     "beats": 1500
   },
   {
-    "name": "surv-criminals",
-    "options": {
-      "mode": "surv"
-    },
-    "computers": 3,
-    "beats": 1500,
-    "peakNow": 1,
-    "sv": {
-      "GUNMEN": 1,
-      "CRIM": 1,
-      "STEP": 0
-    }
-  },
-  {
-    "name": "surv-soldiers",
-    "options": {
-      "mode": "surv"
-    },
-    "computers": 3,
-    "beats": 1500,
-    "peakNow": 1,
-    "sv": {
-      "GUNMEN": 1,
-      "CRIM": 0,
-      "STEP": 0
-    },
-    "gm": {
-      "SNIPER": 1
-    }
-  },
-  {
-    "name": "surv-friends",
-    "options": {
-      "mode": "surv"
-    },
-    "computers": 3,
-    "beats": 2400,
-    "sv": {
-      "GUNMEN": 1,
-      "CRIM": 0,
-      "STEP": 0
-    },
-    "fr": {
-      "CHANCE": 1
-    },
-    "restNow": 1
-  },
-  {
     "name": "sb-cabin",
     "options": {
       "mode": "sandbox",
@@ -281,21 +233,6 @@
     "computers": 3,
     "beats": 1500,
     "bait": 100
-  },
-  {
-    "name": "surv-zombies-bait",
-    "options": {
-      "mode": "surv"
-    },
-    "computers": 3,
-    "beats": 3000,
-    "peakNow": 1,
-    "sv": {
-      "GUNMEN": 0,
-      "CRIM": 0,
-      "STEP": 0
-    },
-    "bait": 0
   },
   {
     "name": "sb-cabin-bait",
@@ -624,42 +561,6 @@
     "beats": 4500
   },
   {
-    "name": "surv-sniper-bait",
-    "options": {
-      "mode": "surv"
-    },
-    "computers": 3,
-    "beats": 1500,
-    "peakNow": 1,
-    "sv": {
-      "GUNMEN": 1,
-      "CRIM": 0,
-      "STEP": 0
-    },
-    "gm": {
-      "SNIPER": 1
-    },
-    "baitGm": {
-      "at": 100,
-      "k": "sn"
-    }
-  },
-  {
-    "name": "surv-criminals-2",
-    "seed": 5,
-    "options": {
-      "mode": "surv"
-    },
-    "computers": 3,
-    "beats": 1500,
-    "peakNow": 1,
-    "sv": {
-      "GUNMEN": 1,
-      "CRIM": 1,
-      "STEP": 0
-    }
-  },
-  {
     "name": "hang-nade",
     "options": {
       "mode": "hang"
@@ -670,25 +571,6 @@
       "at": 20,
       "every": 15,
       "aim": "duck"
-    }
-  },
-  {
-    "name": "surv-nade-gm",
-    "options": {
-      "mode": "surv"
-    },
-    "computers": 3,
-    "beats": 900,
-    "peakNow": 1,
-    "sv": {
-      "GUNMEN": 1,
-      "CRIM": 1,
-      "STEP": 0
-    },
-    "nade": {
-      "at": 30,
-      "every": 10,
-      "aim": "gm"
     }
   }
 ]

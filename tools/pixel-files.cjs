@@ -34,7 +34,6 @@ const MODES = [
   "law",
   "quack",
   "sc",
-  "surv",
   "trivia",
   "vdd",
   "wyr",

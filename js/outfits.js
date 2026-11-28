@@ -945,7 +945,7 @@ export const OUTFITS = [
    Never a player's: Customize, the chat and the computers only list OUTFITS; outfitById finds these as well, so a look
    (gunmen.js) wears them as any duck wears an outfit. */
 /* camouflage: its base and three blotch tones, each pattern's */
-export const CAMO = {
+const CAMO = {
   woodland: ["#5b6a3c", "#3b4a2a", "#7d7a4c", "#262c1e"],
   desert: ["#b39b6b", "#8c7552", "#d1bf90", "#5f513a"],
   urban: ["#6c7078", "#474b53", "#9a9fa7", "#2b2e34"],

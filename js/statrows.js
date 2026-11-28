@@ -3,7 +3,6 @@
 import { COLS, signed, nameOfValue, DDR_SIDES } from "./rules.js";
 import { esc } from "./ui.js";
 import { fmtJumps } from "./format.js";
-import { clockOf } from "./survrules.js";
 
 const share = (t) => t.majority + t.minority;
 const pct = (v) => `${Math.round(v * 100)}%`;
@@ -63,10 +62,6 @@ const KINDS = {
   best: (t, k) => ({
     html: t[k] ? fmtJumps(t[k]) : "—",
     text: t[k] ? String(t[k]) : "—",
-  }),
-  clock: (t, k) => ({
-    html: t[k] ? clockOf(t[k]) : "—",
-    text: t[k] ? clockOf(t[k]) : "—",
   }),
 };
 /* one row [label, key, kind] of a mode's table for a player's all-time numbers t: { label, html, text } */
