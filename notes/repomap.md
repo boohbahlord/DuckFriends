@@ -294,7 +294,7 @@ dpflood.js 89 Downpour's flood over its bed
 dpground.js 324 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 174 fireflies
-flicker.js 93 now and then a light
+flicker.js 84 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
