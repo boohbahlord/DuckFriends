@@ -547,6 +547,7 @@ function zombieEl(z) {
   const el = document.createElement("div"),
     box = zombieBox(z.l);
   el.className = "l4z";
+  el.hidden = true; // (shown by its first draw, fading in as one coming into sight does)
   const url = zombieURL(z.l, z.i);
   /* the pixel look: no src yet, its pixels come in draw() (pxPic) at once when a zombie that looks the same has them
      already; until then it shows nothing rather than its live drawing (a whole wave of them would be drawn as drawings
