@@ -1,4 +1,4 @@
-/* ---------- the silly commands (lightning, love, kill, hotdog) and the room's shots and blasts, as they are drawn ----------
+/* ---------- the board's specials (lightning, love, kill) and the room's shots and blasts, as they are drawn ----------
    Moved out of game.js to keep that file small (a pure move). It imports back from game.js, which imports it. */
 import {
   R,
@@ -9,7 +9,6 @@ import {
   follows,
   frameNo,
   geo,
-  hotdogs,
   me,
   neckSpray,
   podLift,
@@ -78,8 +77,6 @@ import { low } from "./gfx.js";
 import { kick, shake, vibrate, VIB } from "./fxmotion.js";
 import { heatShake } from "./heat.js";
 
-/* ---------- the silly commands: lightning, love, kill, hotdog ---------- */
-const HOTDOG = `<svg viewBox="-34 -24 68 30" width="100%"><path d="M-24-13C-26-18-20-21-12-19L14-19C22-21 27-17 25-12Z" fill="#e2a65a" stroke="#1c1c28" stroke-width="1.6"/><rect x="-31" y="-17" width="62" height="10" rx="5" fill="#c0502b" stroke="#1c1c28" stroke-width="1.6"/><path d="M-24-13l4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3 4-3 4 3" stroke="#f2c230" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M-27-9C-28-1-20 2-10 2L10 2C20 2 28-1 27-9C18-6-18-6-27-9Z" fill="#eab36a" stroke="#1c1c28" stroke-width="1.6"/></svg>`;
 /* a card's color, lifted when it's too dark to see on the name tag (a black card's meter showed black on black) */
 export function seen(hex) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
@@ -689,12 +686,5 @@ export function playFx(f) {
     setTimeout(() => word.remove(), 1200);
   } else if (f.kind === "eat") {
     sfx.chomp();
-  } else if (f.kind === "hotdog") {
-    const node = el(
-      `<div class="fx-hotdog" style="width:${(size * 0.8).toFixed(0)}px">${HOTDOG}</div>`,
-    );
-    fxl.append(node);
-    hotdogs.push({ id: f.who[0], el: node, until: now + 7000 });
-    sfx.hotdog();
   }
 }

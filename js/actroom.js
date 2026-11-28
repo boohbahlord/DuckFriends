@@ -535,17 +535,13 @@ export function act_voteCast({ state, s, a, now, me }) {
 }
 
 export function act_chat({ state, s, a, now, P, me }) {
-  // a message; from the command line (send) it carries the command (cmd) and may be a file
+  // a message
   if (!me) return s;
-  if (
-    denied(s, a.id, "nochat") ||
-    (a.cmd && (denied(s, a.id, "nocmd") || denied(s, a.id, "nosend")))
-  )
-    return state;
+  if (denied(s, a.id, "nochat")) return state;
   if (now - ((s.lastChat || {})[a.id] || 0) < slowMs(s, a.id)) return state; // slow: one message every 15 s (slow30: 30 s)
   const text = String(a.text || "")
     .trim()
-    .slice(0, a.cmd ? 2000 : 500);
+    .slice(0, 500);
   if (!text) return state;
   if (a.to && !P[a.to]) return state;
   s.lastChat = { ...(s.lastChat || {}), [a.id]: now };
@@ -553,14 +549,6 @@ export function act_chat({ state, s, a, now, P, me }) {
     from: a.id,
     to: a.to || null,
     text,
-    ...(a.cmd ? { cmd: String(a.cmd).slice(0, 200) } : {}),
-    ...(a.file
-      ? {
-          file: String(a.file).slice(0, 40),
-          ...(a.pub ? { pub: true } : {}),
-          ...(a.grp && groupsOf0(s)[a.grp] ? { grp: String(a.grp) } : {}),
-        }
-      : {}),
   });
   return s;
 }

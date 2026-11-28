@@ -1,5 +1,6 @@
-/* I want the playtester's test commands to work: in Dead Ducks Arcade on Downpour, `cheat goto canopy | station | chapel | X Y [Z]` puts my duck there (through the host, so the
-   camera goes with it, and at the height of that roof). The first one used turns stats off (cheatflag.js). */
+/* I want the test commands to work: in Dead Ducks Arcade on Downpour, goto canopy | station | chapel | X Y [Z] puts my
+   duck there (through the host, so the camera goes with it, and at the height of that roof). The first one used turns
+   stats off (cheatflag.js). A test sends the action itself: { t: "hang", k: "cheat", do: "goto", spot } */
 const { chromium } = require("playwright");
 const { url, fail, noErrors } = require("./lib.cjs");
 (async () => {
@@ -33,14 +34,12 @@ const { url, fail, noErrors } = require("./lib.cjs");
   const o = await p.evaluate(async () => {
     const R = window._r,
       w8 = (ms) => new Promise((r) => setTimeout(r, ms)),
-      { shellRun } = await import("./js/shell.js"),
-      { shellCtx } = await import("./js/chat.js"),
-      run = async (l) =>
-        ((await shellRun(l, shellCtx())).lines || []).join(" | "),
+      { cheated } = await import("./js/cheatflag.js"),
+      go = (spot) => R.send({ t: "hang", k: "cheat", do: "goto", spot }),
       o = {};
     (await import("./js/net.js")).setActive(R);
-    o.before = await run("sudo cheat");
-    o.goto = await run("sudo cheat goto canopy");
+    o.before = cheated(R.state);
+    go("canopy");
     await w8(1200);
     const p1 = R.state.pos[R.me];
     o.canopy = [
@@ -49,22 +48,22 @@ const { url, fail, noErrors } = require("./lib.cjs");
       p1.z,
       !!p1.tp,
     ];
-    o.goto2 = await run("sudo cheat goto station");
+    go("station");
     await w8(1200);
     o.station = [R.state.pos[R.me].z];
-    o.after = await run("sudo cheat");
-    o.bad = await run("sudo cheat goto nowhere");
+    o.after = cheated(R.state);
+    const was = R.state.pos[R.me].tp;
+    go("nowhere");
+    await w8(600);
+    o.bad = R.state.pos[R.me].tp !== was; // (tp: when the host last put it somewhere)
     return o;
   });
   if (process.env.SHOW) console.log(JSON.stringify(o));
-  if (!/No test commands/.test(o.before))
-    fail("cheatcmds: expected a clean game first " + o.before);
-  if (!/Moved/.test(o.goto) || !(o.canopy[2] > 0))
-    fail("cheatcmds: goto canopy " + JSON.stringify(o));
+  if (o.before) fail("cheatcmds: expected a clean game first");
+  if (!(o.canopy[2] > 0)) fail("cheatcmds: goto canopy " + JSON.stringify(o));
   if (!(o.station[0] > 0)) fail("cheatcmds: goto station " + JSON.stringify(o));
-  if (!/counts no stats/.test(o.after))
-    fail("cheatcmds: stats not off " + o.after);
-  if (!/✗/.test(o.bad)) fail("cheatcmds: a bad place was taken " + o.bad);
+  if (!o.after) fail("cheatcmds: stats not off");
+  if (o.bad) fail("cheatcmds: a bad place was taken");
   noErrors(errs, "cheatcmds");
   await b.close();
 })();

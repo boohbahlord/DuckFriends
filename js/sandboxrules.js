@@ -167,7 +167,7 @@ export const SB_RULES = {
      Nov 19 21:59Z: "Crit percent chance could be in a file that the players can change, among other settings", gore,
      and "you can change the limit for the amount of players within a game mode in the file ... 8 players max, which is
      the normal ... or you can make it 4 players max"; "it's 2 players max for the actual game mode when it's made, not
-     for the actual sandbox itself that makes the game mode"). Seriat's settings/limits (shell.js), never G's window */
+     for the actual sandbox itself that makes the game mode"). Seriat's settings/limits (seriatfiles.js), never G's window */
   critp: {
     name: "crit chance",
     kind: "int",

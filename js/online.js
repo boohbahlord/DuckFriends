@@ -290,7 +290,6 @@ const REMOTE = new Set([
   "use",
   "reload",
   "aura",
-  "fx",
   "jumps",
   "chat",
   "options",
@@ -387,7 +386,7 @@ function clean(a, by) {
 }
 /* a guess at my own action's result, shown until the host's answer comes back; the host alone ends phases */
 function predict(s, a) {
-  if (["chat", "fx", "join", "leave"].includes(a.t)) return s;
+  if (["chat", "join", "leave"].includes(a.t)) return s;
   let p;
   try {
     p = reduce(s, a, now());

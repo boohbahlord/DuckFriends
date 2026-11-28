@@ -124,7 +124,7 @@ export const justinShown = (s) =>
 /* the turn he is in (a question, a round): not each stage of it */
 const turnKey = (s) => [s.round, s.qi, s.startedAt].join();
 /* shot or killed: down where he stands, one of his death lines, back on the next turn */
-export function justinDown(s, now, log) {
+function justinDown(s, now, log) {
   const j = s.justin;
   if (!justinShown(s) || j.down) return false;
   const at = justinAt(j, now);

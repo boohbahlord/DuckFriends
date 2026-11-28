@@ -1,27 +1,18 @@
-/* ---------- text chat (T) and the command line (Shift+T) ----------
-   A slide at the side chosen in Settings (left, bottom, right or hidden). Closed, it is a round button: "ABC" on white for
-   the chat. Open, the symbol at its bottom left switches between the chat and the command line (a green "$" on black).
+/* ---------- text chat (T) ----------
+   A slide at the side chosen in Settings (left, bottom, right or hidden). Closed, it is a round button: "ABC" on white.
 
    Chat: @name pings that player (a soft sound and a "!" on the chat button); \@name sends a private message; \help lists
    these. Suggestions show once something is typed (\togglesuggest turns them off); Tab completes (never leaving the
    page), the arrow keys move through them. Mutes: \mute bubble ping text on @name … (until you leave the room),
    \permmute … (kept on this device), \show mute | permmute | players. A message over 250 characters folds under an
-   arrow; each new message's bubble floats over its duck on the board.
-
-   Command line: a small bash (shell.js, bash.js): files, pipes and the other operators, variables, loops, text tools,
-   stats, send, sudo and groups, forgame; and the customization, e.g. custom username font "times new roman". Words are
-   split by spaces, so a choice with a space goes in quotes; Tab adds the quotes. ↑ and ↓ bring back earlier commands,
-   Ctrl+R searches them, Ctrl+C stops a running command, Ctrl+L clears. A message sent from the command line shows the
-   command in small print over its output; a sent file shows only its name to anyone who may not open it (only sudo,
-   unless chmod let its group or everyone). */
+   arrow; each new message's bubble floats over its duck on the board. */
 import { el, esc, typing, windowOpen, setHTML } from "./ui.js";
 import { profile } from "./store.js";
 import { activeRoom } from "./net.js";
 
-import { denied, canOpen, slowMs } from "./roomrules.js";
-import { shellRun, shellSuggest, shellHistory } from "./shell.js";
-
-import { paint, isHelpName } from "./helppages.js";
+import { denied, slowMs } from "./roomrules.js";
+import { secret } from "./unlocks.js";
+import { shareLook } from "./customize.js";
 
 import { nameHTML, fontHTML } from "./name.js";
 import { sfx } from "./sound.js";
@@ -30,21 +21,17 @@ import { settingText } from "./gamesettings.js";
 
 import { DOD_NEWS } from "./lobbysettings.js";
 
-import { useSeriatTheme, freeSeriatTheme } from "./seriattheme.js";
-
 import { npcById, seen } from "./npcs.js";
 import {
   HELP,
   chatCommand,
   chatSuggest,
   isMuted,
-  shellCtx,
+  byTag,
+  tag,
 } from "./chatmutes.js";
 
-import { CMD_MAX, byTag, tag } from "./chatcmds.js";
-
-export { tag } from "./chatcmds.js";
-export { isMuted, shellCtx } from "./chatmutes.js";
+export { isMuted, tag } from "./chatmutes.js";
 
 /* a settings change in the chat, after the name tag of whoever made it: "changed Map to Tiles and Turn ends when done to
    2 of 3", or "put the game settings back to the defaults" */
@@ -67,21 +54,16 @@ function optsWords(m) {
 }
 
 /* ---------- the widget ---------- */
-export const ui = {
+const ui = {
   open: false,
-  mode: "chat",
   ping: false,
-  cmd: [],
   notes: [],
   long: new Set(),
   game: "",
-  running: false,
-  cancel: false,
-  live: [],
   chatFrom: 0,
   dodRoom: "",
   dodVotes: [],
-}; // cmd: the command line's lines; notes: chat lines only you see; long: unfolded long messages; chatFrom: clear hides the chat before it, on your screen
+}; // notes: chat lines only you see; long: unfolded long messages; chatFrom: clear hides the chat before it, on your screen
 const mentionRe = (n) =>
   new RegExp(
     `(^|[^\\\\\\p{L}\\p{N}_-])@(${tag(n).replace(/[-]/g, "\\-")}|everyone)(?![\\p{L}\\p{N}_-])`,
@@ -90,7 +72,7 @@ const mentionRe = (n) =>
 
 /* the chat comes in two parts that the screen places: the round button (in the bottom bar) and the panel (in a dock at the
    side chosen in Settings, so it never covers anything) */
-export let current = null;
+let current = null;
 export function chatWidget() {
   const btn = el(
     `<button type="button" class="chat-btn mode-icon" aria-label="Text chat (T)" data-tip="Text chat (T)"><span class="mi">ABC</span><span class="bang" hidden>!</span></button>`,
@@ -100,7 +82,6 @@ export function chatWidget() {
       <div class="chat-log" aria-live="polite"></div>
       <ul class="chat-sugg" role="listbox" hidden></ul>
       <form class="chat-row" autocomplete="off">
-        <button type="button" class="mode-btn mode-icon" aria-label="Chat mode; switch to the command line (Shift+T)" data-tip="Chat · click for the command line (Shift+T)"><span class="mi">ABC</span></button>
         <input class="chat-in" maxlength="500" spellcheck="false" aria-label="Message">
       </form>
     </section>`);
@@ -108,7 +89,6 @@ export function chatWidget() {
   const log = panel.querySelector(".chat-log"),
     inp = panel.querySelector(".chat-in"),
     sugg = panel.querySelector(".chat-sugg");
-  const modeBtn = panel.querySelector(".mode-btn");
   let sel = 0,
     list = [],
     lastN = 0;
@@ -116,27 +96,13 @@ export function chatWidget() {
 
   const addNote = (text, float) => {
     ui.notes.push({ t: Date.now(), mine: true, text }); // (a line only I see; float: the chat's button floats it too while the chat is closed)
-    if (ui.mode === "chat") drawLog();
+    drawLog();
     if (float && !ui.open && room())
       showFloat(room().state, room().me, { sys: true, text });
   };
   const drawLog = () => {
     const r = room(),
       s = r && r.state;
-    if (ui.mode === "cmd") {
-      setHTML(
-        log,
-        [...ui.cmd, ...ui.live]
-          .map(
-            (l) =>
-              `<p class="cmd-line${l.startsWith("$ ") ? " echo" : ""}">${paint(l)}</p>`,
-          )
-          .join("") ||
-          '<p class="dim small">Type help and press Enter. New to this? HelpCommandLine.</p>',
-      );
-      log.scrollTop = 1e9;
-      return;
-    }
     if (!s) {
       setHTML(log, "");
       return;
@@ -191,11 +157,6 @@ export function chatWidget() {
         const priv = m.to
           ? `<span class="tag-priv">${m.from === me ? `to ${s.players[m.to] ? esc(s.players[m.to].name) : "?"}` : "private"}</span> `
           : "";
-        /* from the command line: the command in small print, then its output (a file: only sudo members see inside) */
-        if (m.cmd) {
-          const sealed = !canOpen(s, me, m);
-          return `<p class="from-cmd${m.to ? " priv" : ""}${hit ? " hit" : ""}${long ? " long" : ""}">${fold}${priv}${name(m.from)} <span class="cmd-tag">from the command line: <code>$ ${m.file ? "send " : ""}${esc(m.cmd)}</code></span>${m.file ? `<span class="cmd-file">📄 ${esc(m.file)}${sealed ? ` <span class="dim">(only sudo${m.grp ? ` and ${esc(m.grp)}` : ""} can open it)</span>` : ""}</span>` : ""}${sealed ? "" : `<span class="cmd-out">${text}</span>`}</p>`;
-        }
         return `<p class="${m.to ? "priv" : ""}${hit ? " hit" : ""}${long ? " long" : ""}">${fold}${priv}${name(m.from)}: ${text}</p>`;
       })
       .join("");
@@ -218,56 +179,21 @@ export function chatWidget() {
   };
   const refresh = () => {
     const r = room();
-    list = !inp.value
-      ? []
-      : ui.mode === "cmd"
-        ? shellSuggest(inp.value, shellCtx())
-        : chatSuggest(inp.value, r && r.state, r && r.me); // only once something is typed
+    list = !inp.value ? [] : chatSuggest(inp.value, r && r.state, r && r.me); // only once something is typed
     sel = Math.min(sel, Math.max(0, list.length - 1));
     drawSugg();
   };
-  /* the round symbol shows the mode you are in: ABC on white for the chat, a green $ on black for the command line */
-  const setMode = (m) => {
-    ui.mode = m;
-    panel.dataset.mode = btn.dataset.mode = modeBtn.dataset.mode = m;
-    panel.querySelector(".chat-title").textContent =
-      m === "cmd" ? "Command line" : "Chat";
-    for (const b of [modeBtn, btn])
-      b.querySelector(".mi").textContent = m === "cmd" ? "$" : "ABC";
-    modeBtn.dataset.tip =
-      m === "cmd"
-        ? "Command line · click for the text chat (T)"
-        : "Chat · click for the command line (Shift+T)";
-    modeBtn.setAttribute(
-      "aria-label",
-      m === "cmd"
-        ? "Command line mode; switch to the text chat (T)"
-        : "Chat mode; switch to the command line (Shift+T)",
-    );
-    btn.dataset.tip = m === "cmd" ? "Command line (Shift+T)" : "Text chat (T)";
-    inp.setAttribute("aria-label", m === "cmd" ? "Command" : "Message");
-    inp.maxLength = m === "cmd" ? CMD_MAX : 500; // a command line can be longer than a chat message
-    drawLog();
-    refresh();
-    cmdLook();
-  };
-  /* the command line up wears the book's look (seriattheme.js: the owner's, Nov 19 21:59Z, "terminal mode on the text chat") */
-  const cmdLook = () =>
-    ui.open && ui.mode === "cmd"
-      ? useSeriatTheme("chat")
-      : freeSeriatTheme("chat");
-  const openPanel = (m) => {
+  const openPanel = () => {
     ui.open = true;
     panel.hidden = false;
     btn.setAttribute("aria-pressed", "true");
     ui.ping = false;
     btn.querySelector(".bang").hidden = true;
     if (w.onToggle) w.onToggle(); // the dock opens first, so the box can take the focus
-    setMode(m || ui.mode);
+    drawLog();
     log.scrollTop = 1e9;
     inp.focus();
     refresh(); // always open on the newest message
-    cmdLook();
   };
   const closePanel = () => {
     ui.open = false;
@@ -276,45 +202,17 @@ export function chatWidget() {
     btn.setAttribute("aria-pressed", "false");
     inp.blur();
     if (w.onToggle) w.onToggle();
-    cmdLook();
   };
   w.openChat = openPanel;
   w.close = closePanel;
-  /* a command's live lines (top), shown under it until it ends */
-  w.live = (ls) => {
-    ui.live = ls;
-    if (ui.mode === "cmd") drawLog();
-  };
 
   btn.onclick = () => (ui.open ? closePanel() : openPanel());
   panel.querySelector(".chat-x").onclick = closePanel;
-  modeBtn.onclick = () => {
-    setMode(ui.mode === "cmd" ? "chat" : "cmd");
-    inp.focus();
-  };
   inp.addEventListener("focus", refresh);
   inp.addEventListener("click", refresh);
   inp.addEventListener("input", () => {
     sel = 0;
     refresh();
-  });
-  inp.addEventListener("paste", (e) => {
-    // a pasted line that is too long: say it was cut
-    const t = (e.clipboardData || {}).getData
-        ? e.clipboardData.getData("text")
-        : "",
-      max = inp.maxLength;
-    if (
-      max > 0 &&
-      inp.value.length - (inp.selectionEnd - inp.selectionStart) + t.length >
-        max &&
-      ui.mode === "cmd"
-    ) {
-      ui.cmd.push(
-        `✗ That line is longer than ${max.toLocaleString("en-US")} characters, so its end was cut off.`,
-      );
-      drawLog();
-    }
   });
   inp.addEventListener("blur", () => setTimeout(drawSugg, 120));
   sugg.addEventListener("mousedown", (e) => {
@@ -325,44 +223,7 @@ export function chatWidget() {
     sel = 0;
     refresh();
   });
-  let back = -1,
-    search = null; // the command line's ↑ ↓: how far back in its history; Ctrl+R: what is searched for
   inp.addEventListener("keydown", (e) => {
-    if (ui.mode === "cmd" && e.ctrlKey && !e.altKey && !e.metaKey) {
-      const k = e.key.toLowerCase();
-      if (k === "c" && inp.selectionStart === inp.selectionEnd) {
-        // stop the running command, or drop the line (copying still works)
-        e.preventDefault();
-        if (ui.running) ui.cancel = true;
-        else {
-          ui.cmd.push("$ " + inp.value + "^C");
-          inp.value = "";
-          drawLog();
-          refresh();
-        }
-        return;
-      }
-      if (k === "l") {
-        e.preventDefault();
-        ui.cmd = [];
-        drawLog();
-        return;
-      }
-      if (k === "r") {
-        // each press goes further back through the commands that have the words typed
-        e.preventDefault();
-        const h = shellHistory();
-        if (search === null) search = { q: inp.value, at: h.length };
-        let i = search.at - 1;
-        while (i >= 0 && !h[i].includes(search.q)) i--;
-        if (i >= 0) {
-          search.at = i;
-          inp.value = h[i];
-        }
-        return;
-      }
-    }
-    if (e.key !== "Control") search = null;
     if (e.key === "Tab") {
       e.preventDefault();
       if (list.length) {
@@ -370,21 +231,6 @@ export function chatWidget() {
         sel = 0;
         refresh();
       }
-      return;
-    }
-    if (
-      (e.key === "ArrowUp" || e.key === "ArrowDown") &&
-      ui.mode === "cmd" &&
-      !list.length
-    ) {
-      const h = shellHistory();
-      if (!h.length) return;
-      e.preventDefault();
-      back =
-        e.key === "ArrowUp"
-          ? Math.min(h.length - 1, back + 1)
-          : Math.max(-1, back - 1);
-      inp.value = back < 0 ? "" : h[h.length - 1 - back];
       return;
     }
     if ((e.key === "ArrowDown" || e.key === "ArrowUp") && list.length) {
@@ -410,44 +256,12 @@ export function chatWidget() {
     drawLog();
   });
   const submit = async (text) => {
-    if (ui.mode === "cmd") {
-      if (ui.running) {
-        ui.cmd.push(
-          "$ " + text,
-          "✗ A command is still running (Ctrl+C stops it).",
-        );
-        drawLog();
-        return;
-      }
-      ui.cmd.push("$ " + text);
-      back = -1;
-      search = null;
-      ui.running = true;
-      ui.cancel = false;
-      drawLog();
-      const at = ui.cmd.length; // its lines go right under it, above anything typed while it ran
-      let res;
-      try {
-        res = await shellRun(text, shellCtx());
-      } finally {
-        ui.running = false;
-        ui.cancel = false;
-        ui.live = [];
-      }
-      if (res.cleared) ui.cmd = [...res.lines];
-      else ui.cmd.splice(Math.min(at, ui.cmd.length), 0, ...res.lines);
-      if (ui.cmd.length > 300) ui.cmd.splice(0, ui.cmd.length - 300);
-      drawLog();
-      refresh();
-      return;
-    }
     const r = room(),
       note = (...t) => {
         t.forEach(addNote);
         refresh();
       };
-    /* the command line's words, typed in the chat: clear clears the chat on your screen, help is the chat's help, and a
-       Help page opens in the command line */
+    /* clear clears the chat on your screen, help is the chat's help */
     if (/^\\?clear$/i.test(text)) {
       ui.chatFrom = Date.now();
       return note(
@@ -456,9 +270,11 @@ export function chatWidget() {
     }
     if (/^\\?help$/i.test(text) || /^\\help\b/i.test(text))
       return note(...HELP);
-    if (isHelpName(text.split(/\s+/)[0]) || /^secret\b/i.test(text)) {
-      setMode("cmd");
-      return submit(text);
+    const sc = text.match(/^secret\s+(\S+)\s*(\S*)/i);
+    if (sc) {
+      const said = secret(sc[1], sc[2].toLowerCase());
+      shareLook(); // (a code turned off takes locked things off)
+      return note(said);
     } // (a secret code never goes to the room's chat)
     const said = await chatCommand(text, r);
     if (said !== null) {
@@ -521,11 +337,7 @@ export function chatWidget() {
     }
     const p = s.players[m.from],
       text =
-        m.file && !canOpen(s, me, m)
-          ? `📄 ${m.file}`
-          : m.text.length > 160
-            ? m.text.slice(0, 160).trimEnd() + "…"
-            : m.text;
+        m.text.length > 160 ? m.text.slice(0, 160).trimEnd() + "…" : m.text;
     float.innerHTML = m.opts
       ? `<span class="cf-sys">${s.players[m.by] ? nameHTML(s.players[m.by].name, s.players[m.by].nameStyle) : "The host"} ${esc(optsWords(m))}</span>`
       : m.sys
@@ -591,14 +403,13 @@ export function chatWidget() {
         btn.isConnected &&
         [...fresh].reverse().find((m) => floatable(s, r.me, m));
       if (fl) showFloat(s, r.me, fl);
-      if (ui.mode === "chat") drawLog();
+      drawLog();
     }
   };
   const r0 = room();
   if (r0) lastN = r0.state.logN || 0;
   const unsub = r0 ? r0.on(onState) : () => {};
   w.destroy = () => {
-    freeSeriatTheme("chat");
     unsub();
     if (float) float.remove();
     float = null;
@@ -606,7 +417,6 @@ export function chatWidget() {
   };
   w.isOpen = () => ui.open;
   w.note = (text) => addNote(text, true);
-  setMode(ui.mode);
   if (ui.open) {
     panel.hidden = false;
     btn.setAttribute("aria-pressed", "true");
@@ -616,7 +426,7 @@ export function chatWidget() {
   return w;
 }
 export const chatNote = (text) => current && current.note(text); // (a line of the chat only I see: game.js)
-/* T opens the chat, Shift+T the command line (not while typing or with a window open) */
+/* T opens the chat (not while typing or with a window open) */
 addEventListener("keydown", (e) => {
   if (
     e.code !== "KeyT" ||
@@ -629,5 +439,5 @@ addEventListener("keydown", (e) => {
     return;
   if (!current) return;
   e.preventDefault();
-  current.openChat(e.shiftKey ? "cmd" : "chat");
+  current.openChat();
 });

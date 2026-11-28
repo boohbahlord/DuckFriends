@@ -4,7 +4,7 @@
    to change permissions for that file (read, write, execute), or to give other players in a dropdown menu to modify
    permissions player's have within your files and directories (only yours). otherwise, players cannot read your files OR
    write OR execute unless you give them persmission. permission has to be granted for every new sandbox session".
-   Every player's files stay on their own device (shell.js). The room only learns, for this Sandbox:
+   Every player's files stay on their own device (seriatfiles.js). The room only learns, for this Sandbox:
    - the names in each player's folder (n: ["a.num", "d/", "d/b.num"]), so whoever has canhomes can look in it;
    - the rights each player gave (g: { path in their folder ("" = all of it): { who: "rwx" } }), who being a player's id,
      "@o" (everyone) or "@g:<group>" (a group's members).

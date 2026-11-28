@@ -1,8 +1,8 @@
 /* ---------- the characters you can mute: Justin, the cats, Justin's Butler, the shadow duck ----------
    The chat's \mute, \permmute and \show take them by name like players (the only commands that work on the cats). Their
    mutes are kept under 'npc:<id>'. A cat's line shows in my chat only if the cat was on my screen when it spoke
-   (hangout/characters.js writes which lines those were in seen). No imports, so chat.js, shell.js and the Hangout can
-   all use it. */
+   (hangout/characters.js writes which lines those were in seen). No imports, so chat.js and the Hangout can both use
+   it. */
 const NPCS = [
   { id: "justin", name: "Justin", tags: ["justin"] },
   { id: "annabelle", name: "Annabelle", tags: ["annabelle"], cat: true },

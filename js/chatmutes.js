@@ -6,16 +6,18 @@ import { profile, save } from "./store.js";
 
 import { activeRoom } from "./net.js";
 
-import { denied, gameMuted, slowMs } from "./roomrules.js";
-
-import { shareLook } from "./customize.js";
+import { denied, gameMuted } from "./roomrules.js";
 
 import { uiCommand } from "./hideui.js";
 
 import { npcById, npcByTag, npcsHere, npcTag as npcAt, muted } from "./npcs.js";
 
-import { TREE, byTag, cmdSuggest, funOn, runCommand, tag } from "./chatcmds.js";
-import { current, ui } from "./chat.js";
+/* a name as it is typed after @: without its spaces ("Player 1" is @Player1) */
+export const tag = (n) => String(n || "").replace(/\s+/g, "");
+export const byTag = (s, t) =>
+  s.seat.find(
+    (i) => tag(s.players[i].name).toLowerCase() === tag(t).toLowerCase(),
+  );
 
 /* ---------- the chat's suggestions ---------- */
 /* chat commands: nothing shows before typing; typing narrows them (\\ shows every \\ command); names complete
@@ -82,7 +84,7 @@ export function chatSuggest(line, s, me) {
   return [];
 }
 export const HELP = [
-  "The chat's help (HelpChat in the command line tells more):",
+  "The chat's help:",
   '@name: pings a player (a soft sound and a "!"); @everyone pings everyone',
   "\\@name message: a private message",
   "\\mute bubble ping text on @name @name2: mute what you list (all = everything; off undoes it) until you leave the room",
@@ -91,7 +93,6 @@ export const HELP = [
   "\\hide ui: hides the bars and the words at the bottom on your screen (\\show ui brings them back)",
   "\\togglesuggest: suggestions in the chat on or off",
   "clear (or \\clear): clears the chat on your screen",
-  "Shift+T or the symbol at the bottom left: the command line",
   "Tab: complete; ↑ ↓: choose",
 ];
 
@@ -229,7 +230,7 @@ function showPlayers(s, online) {
     .join("\n");
 }
 
-/* the chat's own commands (\togglesuggest, \show, \mute, \permmute), from the chat or the command line; null: not one */
+/* the chat's own commands (\togglesuggest, \show, \mute, \permmute), from the chat; null: not one */
 export async function chatCommand(text, r) {
   if (/^\\togglesuggest\s*$/i.test(text)) {
     profile.settings.chatSuggest = profile.settings.chatSuggest === false;
@@ -277,42 +278,4 @@ export async function chatCommand(text, r) {
   )
     return "Nothing muted.";
   return setMutes(text, permanent, r.state, r.me);
-}
-/* what the command line needs from here: the room, your name, these commands and the customization ones */
-export function shellCtx() {
-  const r = activeRoom(),
-    s = r && r.state,
-    me = s && s.players[r.me];
-  return {
-    room: r,
-    meName: tag(me ? me.name : profile.name),
-    chat: async (text) =>
-      (await chatCommand(text, r)) ?? `✗ ${text.split(" ")[0]}?`,
-    legacyHas: (name) => !!TREE[name] && name !== "help" && name !== "clear",
-    legacyTop: () =>
-      Object.keys(TREE).filter(
-        (k) => k !== "help" && k !== "clear" && !(TREE[k].fun && !funOn()),
-      ),
-    legacy: (line) => runCommand(line),
-    legacySuggest: (line) => cmdSuggest(line),
-    look: () => {
-      save();
-      shareLook();
-    }, // the look changed on this device (a code turned off takes locked things off)
-    /* while a command runs: Ctrl+C stops it, top shows its lines live, exit closes the window */
-    cancelled: () => ui.cancel,
-    live: (ls) => {
-      if (current && current.live) current.live(ls);
-    },
-    close: () => {
-      if (current && current.close) current.close();
-    },
-    slowLeft: () => {
-      const ms = s ? slowMs(s, r.me) : 0;
-      return ms ? ms - (Date.now() - (ui.lastSent || 0)) : 0;
-    },
-    sent: () => {
-      ui.lastSent = Date.now();
-    },
-  };
 }

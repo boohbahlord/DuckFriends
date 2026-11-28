@@ -170,7 +170,7 @@ export const OPTIONS_DEFAULT = {
   discuss: 0, // 1: the Discussion round after each vote comes back (Agree or Disagree, Would You Rather, Bicker Brackets, Lawyering)
   submitTime: 132, // 0 (off), 60, 90, 120, 132 (2:12): a time limit on writing questions; Bicker Brackets starts with none (0)
   botWait: 5, // TEST rooms: seconds before computers act
-  fun: 1, // the silly commands (lightning, love, kill, hotdog): 1 on, 0 off
+  fun: 1, // the board's weapons and items: 1 on, 0 off
   ghosts: 0, // 1: Duck Cabin's ghosts (hangout/ghosts.js): a knocked-down duck's ghost walks about until Space
   sbTint: 0, // Sandbox on the board: 1 puts a slowly changing colored field over the map (off: the map shows plain)
   sbAll: 0, // Sandbox: 1, every player has all of Sandbox's rights (sandboxrules.js sbCan); 0, the host and whoever it lets
@@ -213,7 +213,6 @@ export const OPTIONS_DEFAULT = {
   mapZoom: 0, // Euclid's Squares, picked by the host: 1 zooms into its tiny squares forever (s.mapZoomed in the game)
   invuln: 0, // 1: Invulnerability: nothing takes a duck down or takes its HP, hits only flash red
   noChat: 0, // 1: No Chat: text chat is off for everyone, the host too (the game's own messages still show)
-  noTerm: 0, // 1: No Terminal: the command line is off for everyone, the host too
   aodColors: "rainbow", // Agree or Disagree's board: rainbow | gr (shades of green and red, Neutral fading black, grey, white)
   hideNames: 0, // 1: name tags stay hidden while answering (Agree or Disagree, Would You Rather, Does Duck Relate?)
   showWriter: 0, // 1: the question's writer is named after the vote (Agree or Disagree, Would You Rather)
@@ -259,7 +258,6 @@ export const GEN_RULES = [
   "justin",
   "invuln",
   "noChat",
-  "noTerm",
   "lateJoin",
   "textMax",
 ];

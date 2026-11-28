@@ -89,7 +89,6 @@ import {
   vdTimer,
   vdTick,
   vdWrite,
-  vdSafe,
   seated,
 } from "./vddrules.js";
 import {
@@ -111,7 +110,6 @@ import {
   quackMoved,
 } from "./quackrules.js";
 import {
-  holdDown,
   shielded,
   comeBack,
   normalGame,
@@ -121,7 +119,7 @@ import {
 } from "./hangout/death.js";
 import { hangAction, hangTick, hangStill } from "./hangout/rules.js";
 import { inCabin, W as HW, H as HH } from "./hangout/layout.js";
-import { justinTick, justinDown } from "./boardjustin.js";
+import { justinTick } from "./boardjustin.js";
 import { pwTick } from "./wounds.js";
 import {
   isL4dd,
@@ -157,13 +155,7 @@ import {
   moveShots,
   strike,
 } from "./boardfire.js";
-import {
-  denied,
-  dodRoom,
-  dodSettle,
-  dodStarts,
-  dodVoting,
-} from "./roomrules.js";
+import { dodRoom, dodSettle, dodStarts, dodVoting } from "./roomrules.js";
 import { countdown, nextVote, rolling, sbHere, votesDue } from "./voterules.js";
 import { zOf } from "./heights.js";
 import { act_draw, draws, drawTaken, drawFast } from "./bowdraw.js";
@@ -388,47 +380,6 @@ export function act_toLobby({ s, a, P, me, boss }) {
     s.vd = null;
     for (const id of s.seat) P[id].ready = false;
   }
-  return s;
-}
-
-export function act_fx({ state, s, a, now, P, me }) {
-  // the silly commands, seen by everyone on the board
-  const who = (a.who || []).filter((id) => P[id]);
-  if (
-    a.justin &&
-    a.kind === "kill" &&
-    me &&
-    s.options.fun &&
-    !denied(s, a.id, "nofun")
-  )
-    return justinDown(s, now, logLine) ? s : state; // (the Justin option: kill @Justin on the boards)
-  if (
-    !me ||
-    !s.options.fun ||
-    denied(s, a.id, "nofun") ||
-    !who.length ||
-    !["lightning", "love", "kill", "hotdog", "fire"].includes(a.kind)
-  )
-    return state;
-  if (a.kind === "kill") {
-    for (const id of who)
-      if (!isGhost(s, id) && !vdSafe(s, id)) {
-        P[id].dead = true;
-        holdDown(s, id, now);
-      }
-  } // (it can't move for the knocked-down time: 6 s in Duck Cabin, as from Justin's gun)
-  logLine(s, {
-    sys: true,
-    small: true,
-    float: true,
-    by: a.id,
-    text: `${me.name} used ${a.kind} on ${who.map((id) => P[id].name).join(" and ")}.`,
-  }); // who did it, in small print
-  s.fxN = (s.fxN || 0) + 1;
-  s.fx = [
-    ...(s.fx || []).slice(-19),
-    { n: s.fxN, kind: a.kind, who, by: a.id, t: now },
-  ];
   return s;
 }
 
@@ -850,7 +801,6 @@ export const PLAY_ACTS = {
   voteReview: act_voteReview,
   cabinEnd: act_cabinEnd,
   toLobby: act_toLobby,
-  fx: act_fx,
   jumps: act_jumps,
   ping: act_ping,
   idle: act_idle,

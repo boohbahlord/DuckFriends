@@ -122,13 +122,10 @@ export function bbRows(text) {
   }
 }
 
-/* the command line's Seriat folder, loaded when it's wanted (it brings the command line) */
+/* my Seriat folder, loaded when it's wanted */
 const folder = async () => {
-  const [{ numerat }, { shellCtx }] = await Promise.all([
-    import("./shell.js"),
-    import("./chat.js"),
-  ]);
-  const c = shellCtx();
+  const { numerat, filesCtx } = await import("./seriatfiles.js");
+  const c = filesCtx();
   return { numerat, c, dir: numerat.root(c) + "/" + MY_FILES };
 };
 /* the files in my-files/: [{ name, path }] (the Brain box's arrow and the builder's Open list) */

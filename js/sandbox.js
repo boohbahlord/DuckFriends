@@ -1311,11 +1311,8 @@ export function mountSandboxKeys(S, getR, onOpen, spotAt, screenAt) {
   const share = setInterval(async () => {
     const R = getR();
     if (!R || !isSb(R.state) || R.state.phase === "lobby") return;
-    const [{ numerat }, { shellCtx }] = await Promise.all([
-      import("./shell.js"),
-      import("./chat.js"),
-    ]);
-    numerat.share(shellCtx());
+    const { numerat, filesCtx } = await import("./seriatfiles.js");
+    numerat.share(filesCtx());
   }, 3000);
   return {
     paint,

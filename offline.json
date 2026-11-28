@@ -1,5 +1,5 @@
 {
-"v": "202611280042",
+"v": "202611280103",
 "files": {
 "assets/app/apple-touch-icon.png": "cda48ff597",
 "assets/app/icon-192.png": "8e062adfdc",
@@ -64,8 +64,8 @@
 "assets/px/cards/base.webp": "e6bf46268f",
 "assets/px/cards/fixed.webp": "bbe9916c78",
 "assets/px/cards/tint.webp": "a8520388a0",
-"assets/px/ducks/32/index-cdd6fd7d.json": "cdd6fd7d36",
-"assets/px/ducks/32/main-c663853f.webp": "c663853fd4",
+"assets/px/ducks/32/index-c732e7a9.json": "c732e7a9bb",
+"assets/px/ducks/32/main-e60ee716.webp": "e60ee71670",
 "assets/px/ducks/32/s-rubber-4ad599d3.webp": "4ad599d356",
 "assets/px/looks/cabin-checks.webp": "38a4555956",
 "assets/px/looks/cabin-deck.webp": "a8ec9b9b36",

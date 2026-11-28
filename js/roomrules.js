@@ -10,14 +10,10 @@ import { npcById } from "./npcs.js";
 import { isWorldMap } from "./maps.js";
 
 /* ---------- groups, permissions and forgame (the command line's sudo commands) ----------
-   sudo: may run usermod, groupadd, groupdel and forgame; the host is always in it. dumbasses: no silly commands, and one
-   chat message every 15 seconds. A group made with groupadd takes any of: nocmd (no command line), nochat (no text
-   chat), nofun (no silly commands), slow (one message every 15 seconds). */
-export const GROUP_PERMS = [
-  "nocmd",
+   sudo: the host is always in it. dumbasses: one chat message every 15 seconds. A group takes any of: nochat (no text
+   chat), slow (one message every 15 seconds). */
+const GROUP_PERMS = [
   "nochat",
-  "nosend",
-  "nofun",
   "nomute",
   "slow",
   "canskip",
@@ -34,7 +30,7 @@ export function groupsOf0(s) {
   if (!s.groups)
     s.groups = {
       sudo: { perms: [], members: [] },
-      dumbasses: { perms: ["nofun", "slow"], members: [] },
+      dumbasses: { perms: ["slow"], members: [] },
     };
   return s.groups;
 }
@@ -139,16 +135,15 @@ export const groupsOf = (s, id) => {
       ? ["sudo"]
       : [];
   for (const [name, g] of Object.entries(
-    s.groups || { dumbasses: { perms: ["nofun", "slow"], members: [] } },
+    s.groups || { dumbasses: { perms: ["slow"], members: [] } },
   ))
     if ((g.members || []).includes(id) && !out.includes(name)) out.push(name);
   return out;
 };
 export const isSudo = (s, id) => groupsOf(s, id).includes("sudo");
-/* the lobby's No Chat and No Terminal settings take chat and the command line away from everyone, the host too */
+/* the lobby's No Chat setting takes chat away from everyone, the host too */
 export const denied = (s, id, perm) =>
   (perm === "nochat" && +s.options.noChat === 1) ||
-  (perm === "nocmd" && +s.options.noTerm === 1) ||
   groupsOf(s, id).some((n) =>
     (((s.groups || {})[n] || {}).perms || []).includes(perm),
   );
@@ -165,13 +160,6 @@ export function slowMs(s, id) {
     }
   return ms;
 }
-/* may this player open a file someone sent from the command line? its sender, sudo, its group (chmod g+r), or everyone (o+r) */
-export const canOpen = (s, id, m) =>
-  !m.file ||
-  m.from === id ||
-  isSudo(s, id) ||
-  !!m.pub ||
-  (!!m.grp && groupsOf(s, id).includes(m.grp));
 /* the stage a phase belongs to, and the running count of turns and of each stage (for forgame's timed mutes) */
 export const STAGE = {
   dunced: "discussing",

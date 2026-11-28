@@ -134,24 +134,6 @@ export const fontStyle = (id) =>
   `font-family:${esc(fontCSS(id))};--fk:${fontScale(id)}`;
 export const fontHTML = (id, html) =>
   `<span class="pf" style="${fontStyle(id)}">${html}</span>`;
-/* a font from what a player typed ("times new roman", "Old English", "grenze"…) */
-export const findFont = (s) => {
-  const k = String(s || "")
-    .toLowerCase()
-    .replace(/[^a-z]/g, "");
-  return (
-    FONTS.find(
-      (f) =>
-        f.id === k ||
-        f.name.toLowerCase().replace(/[^a-z]/g, "") === k ||
-        (k.length > 2 &&
-          f.name
-            .toLowerCase()
-            .replace(/[^a-z]/g, "")
-            .startsWith(k)),
-    ) || null
-  );
-};
 
 /* a name as others see it */
 export function nameHTML(name, style = {}) {
