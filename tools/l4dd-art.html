@@ -88,7 +88,8 @@
     } from "../js/l4ddart.js";
     import { OPENINGS, POOL, SHOP, weaponName } from "../js/l4ddrules.js";
     import { modeSymbol } from "../js/modes.js";
-    import { GUNS, ROUNDS_ART, BULLET } from "../js/gunart.js";
+    import { GUNS, roundOf } from "../js/gunart.js";
+    import { caliberOf } from "../js/guns.js";
     import { heldHTML } from "../js/specials.js";
     import { DROP_ICONS } from "../js/l4dddrops.js";
     import { DROPS, dropName } from "../js/l4ddrules.js";
@@ -209,21 +210,17 @@
     ).join("");
     const bul = (svg, w) =>
       `<div style="width:${w}px;filter:drop-shadow(0 0 3px #ffd84a)">${svg.replace("<svg", '<svg style="width:100%;height:auto;display:block"')}</div>`;
-    gr.innerHTML =
-      fig(
-        `<div style="display:flex;gap:16px;align-items:center">${bul(BULLET(), 34 * 3)}${bul(BULLET(), 34)}</div>`,
-        "the pistol's",
-        "floor wall",
-      ) +
-      Object.entries(ROUNDS_ART)
-        .map(([w, r]) =>
-          fig(
-            `<div style="display:flex;gap:16px;align-items:center">${bul(r.svg, r.w * 3)}${bul(r.svg, r.w)}</div>`,
-            weaponName(w),
-            "floor wall",
-          ),
-        )
-        .join("");
+    gr.innerHTML = [...new Set(["handgun", "shotgun", ...NEW])]
+      .filter((w) => caliberOf(w)) // (each caliber's bullet, K5)
+      .map((w) => [w, roundOf(w, "#ffd23f")])
+      .map(([w, r]) =>
+        fig(
+          `<div style="display:flex;gap:16px;align-items:center">${bul(r.svg, r.w * 3)}${bul(r.svg, r.w)}</div>`,
+          weaponName(w),
+          "floor wall",
+        ),
+      )
+      .join("");
     dr.innerHTML = DROPS.map((k) =>
       fig(
         `<div style="display:flex;gap:18px;align-items:flex-end"><div style="width:120px">${DROP_ICONS[k]}</div><div class="l4-drop k-${k}" style="position:relative;transform:none;--k:1"><i>${DROP_ICONS[k]}</i></div></div>`,

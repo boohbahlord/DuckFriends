@@ -13814,21 +13814,19 @@ html.moving .eye-zap {
     filter: none;
   }
 }
-/* his shotgun and its pellets */
-.bullet.pellet {
-  width: 16px;
-  margin: -4px 0 0 -8px;
+/* his shotgun's pellets (and every shotgun's) */
+.bullet.k-pellet {
   filter: drop-shadow(0 0 2px #ffb347);
 }
 /* Quacky Zombies' guns in the hand: each as long as its l4ddguns.js w, set by game.js as --gw (.held i), one number per
    gun. They had a width each here, and a new gun with none was left at a knife's size (the Laser Rifle, then the Tommy
    gun and the UMP-45: the owner, Nov 18 10:38Z, "the tommy gun is obviously supposed to be almost the size of the
    ak47"). Their bullets (the SMG's with no glow: many fly at once) */
-/* (every gun's own bullet, game.js .round: the Tommy gun's and the UMP-45's had been left out of a list here, so they flew
-   at the handgun's size, off their line) */
+/* (every bullet, game.js .round: its caliber's, as wide and tall as gunart.js roundArt makes it, --w and --h, centered
+   on its line) */
 .bullet.round {
   width: var(--w);
-  margin: calc(var(--w) * -0.18) 0 0 calc(var(--w) * -0.5);
+  margin: calc(var(--h) * -0.5) 0 0 calc(var(--w) * -0.5);
 }
 .bullet.k-smg {
   filter: none;

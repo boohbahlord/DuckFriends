@@ -124,13 +124,12 @@ import { underVeil } from "./loading.js";
 
 import {
   ARROW,
-  BULLET,
   CHAIR,
   GOLD_CHAIR,
   GRENADE,
   GRENADE_PIN,
   GUNS,
-  ROUNDS_ART,
+  shotLook,
 } from "./gunart.js";
 
 import { isInvisible } from "./invisible.js";
@@ -1617,17 +1616,7 @@ function drawDucks(now = clockNow()) {
                   `<i class="${spin}">${sh.k !== "dagger" ? GRENADE(colorsOf(duck, "grenade"), false) : daggerHTML(duck)}</i>`,
                   sz,
                 ] // (the grenade launcher's fly as the thrown ones, straight)
-              : ROUNDS_ART[sh.k]
-                ? [
-                    `bullet round k-${sh.k}`,
-                    ROUNDS_ART[sh.k].svg,
-                    `${ang};--w:${ROUNDS_ART[sh.k].w}px`,
-                  ] // (Quacky Zombies' new guns: each its own bullet)
-                : [
-                    `bullet${sh.k === "pellet" ? " pellet" : ""}`,
-                    BULLET(colorsOf(duck, "handgun")[2]),
-                    ang,
-                  ];
+              : shotLook(sh.k, ang, colorsOf(duck, "handgun")[2]); // (a bullet: its caliber's, gunart.js)
       b = shotPool(cls, inner);
       b.setAttribute("style", style);
       b.dataset.n = sh.n;

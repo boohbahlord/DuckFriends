@@ -151,6 +151,19 @@ export const caliberOf = (w) => {
   const c = (ARMS[w] || {}).cal;
   return c && c in PUSH ? c : "";
 };
+/* the caliber a shot flies as (gunart.js roundOf draws it), by its kind (a gun's own shot kind, ARMS' k; the shotgun's
+   pellets its buckshot) or by the gun */
+let calOfShot = null;
+export const shotCal = (k) => {
+  calOfShot ||= Object.fromEntries([
+    ...Object.entries(ARMS).flatMap(([id, a]) => [
+      [id, a.cal],
+      [a.k || id, a.cal],
+    ]),
+    ["pellet", ARMS.shotgun.cal],
+  ]);
+  return calOfShot[k] || "";
+};
 export const barrelOf = (w) => {
   const b = (ARMS[w] || {}).barrel;
   return b && b !== "none" ? b : "";

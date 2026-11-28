@@ -42,7 +42,7 @@ corners.js 94 full screen
 court.js 230 Lawyering: what the screen shows
 courtrules.js 17 the courtroom's seats: Lawyering and
 crowd.js 297 crowds: walkers keep out of
-customize.js 1760 Customize: the Armory
+customize.js 1758 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 233 Democracy of Ducklings:
 dock.js 73 the docks: where Notes and
@@ -64,7 +64,7 @@ front.js 150 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4385 the game screen
+game.js 4374 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
@@ -84,9 +84,9 @@ ground.js 55 what a duck walks on,
 gspreview.js 88 Game Settings: the pictures in
 gssettings.js 747 Game Settings: every setting, its
 gstext.js 200 Game Settings: what a setting
-gunart.js 467 every weapon, drawn: one drawing
+gunart.js 504 every weapon, drawn: one drawing
 gunparts.js 15 the pieces every weapon's drawing
-guns.js 656 every weapon's numbers: one sheet
+guns.js 669 every weapon's numbers: one sheet
 hats.js 1003 hats
 heat.js 93 a gun's heat: the spread
 heights.js 95 a shot's height, Doom's way
@@ -284,7 +284,7 @@ bricks.js 482 loose bricks, drawn as pixels
 cabinend.js 135 End Cabin / Exit Cabin
 cats.js 662 Duck Cabin's cats: Annabelle, Bubbles,
 chalk.js 627 the chalk floor: draw on
-characters.js 592 Duck Cabin's characters on the
+characters.js 595 Duck Cabin's characters on the
 death.js 99 how long a knocked-down duck
 doors.js 32 the doors: they swing open
 dpflood.js 89 Downpour's flood over its bed
