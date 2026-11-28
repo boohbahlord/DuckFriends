@@ -118,7 +118,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 337 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4530 the rules of Quacky Zombies
+l4ddrules.js 4538 the rules of Quacky Zombies
 l4ddsfx.js 509 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -265,7 +265,7 @@ who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 294 the zombies' walk over Downpour's
-zombies.js 1294 the zombies: one module for
+zombies.js 1296 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the
