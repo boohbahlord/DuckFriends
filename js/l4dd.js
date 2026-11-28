@@ -177,6 +177,10 @@ const DARK_ON = 0.5, // … and with the power on: the lights are on, still nigh
   DARK_ON_IN = 0; // … and inside the cabin as bright as Hangout is with its power on (the owner's, Nov 20: it brightens when the generator is on)
 const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how far, and half its width
 const GLOW = 80; // world px: the faint light round every duck
+const FIRE_LIGHT = { r: 110, k: 0.5 }; // the light round a zombie or a duck on fire
+/* the screen's edges darker, in a circle: clear out to `clear` of the way from the middle to a corner, as much darker
+   as `k` at the corners; the flashlights and the lights still cut through it (the owner's, Nov 28 01:57Z) */
+const VIGNETTE = { clear: 0.55, k: 0.75 };
 const LOW_DEAD = 2000; // ms a dead zombie shows on my screen with Low graphics or Data saving (the rules keep it L4.DEAD_MS)
 /* where each opening's moonlight falls: just inside its wall (the deck's stairs: on their top) */
 let moon = null,
@@ -1423,6 +1427,24 @@ function paint(now, ctx) {
         holes.push([p.left * q, p.top * q, r * sc, 0.32 + 0.16 * br]);
     }
   }
+  /* a zombie or a duck on fire lights round it */
+  const fire = s.hang.l4fire || {},
+    tn = clockNow();
+  for (const o of Z.values()) {
+    if (o.el.hidden || !o.lit) continue;
+    const p = Wd.toScreen(o.x, o.y, (o.z || 0) + 30),
+      r = FIRE_LIGHT.r * sc;
+    if (on(p.left * q, p.top * q, r))
+      holes.push([p.left * q, p.top * q, r, FIRE_LIGHT.k]);
+  }
+  for (const [id, until] of Object.entries(fire.p || {})) {
+    const a = until > tn && Wd.at(id);
+    if (!a || !seenFrom(a.x, a.y, Wd.inside, a.z)) continue;
+    const p = Wd.toScreen(a.x, a.y, a.z + 30),
+      r = FIRE_LIGHT.r * sc;
+    if (on(p.left * q, p.top * q, r))
+      holes.push([p.left * q, p.top * q, r, FIRE_LIGHT.k]);
+  }
   /* the drops glow on the floor */
   for (const o of D.values()) {
     if (!seenFrom(o.x, o.y, Wd.inside)) continue;
@@ -1522,8 +1544,22 @@ function paint(now, ctx) {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.globalCompositeOperation = "source-over";
   g.clearRect(0, 0, w, h);
-  g.fillStyle = `rgba(3,4,10,${powerOn(s) ? (Wd.inside ? DARK_ON_IN : DARK_ON) : DARK})`;
+  const dk = powerOn(s) ? (Wd.inside ? DARK_ON_IN : DARK_ON) : DARK;
+  g.fillStyle = `rgba(3,4,10,${dk})`;
   g.fillRect(0, 0, w, h);
+  const vr = Math.hypot(w, h) / 2,
+    vg = g.createRadialGradient(
+      w / 2,
+      h / 2,
+      vr * VIGNETTE.clear,
+      w / 2,
+      h / 2,
+      vr,
+    );
+  vg.addColorStop(0, "rgba(3,4,10,0)");
+  vg.addColorStop(1, `rgba(3,4,10,${(VIGNETTE.k * dk) / DARK})`); // (as dark as the night is: none in a lit room)
+  g.fillStyle = vg;
+  g.fillRect(0, 0, w, h); // (the edges, in a circle)
   g.globalCompositeOperation = "destination-out";
   const st = stamp();
   for (const [x, y, r, k] of holes) {
