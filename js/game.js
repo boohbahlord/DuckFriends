@@ -164,7 +164,7 @@ import { activeRoom } from "./net.js";
 
 import { sprintStep } from "./stamina.js";
 
-import { SPRINT } from "./gamedefaults.js";
+import { SPRINT, SWAY } from "./gamedefaults.js";
 
 import { sprintBlur } from "./sprintblur.js";
 
@@ -418,7 +418,7 @@ import { mountMap, mapKey } from "./maps.js";
 
 import { mountTouch, stick } from "./touch.js";
 
-import { walkIntent } from "./playerinput.js";
+import { walkIntent, easeWalk } from "./playerinput.js";
 
 import { jumpCfg, jumpZ, landsAt, jumpDodges, jumpSend } from "./jump.js";
 
@@ -1811,7 +1811,8 @@ function drawDucks(now = clockNow()) {
       ),
       [kr, kb] = kickOf(id, now, ds, left),
       [jr, jx, jy] = jitter(adren(s, id, now), ds);
-    const rot = ang + ((left ? -1 : 1) * turn * Math.PI) / 180 + sw + kr + jr,
+    const sa = mine ? swayNow() : sw, // (mine: my aim's own sway, so the gun points where my shots go: myAim)
+      rot = ang + ((left ? -1 : 1) * turn * Math.PI) / 180 + sa + kr + jr,
       hx = c.left + sx + jx,
       hy = c.top + sy + jy,
       reach = (w === "hammer" ? hs : ds) * out - kb;
@@ -1823,7 +1824,7 @@ function drawDucks(now = clockNow()) {
       hy + Math.sin(rot) * (reach + gl * 0.5),
       rot,
     ];
-    h._aim = [c.left, c.top, ang]; // (where it aims from, and which way: the board's laser sight)
+    h._aim = [c.left, c.top, mine ? ang + sa : ang]; // (where it aims from, and which way: the board's laser sight; mine swaying with my aim, the others' already in their aim)
     if (h.classList.contains("dual")) {
       /* the Angelic pistols: each one's muzzle on the board, for its own laser sight and its own flash (specials.js
          DUAL; the picture's middle is the drawing's middle) */
@@ -2360,24 +2361,38 @@ function trackWalk() {
   }
   walkLast = [me.x, me.y];
 }
+/* my aim sways as I move: the flashlight, the laser sight, my gun and my shots together (the owner's, Nov 28 03:28Z,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7: "the laser sight and flashlight sway together, with the laser
+   sight changing where bullets first land ... swaying gets worse with sprinting"; gamedefaults.js SWAY), Dead Ducks
+   Arcade's. Radians now, clockwise; it grows and dies away with my walk */
+let aimSway = { a: 0, t: 0 };
+function swayNow() {
+  if (!R || !isL4dd(R.state)) return 0;
+  const t = performance.now(),
+    want = moving ? (sprinting ? SWAY.sprint : SWAY.walk) : 0,
+    k = Math.min(1, (t - (aimSway.t || t)) / 1000 / SWAY.ease);
+  aimSway = { a: aimSway.a + (want - aimSway.a) * k, t };
+  return ((aimSway.a * Math.PI) / 180) * Math.sin((2 * Math.PI * t) / SWAY.ms);
+}
+function swayed([x, y]) {
+  const r = swayNow(),
+    c = Math.cos(r),
+    s = Math.sin(r);
+  return [x * c - y * s, x * s + y * c];
+}
 export function myAim() {
   const face = turned() ? 1 : (me && me.face) || 1;
   if (!geo || !me) return [face, 0];
-  if (keyAim) return toBoard(keyAim[0], keyAim[1]) || [face, 0]; // (the arrow keys moved last)
-  if (phoneAim() && walkScr)
-    return toBoard(walkScr[0], walkScr[1]) || [face, 0]; // (a phone: the way I walk)
+  const at = (a) => (a ? swayed(a) : [face, 0]);
+  if (keyAim) return at(toBoard(keyAim[0], keyAim[1])); // (the arrow keys moved last)
+  if (phoneAim() && walkScr) return at(toBoard(walkScr[0], walkScr[1])); // (a phone: the way I walk)
   if (!mouse) return toBoard(face, 0) || [face, 0];
   const board = origin($(".board", S));
   if (!board) return [face, 0];
   const r = board.getBoundingClientRect(),
     c = bodyAt(R.me, me),
     up = isL4dd(R.state) && world ? world.lift(R.me, me) : 0; // (Quacky Zombies, up in the air (a jump): it aims from where it stands, as its shot flies along the ground from its feet, so it goes where I point; the owner's, Nov 15)
-  return (
-    toBoard(mouse.x - r.left - c.left, mouse.y - r.top - c.top - up) || [
-      face,
-      0,
-    ]
-  );
+  return at(toBoard(mouse.x - r.left - c.left, mouse.y - r.top - c.top - up));
 }
 const STILL_MS = 600; // ms between my duck's updates on a Poor connection while it stands still (moving: 220)
 export function sendMove(force) {
@@ -2503,10 +2518,11 @@ export function step(dt, now) {
     countJump();
     sendMove(true);
   }
-  const want = walkIntent(keys, arrowsAim()), // (the arrows aim: WASD walks)
+  const asked = walkIntent(keys, arrowsAim()), // (the arrows aim: WASD walks)
+    want = easeWalk(asked, dt), // (it speeds up and slows down: playerinput.js)
     hx = want.x,
     vy = want.y; // on screen: right, down
-  if (hx || vy) target = null;
+  if (asked.x || asked.y) target = null;
   sprinting = want.sprint || !!(target && target.sprint);
   sprinting = sprintStep(
     sprinting && !!(hx || vy || target),
@@ -2692,10 +2708,11 @@ export function step(dt, now) {
 /* Hangout: the keys, the stick or a tap say which way; the world walks my duck (walls, steps, edges, falls) */
 function hangStep(dt, now) {
   if (!world || !geo) return;
-  const want = walkIntent(keys, arrowsAim()); // (the arrows aim: WASD walks)
+  const asked = walkIntent(keys, arrowsAim()), // (the arrows aim: WASD walks)
+    want = easeWalk(asked, dt); // (it speeds up and slows down: playerinput.js)
   let ax = want.x,
     ay = want.y;
-  if (ax || ay) target = null;
+  if (asked.x || asked.y) target = null;
   sprinting = want.sprint || !!(target && target.sprint);
   if (target) {
     // a click or a tap: there, or held up by something

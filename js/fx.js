@@ -569,9 +569,20 @@ export const MUZZLE = {
     kick: 1.1,
   },
 };
+/* each shot's flash of light round the gun's end, for the dark (l4dd.js): [x, y (as fxMuzzle's), r (px), when]; a
+   bigger gun's flash is bigger, and so is its light (the owner's, Nov 28 03:28Z,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7: "gunshots cause a slight flash of light in a small area around a
+   gun", "larger calibers have bigger flashes"). Kept MUZZLE_LIGHT.ms */
+export const MUZZLE_LIGHT = { k: 3, ms: 90 },
+  muzzleLights = [];
 export function fxMuzzle(x, y, ang, gun) {
   const M = MUZZLE[gun];
-  if (!M || noHeavy) return;
+  if (!M) return;
+  const t = performance.now();
+  while (muzzleLights.length && t - muzzleLights[0][3] > MUZZLE_LIGHT.ms)
+    muzzleLights.shift();
+  muzzleLights.push([x, y, unit * M.reach * MUZZLE_LIGHT.k, t]);
+  if (noHeavy) return;
   const u = unit,
     c = Math.cos(ang),
     s = Math.sin(ang),

@@ -62,14 +62,14 @@ flowfield.js 173 the zombies' flow field, worked
 format.js 15 numbers as the settings ask
 friends.js 236 friends
 front.js 150 the front page
-fx.js 1187 the effects, drawn as pixels
+fx.js 1198 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4449 the game screen
+game.js 4466 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 248 the game's own numbers, for
+gamedefaults.js 259 the game's own numbers, for
 gamefx.js 697 the board's specials and the
 gamehand.js 514 the hand: the number-key specials,
 gamemsg.js 108 lines by the chat button:
@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3422 Quacky Zombies on every screen
+l4dd.js 3438 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -117,7 +117,7 @@ l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 58 Dead Ducks Arcade: what lies
 l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 327 Dead Ducks Arcade's power box
-l4ddpowerui.js 276 Dead Ducks Arcade's power box
+l4ddpowerui.js 282 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
 l4ddrules.js 4948 the rules of Quacky Zombies
 l4ddsfx.js 514 Dead Ducks Arcade's sounds
@@ -160,7 +160,7 @@ phonepad.js 144 phones: the aim-and-attack stick and
 picrop.js 268 cropping a picture: every picture
 pixel.js 767 the pixel look
 pixelpalette.js 192 the pixel look's colors
-playerinput.js 26 what I ask my duck
+playerinput.js 41 what I ask my duck
 players.js 342 the player menu and the
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power
@@ -239,7 +239,7 @@ specials.js 851 Specials
 spectate.js 98 Sandbox: watching the others once
 splash.js 71 the start screen: your duck
 sprintblur.js 54 the sprint's blurred border of
-stamina.js 41 my sprint's stamina, in every
+stamina.js 61 my sprint's stamina, in every
 statrows.js 82 I want one table for
 stats.js 161 stats: a player's stat box
 store.js 256 what this device remembers
@@ -267,7 +267,7 @@ weaponuse.js 199 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 500 
 zombiepath.js 187 the zombies' way to the
-zombieroofs.js 331 the zombies' walk over Downpour's
+zombieroofs.js 332 the zombies' walk over Downpour's
 zombies.js 1824 the zombies: one module for
 
 ## js/hangout/

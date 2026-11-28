@@ -3063,10 +3063,14 @@ html.still .lord-say.out .w > span {
   flex-direction: column;
   align-items: center;
 }
+/* a duck turns round in 0.1 s, never at once (the owner's, Nov 28 03:28Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7:
+   "players cannot instantly turn their duck around now ... very very slight"): its body's flip eases, while its weapon
+   turns to the aim at once (game.js) */
 .gduck-body {
   position: relative;
   width: 100%;
   transform-origin: 50% 100%;
+  transition: transform 0.1s linear;
 }
 .gduck-body svg {
   transition: transform 0.1s ease-out;

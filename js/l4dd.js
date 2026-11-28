@@ -151,7 +151,7 @@ import {
 import { DROP_ICONS } from "./l4dddrops.js";
 import { popHP } from "./hpmeter.js";
 import { roundLine, REST } from "./roundline.js";
-import { fxHitAt, fxEye, heavyOff } from "./fx.js";
+import { fxHitAt, fxEye, heavyOff, muzzleLights, MUZZLE_LIGHT } from "./fx.js";
 import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olAway, olRoofed, olPic, DROP_OL } from "./outlines.js";
@@ -181,8 +181,11 @@ const CONE = { far: 560, half: (27 * Math.PI) / 180 }; // the flashlight: how fa
 const GLOW = 80; // world px: the faint light round every duck
 const FIRE_LIGHT = { r: 110, k: 0.5 }; // the light round a zombie or a duck on fire
 /* the screen's edges darker, in a circle: clear out to `clear` of the way from the middle to a corner, as much darker
-   as `k` at the corners; the flashlights and the lights still cut through it (the owner's, Nov 28 01:57Z) */
-const VIGNETTE = { clear: 0.55, k: 0.75 };
+   as `k` at `mid` of the way, and all black from `black` of the way out to the corners, far off in the night (the
+   owner's, Nov 28 01:57Z, and 03:28Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7: "the distance in the night
+   for line of sight eventually becomes completely black when it is far away enough"); the flashlights and the lights
+   still cut through it */
+const VIGNETTE = { clear: 0.55, k: 0.75, mid: 0.8, black: 0.97 };
 const LOW_DEAD = 2000; // ms a dead zombie shows on my screen with Low graphics or Data saving (the rules keep it L4.DEAD_MS)
 /* where each opening's moonlight falls: just inside its wall (the deck's stairs: on their top) */
 let moon = null,
@@ -1477,6 +1480,12 @@ function paint(now, ctx) {
     if (on(p.left * q, p.top * q, r))
       holes.push([p.left * q, p.top * q, r, FIRE_LIGHT.k]);
   }
+  /* each shot's flash lights round the gun for a moment, fading (fx.js muzzleLights; already in my screen's px) */
+  for (const [x, y, r, t] of muzzleLights) {
+    const k = 1 - (pt - t) / MUZZLE_LIGHT.ms;
+    if (k > 0 && on(x * q, y * q, r * q))
+      holes.push([x * q, y * q, r * q, 0.6 * k]);
+  }
   /* the drops glow on the floor */
   for (const o of D.values()) {
     if (!seenFrom(o.x, o.y, Wd.inside)) continue;
@@ -1589,7 +1598,14 @@ function paint(now, ctx) {
       vr,
     );
   vg.addColorStop(0, "rgba(3,4,10,0)");
-  vg.addColorStop(1, `rgba(3,4,10,${(VIGNETTE.k * dk) / DARK})`); // (as dark as the night is: none in a lit room)
+  vg.addColorStop(
+    (VIGNETTE.mid - VIGNETTE.clear) / (1 - VIGNETTE.clear),
+    `rgba(3,4,10,${(VIGNETTE.k * dk) / DARK})`,
+  ); // (as dark as the night is: none in a lit room)
+  vg.addColorStop(
+    (VIGNETTE.black - VIGNETTE.clear) / (1 - VIGNETTE.clear),
+    `rgba(3,4,10,${dk / DARK})`,
+  ); // (far off: black, at night)
   g.fillStyle = vg;
   g.fillRect(0, 0, w, h); // (the edges, in a circle)
   g.globalCompositeOperation = "destination-out";
