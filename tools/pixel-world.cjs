@@ -17,7 +17,6 @@ const ROOT = path.join(__dirname, ".."),
   OUT = path.join(ROOT, "assets", "px", "world");
 const WORLDS = [
   ["cabin", "hang", "cabin"],
-  ["cabin-l4", "l4dd", "cabin"],
   ["downpour", "l4dd", "downpour"],
 ];
 

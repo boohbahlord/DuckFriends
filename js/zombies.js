@@ -100,6 +100,8 @@ import {
   climbFrom,
   roofStep,
   chaseDeck,
+  dropOff,
+  FALL,
 } from "./zombieroofs.js";
 /* the most zombies a round in all, every player counted (l4ddrules.js zombiesFor; was 400); Sandbox keeps its NPCs alive
    under it too (sbspawn.js) */
@@ -122,7 +124,7 @@ export const room = (ax, ay, bx, by) => {
 };
 /* where zombies can stand inside (the walls, the furniture, the beds stop them; the outside too) */
 export const zOk = (x, y, z, up = STEP) =>
-  playable(x, y) && standable(x, y, z, up, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood, climb the fallen tree)
+  playable(x, y) && standable(x, y, z, up, null, true) && !onPlatform(x, y); // (Downpour: zombies wade the deep flood; the fallen tree stops them)
 /* what a zombie keeps from one heartbeat to the next besides its spot, hp and state (in s.hidden.l4z, the host's only):
    cm its way up kept to, k the roof it is up, fl its flank and wp its spot round the side, j its jump onto the canopy
    and jp the spot it jumps from (jumpOn);
@@ -140,6 +142,7 @@ export function zombies(s) {
     zs = s.hang.zs || {},
     zl = s.hang.zl || {},
     mine = (s.hidden && s.hidden.l4z) || {},
+    zj = s.hang.zj || {}, // (a jump or a fall under way: every screen draws it, not only the host's)
     out = [];
   for (let k = 0; k + 3 < zp.length; k += 4) {
     const i = zp[k],
@@ -160,6 +163,7 @@ export function zombies(s) {
       d: h[1],
       l,
       ...(h[2] || {}), // (its way up kept to, its roof, its flank, its jump: KEEP)
+      ...(!(h[2] && h[2].j) && zj[i] ? { j: zj[i] } : null),
     });
   }
   return out;
@@ -168,7 +172,8 @@ export function store(s, zs, keepStatic) {
   const zp = [],
     sw = {},
     mine = {},
-    zl = {};
+    zl = {},
+    zj = {};
   for (const z of zs) {
     zp.push(
       z.i,
@@ -185,11 +190,13 @@ export function store(s, zs, keepStatic) {
     for (const k of KEEP) if (z[k] !== undefined) x[k] = z[k];
     if (Object.keys(x).length) mine[z.i].push(x);
     zl[z.i] = z.l;
+    if (z.st === 8 && z.j) zj[z.i] = z.j;
   }
   const sig = (o) => JSON.stringify(o);
   if (sig(zp) !== sig(s.hang.zp)) s.hang.zp = zp;
   if (sig(sw) !== sig(s.hang.zs)) s.hang.zs = sw;
   if (!keepStatic && sig(zl) !== sig(s.hang.zl)) s.hang.zl = zl;
+  if (sig(zj) !== sig(s.hang.zj || {})) s.hang.zj = zj;
   if (s.hang.zw) {
     // (the wounds go with their zombie)
     const zw = {};
@@ -519,7 +526,7 @@ function walkAll(zs, c) {
          drop from the top down the inside (fenceZ) */
       const f = o.fence,
         top = FENCE.out - FENCE.mid,
-        up = acrossFence(f, z.x, z.y) > top + 1,
+        up = !f.open && acrossFence(f, z.x, z.y) > top + 1,
         [tx, ty] = up ? byFence(f, top, f.axis === "y" ? z.y : z.x) : sp.in;
       if (
         walkTo(
@@ -528,7 +535,9 @@ function walkAll(zs, c) {
           ty,
           up
             ? (FENCE.mid * v * dt) / GS.FENCE_H
-            : ((FENCE.across - FENCE.mid) * dt) / FENCE.FALL,
+            : f.open
+              ? v * dt // (the road's ends: no fence, it walks in)
+              : ((FENCE.across - FENCE.mid) * dt) / FENCE.FALL,
         ) &&
         !up
       ) {
@@ -609,7 +618,7 @@ function walkAll(zs, c) {
     }
     if (z.st === 8) {
       // jumping from the gas station's roof onto the canopy (or, 1 time in 20, short of it, down to the ground), or walking up the plank
-      const [, , x1, y1, , h1, walk] = z.j,
+      const [, , x1, y1, , h1, walk, fall] = z.j,
         q =
           walk &&
           pls.find(
@@ -625,7 +634,7 @@ function walkAll(zs, c) {
         }
         continue;
       } // (a duck on the plank in its way: it stops there and claws at it)
-      if (walkTo(z, x1, y1, walk ? v * dt : JUMP.speed * dt)) {
+      if (walkTo(z, x1, y1, (fall || (walk ? v : JUMP.speed)) * dt)) {
         const fell = h1 < canopyDeck().h - 1;
         z.st = fell ? 2 : 7;
         z.n = 0;
@@ -645,9 +654,14 @@ function walkAll(zs, c) {
          the cake down), it walks off the nearest edge and drops */
       const e = edgeOf(z.x, z.y, deckOf(z));
       if (!deckAt(z.x, z.y, e.d.h)) {
-        z.st = 2;
-        z.n = 0;
-        delete z.k;
+        const a = (z.dir || 0) / 100;
+        dropOff(
+          z,
+          Math.cos(a),
+          Math.sin(a),
+          deckH(e.d, z.x, z.y),
+          FALL.out / 3,
+        ); // (a hole underfoot: down through it, seen falling)
         continue;
       }
       for (const q of pls)
@@ -662,11 +676,8 @@ function walkAll(zs, c) {
       if (!target && !cake && jumpOn(z, pls, v * dt, e.d)) continue; // (nobody up here, a duck on the canopy: to the roof's edge facing it, then the jump)
       if (!target || cake) {
         walkTo(z, z.x + e.nx * 200, z.y + e.ny * 200, v * dt);
-        if (edgeOf(z.x, z.y, e.d).o >= CL.out) {
-          delete z.k;
-          z.st = 2;
-          z.n = 0;
-        }
+        if (edgeOf(z.x, z.y, e.d).o >= CL.out)
+          dropOff(z, e.nx, e.ny, deckH(e.d, z.x, z.y)); // (off the edge: it falls, seen falling)
         continue;
       }
       if (best > ROOF_BACK) {
@@ -870,7 +881,7 @@ function walkAll(zs, c) {
 export function fenceZ(x, y, id) {
   const o = openingById(id),
     f = o && o.fence;
-  if (!f) return 0;
+  if (!f || f.open) return 0;
   const u = (FENCE.out - acrossFence(f, x, y)) / FENCE.across;
   if (u <= 0 || u >= 1) return 0;
   const m = FENCE.mid / FENCE.across;
@@ -919,7 +930,7 @@ export const duckFloor = (p) => (dp() ? deckAt(...toPx(p), zOf(p)) : null);
    or on the ground */
 const zombieZ = (z) =>
   z.st === 5
-    ? fenceZ(z.x, z.y, z.l[2])
+    ? fenceZ(z.x, z.y, z.l[2]) || gr().h(z.x, z.y) // (off it, or walking in at the road's ends: the ground)
     : z.st === 6
       ? climbZ(z.x, z.y, deckOf(z))
       : z.st === 7 || (z.st === 3 && deckOf(z))

@@ -15,6 +15,7 @@
      is HEAT.CONE (15°, the owner's pick, Nov 22 13:02Z) for each point of its recoil score (guns.js recoilOf), the
      bow HEAT.BOW; the grenade launcher kicks but never spreads (the owner's pick, the same card), and the dagger and
      the grenades have no recoil, so they never change;
+   - sprinting spreads it HEAT.RUN more (as the heat does, from the first shot);
    - my crosshair's four ticks sit close round its dot when cool, a little see-through, and move out with my heat
      (pixel.js crossLevel); the gun's kick and my screen's shake grow by up to HEAT.SHAKE (30%) at full heat.
    Where it lives: s.heat { "id weapon": [heat, ms] } (the host's, so every screen draws the same), its heat just after
@@ -33,6 +34,7 @@ const HEAT = {
   BOW: 6 * DEG,
   SHAKE: 0.3,
   TICKS: 4,
+  RUN: 0.5, // (sprinting: half the widest cone more, from the first shot: the owner's, Nov 28 04:05Z)
 };
 /* the widest cone of weapon w, radians each way of its aim (0: it never spreads) */
 const coneOf = (w) =>
@@ -44,6 +46,13 @@ function heatOf(s, id, w, now) {
   const rest = now - e[1] - 1000 / (fireRate(w) || 1); // (cooling only once it's slower than its top rate)
   return Math.max(0, e[0] - (HEAT.COOL * Math.max(0, rest)) / 1000);
 }
+/* how wide it spreads now, 0 … 1: its heat, and HEAT.RUN more while duck id sprints (s.pos sp) */
+const spreadOf = (s, id, w, now) =>
+  Math.min(
+    1,
+    heatOf(s, id, w, now) +
+      (s && s.pos && s.pos[id] && s.pos[id].sp ? HEAT.RUN : 0),
+  );
 /* duck id fires weapon w at now, n rounds (a burst's: all of them unless told): its aim [x, y] (in u: a board's units
    of one duck each way, as the board isn't square) turned by a roll within its cone at the heat it found, and its heat
    up by n over its fire rate. Weapons with no cone come back as they were, with no roll */
@@ -59,10 +68,11 @@ export function spreadAim(
   const cone = coneOf(w);
   if (!cone || !aim) return aim;
   const h = heatOf(s, id, w, now),
-    up = Math.min(1, h + (HEAT.BUILD * n) / (fireRate(w) || 1));
+    up = Math.min(1, h + (HEAT.BUILD * n) / (fireRate(w) || 1)),
+    k = spreadOf(s, id, w, now);
   s.heat = { ...(s.heat || {}), [id + " " + w]: [+up.toFixed(3), now] };
-  if (!h) return aim; // (the first shot goes where it's aimed)
-  const a = (Math.random() * 2 - 1) * cone * h,
+  if (!k) return aim; // (the first shot goes where it's aimed, unless I'm sprinting)
+  const a = (Math.random() * 2 - 1) * cone * k,
     x = aim[0] / u[0],
     y = aim[1] / u[1],
     [c, si] = [Math.cos(a), Math.sin(a)];
@@ -78,6 +88,6 @@ export function armedView(arms, s, now) {
   document.documentElement.classList.toggle("armed", !!mine);
   const w = mine && mine[1];
   crossLevel(
-    coneOf(w) ? Math.round(heatOf(s, mine[0], w, now) * HEAT.TICKS) : 0,
+    coneOf(w) ? Math.round(spreadOf(s, mine[0], w, now) * HEAT.TICKS) : 0,
   );
 }

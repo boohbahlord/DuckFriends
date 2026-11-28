@@ -6,9 +6,8 @@
    down until a teammate holds E by it for 10 seconds, or it bleeds out and walks as a ghost until the next round. The
    game ends when nobody is left standing. The host runs it all (this file); every screen draws it (l4dd.js).
    Points (the owner's): 50 to start, 5 for each point of damage to a zombie, 25 for a headshot (a crit that kills), 10
-   for each board put up (50 a round at most). They buy upgrades from Justin's Butler, who stands by the card table, and
-   a weapon at the fireplace (210: it flickers through the weapons, then lands on one only the payer can take). Each duck
-   has five slots: one melee, two ranged, one special and the grenades.
+   for each board put up (50 a round at most). They buy upgrades and weapons from the merchants. Each duck has five
+   slots: one melee, two ranged, one special and the grenades.
 
    It is Duck Cabin's world (rules.js' isHang is true for it too), with only the activities it keeps (keepOnly below),
    and its own rule 'l4'. s.hang, each key online as its own string (so the zombies walking never send the boards again):
@@ -31,8 +30,6 @@
           g: grenades, u: { weapon: when last used } } }
      l4pt { id: points }
      l4u  { id: { acc, as, hp, sp, rl } }: the upgrades bought (accuracy, attack speed, max HP, speed, faster reload)
-     l4box { id: { by, t, w } }: the fireplace's weapons, one for each duck that paid (at t), landing on w after BOX.spin
-     (each duck's fireplace bags are the host's only: s.hidden.l4sb, fireRoll)
      l4b  { id: { o, at } }: who is boarding up which opening, since when (one more board each BOARD_MS)
      l4f  { id: 1 }: flashlights switched off (key 0; nothing else happens, it's only a choice)
      l4k  [{ by, w, dx, dy, t, hit }]: melee weapons mid-swing (each hurts a zombie once, only for its swing's ms) */
@@ -49,8 +46,6 @@ import {
   swingOn,
   swinging,
   swingMisses,
-  knockOf,
-  KNOCK_DUCK,
 } from "./weaponuse.js";
 import {
   ARMS,
@@ -87,7 +82,6 @@ import {
   CABIN,
   DECK,
   STAIRS,
-  STEP,
   inCabin,
   inDeck,
   heightAt,
@@ -125,7 +119,14 @@ import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
 import { carsBlast, carsSwing } from "./carpush.js";
 import { spreadAim } from "./heat.js";
-import { pushAlong, walkOf, pushTaken, immobile, sizeOf } from "./push.js";
+import {
+  pushAlong,
+  walkOf,
+  pushOn,
+  meleePush,
+  blastPush,
+  sizeOf,
+} from "./push.js";
 import { FLAME, flameReach, inCone } from "./flamer.js";
 import {
   hitWounds,
@@ -155,8 +156,6 @@ import {
   powerAct,
   powerPump,
   powerGas,
-  isPw,
-  pwName,
 } from "./l4ddpower.js";
 import {
   ANGEL,
@@ -210,7 +209,6 @@ keepOnly(
 /* ---------- the numbers ---------- */
 export const L4 = {
   HP: 3,
-  REGEN: 15000, // ms for 1 HP to come back on its own, a hundredth at a time (hpmath.js regenOf)
   REVIVE: 5000, // ms of holding E by a downed duck (5 s: the owner's, Nov 17 11:07Z; it was 10)
   QUICK: 3000, // … with Quick Revive bought (the Butler's, 750: the owner's, Nov 17 11:19Z)
   BACK_HP: 2, // a revived duck comes up with 2 HP
@@ -228,8 +226,7 @@ export const L4 = {
 /* Safe Keeping (the owner's, Nov 16): a halo in the special slot, never used by hand. When its duck goes down it keeps
    everything bought from the Butler, and it gets the duck up again: at once when nobody else is standing (or alone, or
    a computer), else when its player presses the revive key (E) while down. First GLOW ms of a light blue glow, then up
-   with INV ms of nothing hurting it; spent. The fireplace has it with the items, and a merchant may sell it (its color's
-   price, purple: MERCH) */
+   with INV ms of nothing hurting it; spent. A merchant may sell it (its color's price, purple: MERCH) */
 const SAFE = {
   GLOW: 1200,
   INV: 6000,
@@ -259,38 +256,16 @@ const ROUNDS = [
   [Infinity, 50],
 ];
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
-/* the zombies in round r with p players (the owner's, Nov 16 22:11Z and 22:16Z; the sheet: charts/zombies-per-round.xlsx).
-   Each phase of rounds has its base [first round, last round, base]; every player past the first adds a share of it
-   that grows through the phase, the round's place in it over the phase's length (1/4, 2/4 …), rounded down. Never
-   more than 100 a player nor 400 in all, and never fewer than the round before (a round that would have fewer keeps
-   the round before's). From round 21 on: 144 (as far as the cap lets), and never fewer than round 20 */
-/* Nov 18 12:39Z + 12:40Z: every player earns about what one player alone earns, each round. So each round is its own
-   phase (its share is then always the whole base: every extra player adds as many zombies as one player gets), rounds
-   1-4 have as many as rounds 5-8 (24; it was 12), and the caps in all are 800 (8 players x 100). Spawn rates stay. The
-   chart: sheets/zombie-spawns-per-player.xlsx */
-const PHASE_BASE = [
-  [8, 24],
-  [12, 36],
-  [20, 72],
-]; // (up to which round, the zombies a round for one player)
-const PHASES = Array.from({ length: 20 }, (_, i) => [
-  i + 1,
-  i + 1,
-  PHASE_BASE.find(([last]) => i + 1 <= last)[1],
-]);
-const Z_EACH = 72, // the most zombies a round for each player …
-  Z_LATE = 800; // from round 21 on (was 144), and Z_MOST in all (zombies.js)
-function zombiesFor(r, p) {
-  const cap = Math.min(Z_EACH * p, Z_MOST);
-  let n = 0;
-  for (let k = 1; k <= Math.min(r, 20); k++) {
-    const [a, b, base] = PHASES.find((f) => k <= f[1]),
-      d = b - a + 1,
-      raw = Math.floor((base * (d + (p - 1) * (k - a + 1))) / d);
-    n = Math.max(n, Math.min(raw, cap));
-  }
-  return r > 20 ? Math.max(n, Math.min(Z_LATE, cap)) : n;
-}
+/* the zombies in round r for each player: 32 in rounds 1 to 8, then 48 from round 9 on, and it stays there; never more
+   than Z_MOST in all (the owner's, Nov 28 04:58Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtStui5wgzS5J5C6XuzDdAeo: "24 first 4 rounds.
+   32 next 4 rounds after that. And it goes up to 48 per round and stays there ... per player ... start with 32 per round
+   for the first 4 rounds") */
+const Z_EACH = [
+  [8, 32],
+  [Infinity, 48],
+]; // (up to which round, the zombies a round for each player)
+const zombiesFor = (r, p) =>
+  Math.min(Z_EACH.find(([last]) => r <= last)[1] * p, Z_MOST);
 /* spawning (the owner's): a zombie a second, 50% more for each player past the first, never more than 5 a second (3
    more for each player past the first), all twice that (Nov 16 21:21Z), and twice that again once a round is 10 s old
    (Nov 16 22:21Z); each second a 25% chance that none comes. A round's first ZOMBIE_GRACE ms, half as many (8 s since
@@ -330,17 +305,17 @@ export const inHand = (w, s, id) => {
 };
 /* what a kit starts with: the knife and the pistol (its slots: kitslots.js; the bow is in the weak bag) */
 const START = kitSlots(["knife", "handgun"]);
-/* the fireplace's bags (the owner's, Nov 18 12:19Z, and the answers to Adam's questions at 12:32Z). Rolled the rarest
-   first, each only if the one before it failed: the Chair bag 1% (the golden chair), the Special bag 5%, the Item bag
-   20%, else the Weapon bag. The Weapon bag holds seven bags that take turns; each bag then gives the next one of its
+/* the bags a merchant's stock is rolled from (the owner's, Nov 18 12:19Z, and the answers to Adam's questions at 12:32Z;
+   they were the fireplace's, which no longer spins: the owner's, Nov 28). Rolled the rarest
+   first, each only if the one before it failed: the Special bag 5%, the Item bag 20%, else the Weapon bag (the chair's
+   bag is gone: no chair in this mode, the owner's, Nov 28 04:05Z). The Weapon bag holds seven bags that take turns; each bag then gives the next one of its
    own. "Shuffle": a bag gives each of its things once, in a shuffled order, before any comes again (the owner's:
    "an item is removed from it's bag and does not reappear within it's bag until every other item has had a chance").
-   Every duck has its own bags, new each game (fireBags). The bow is in the weak bag; the grenade is in none */
-export const SLOT_ODDS = { chair: 0.01, special: 0.05, item: 0.2 };
+   The bow is in the weak bag; the grenade is in none */
+export const SLOT_ODDS = { special: 0.05, item: 0.2 };
 export const SLOT_BAGS = {
-  chair: ["chair"],
   special: ["flamer", "laser"], // (no chain gun: the owner's, Nov 22 19:26Z, "REMOVE CHAIN GUN")
-  item: ["medkit", "zebra", "adrenaline", "safekeep"],
+  item: ["medkit", "bandage", "zebra", "adrenaline", "safekeep"], // (the bandage: the merchant's, 300 points, the owner's, Nov 28 03:28Z)
 };
 export const WEAPON_BAGS = {
   melee: ["axe", "sword", "hammer"],
@@ -352,10 +327,10 @@ export const WEAPON_BAGS = {
   heavy: ["sniper", "glauncher", "lmg"],
 };
 const BAGS = { odds: SLOT_ODDS, slot: SLOT_BAGS, weapon: WEAPON_BAGS };
-export const weaponName = (w) => (isPw(w) ? pwName(w) : GUN_NAMES[w] || w);
+export const weaponName = (w) => GUN_NAMES[w] || w;
 /* each one's own color, in its slot and as its orb (the owner's, Nov 18 12:19Z: "every weapon, melee, or item has a
    corresponding color to it's slot now ... The purples all glow. Any weapon made angelic now has a red slot color and
-   orb"): green, blue, purple (glowing) or the chair's gold. The dagger, the knife, the pistol, the pan, the adrenaline
+   orb"): green, blue or purple (glowing). The dagger, the knife, the pistol, the pan, the adrenaline
    shot and the bow have no color: a plain slot, as in the other games (the owner's, 12:32Z: "they are a normal looking
    slot like it is in the default game, so no color"). One not here keeps its slot's color (the grenades) */
 /* what each color costs at a merchant (MERCH.PRICES) */
@@ -364,7 +339,6 @@ const TIER_PRICES = {
   green: 500,
   blue: 750,
   purple: 1500,
-  gold: 3000,
 };
 const TINTS = {
   dagger: "plain",
@@ -374,6 +348,7 @@ const TINTS = {
   adrenaline: "plain",
   bow: "plain",
   medkit: "green",
+  bandage: "plain",
   axe: "green",
   sword: "green",
   hammer: "green",
@@ -392,9 +367,8 @@ const TINTS = {
   sniper: "purple",
   flamer: "purple",
   laser: "purple",
-  chair: "gold",
 };
-/* its color's class (css .l4s, .l4orb, .sp-slot: c-plain, c-green, c-blue, c-purple, c-gold, c-red), "" for its slot's own;
+/* its color's class (css .l4s, .l4orb, .sp-slot: c-plain, c-green, c-blue, c-purple, c-red), "" for its slot's own;
    holy: an Angelic one, red */
 export const tintOf = (w, holy = false) =>
   holy ? "c-red" : TINTS[w] ? "c-" + TINTS[w] : "";
@@ -424,22 +398,15 @@ const PTS = {
 }; // (a board: 5, the owner's, Nov 3)
 /* Justin's Butler's upgrades (the owner's prices; attack speed's are Adam's plan's guess, question 3): the price of the
    next one when n are bought already, how many at most */
+/* the upgrades, how many of each I can buy, and their prices (UP_PRICE): the owner's, Nov 28 04:05Z
+   (cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H); Attack speed is gone */
 export const SHOP = [
-  /* the upgrades never run out at the merchant (the owner's, Nov 19 19:27Z: "they do not go away. They are not a
-     limited resource anymore"), and each one stacks up to 5 ("it can increase to 5"), so crits, cooldowns and reloads
-     never run away. Quick Revive is a switch, so it stays one */
   {
     id: "acc",
     name: "Critical Chance",
     what: "+2.5% crits",
-    most: 5,
-  }, // (600 each, +2.5%: the owner's, Nov 16 21:47Z)
-  {
-    id: "as",
-    name: "Attack speed",
-    what: "Cooldowns 10% faster",
-    most: 5,
-  }, // (each one 10% faster than the last)
+    most: 2,
+  },
   {
     id: "hp",
     name: "Increase HP",
@@ -450,7 +417,7 @@ export const SHOP = [
     id: "rl",
     name: "Faster reload",
     what: "Reloads 30% faster",
-    most: 5,
+    most: 1,
   },
   {
     id: "qr",
@@ -459,9 +426,13 @@ export const SHOP = [
     most: 1,
   }, // (750, kept until I go down: the owner's, Nov 17 11:07Z + 11:19Z)
 ];
-/* his guns and their ammo went with the merchants (the owner's, Nov 18 13:46Z: "never any ammo"): what a merchant sells
-   is his stock (merchantStock). Every upgrade is 20% dearer (the owner's, Nov 4) */
-const SHOP_MORE = 1.2;
+/* the nth one's price (n from 0) */
+const UP_PRICE = {
+  acc: (n) => [600, 750][n],
+  hp: (n) => 240 + 200 * n, // (200 more each buy)
+  rl: () => 1500,
+  qr: () => 750, // (kept until I go down: the owner's, Nov 17 11:07Z + 11:19Z)
+};
 /* a number of points as a whole number of fives: dir 1 rounds up, -1 down, 0 to the nearest (5 points is the smallest
    unit of money, for everything: the owner's, Nov 17 19:11Z) */
 const fives = (n, dir = 0) =>
@@ -471,75 +442,24 @@ const fives = (n, dir = 0) =>
     : dir < 0
       ? Math.floor(n / 5)
       : Math.round(n / 5));
-export const priceOf = (id, n) =>
-  id === "acc"
-    ? ACC_PRICE
-    : id === "qr"
-      ? QR_PRICE
-      : fives(
-          UP_TIMES *
-            SHOP_MORE *
-            {
-              acc: 300 + 50 * n,
-              as: 250 + 50 * n,
-              hp: n ? 125 : 100,
-              sp: 250,
-              rl: 300,
-            }[id],
-        );
-const ACC_PRICE = 600; // (every Critical Chance the same: the owner's, Nov 16 21:47Z)
-const QR_PRICE = 750; // (Quick Revive: "it costs only 750", the owner's, Nov 17 11:19Z)
+export const priceOf = (id, n) => UP_PRICE[id](n);
 /* how long duck `by` holds E to get a downed duck up: Quick Revive makes it 3 s */
 export const reviveMs = (s, by) => (upOf(s, by).qr ? L4.QUICK : L4.REVIVE);
-const UP_TIMES = 2; // (every upgrade twice its old price, for now: the owner's, Nov 3; then 20% more, SHOP_MORE)
 /* the price I pay now: a Sale (a drop) halves what I buy for the rest of the round, each of the Butler's upgrades only
-   once (the owner's: "increased health or accuracy is only half off for that item once"), the fireplace every time.
+   once (the owner's: "increased health or accuracy is only half off for that item once").
    It lasts 45 s (DROP.FOR, the owner's, Nov 16; it was the rest of the round) */
 export const saleOn = (s) => !!(s && s.hang && s.hang.l4sale); // (for DROP.FOR: dropTick ends it)
 export const priceFor = (s, id, what, n) => {
-  const full = what === "box" ? BOX.price : priceOf(what, n);
+  const full = priceOf(what, n);
   if (!saleOn(s)) return full;
   const used = (s.hang.l4sale.used || {})[id] || {};
-  return what !== "box" && used[what] ? full : fives(full / 2, 1); // (half, in fives)
+  return used[what] ? full : fives(full / 2, 1); // (half, in fives)
 };
-/* where Justin's Butler stands: beside his stool at the card table (anyone walks through him; nothing hurts him), and
-   the fireplace's front, where E spins it */
+/* where Justin's Butler stands: beside his stool at the card table (anyone walks through him; nothing hurts him) */
 export const BUTLER = { x: BJ.bx + 84, y: BJ.by - 18 };
-export const BOX = {
-  x: 2300,
-  y: 742,
-  sx: 2300,
-  zx: 2300,
-  sy: 706,
-  sz: 58,
-  price: 950, // (the owner's, Nov 18 12:39Z: "the slot now costs 950 points"; it was 650)
-  spin: 4200,
-  keep: 10000,
-}; // (500 a spin: the owner's, Nov 15. sx, sy, sz: where it shows, CABIN_SPOTS below)
-/* … and on Downpour (the second map): the Priest at the chapel's south end does the Butler's job, the car with its hood up the
-   fireplace's (syncMap swaps them in) */
-/* box: where a duck spins and takes (x, y), and where the weapons spin in sight (sx, sy, up sz): over the cabin's
-   fireplace; on Downpour over the hood-up car, on its hood (the owner's, Nov 17 12:28Z; it was on the ground behind it, 11:07Z) */
-const CABIN_SPOTS = {
-    butler: { ...BUTLER },
-    box: { x: BOX.x, y: BOX.y, zx: BOX.x, sx: BOX.x, sy: BOX.y - 36, sz: 58 },
-  },
-  DP_SPOTS = {
-    butler: { x: GS.PRIEST.x, y: GS.PRIEST.y },
-    box: {
-      x: GS.HOOD.spot.x,
-      y: GS.HOOD.spot.y,
-      zx: GS.HOOD.spot.x + 90, // (the yellow square's middle: the owner's, Nov 17: over the car, not on the duck at the spot)
-      /* the orb's middle exactly where I circled the S on my screenshot (refs/nov17-1228-batch/orb-over-car-S.png, Nov 17
-         12:45Z and 17:41Z): the middle of the car's windshield, 58 by 243 into the car's drawing (stationart.js
-         carSVG, 380 by 420 there, the front to the west; its top is the car's height and its hood's over its north edge).
-         Its depth is the car's south edge, so it shows in front of the car; sz lifts it up to that spot (the orb hangs
-         54 over its point, its middle 27 over) */
-      sx: GS.HOOD.x0 + 58 * GS.K,
-      sy: GS.HOOD.y1,
-      sz: GS.HOOD.y1 - (GS.HOOD.y0 - 220 * GS.K + 243 * GS.K) - 27,
-    },
-  };
+/* … and on Downpour (the second map): the Priest at the chapel's south end does the Butler's job (syncMap swaps him in) */
+const CABIN_SPOTS = { butler: { ...BUTLER } },
+  DP_SPOTS = { butler: { x: GS.PRIEST.x, y: GS.PRIEST.y } };
 const SHOP_REACH = 130;
 const SHOT_LIFE = 2000;
 /* a zombie's room on the floor, as the ducks' (world.js crowd): an ellipse 56 across and 25.6 deep; every zombie the
@@ -610,9 +530,11 @@ export const zombieLook = (l) => ({
 /* about how far a player sees from its duck, either way (a computer's view, the wider one) */
 export const VIEW = { x: 720, y: 460 };
 const LAND = { x0: STAIRS.x0, x1: STAIRS.x1, y0: STAIRS.y0, y1: STAIRS.land };
-/* Downpour: the forest, short of the world's edge (the forest line stops nobody: the owner's, Nov 17 03:34Z). Past the
-   fences only the road is open, so zombies there still climb them */
-const inWoods = (x, y) => x >= 70 && x <= W - 70 && y >= 70 && y <= H - 70;
+/* Downpour: the forest, up to the fence round the map (the forest line stops nobody: the owner's, Nov 17 03:34Z; the
+   fence stops a duck right at it, as a wall does: Nov 28 04:05Z). Past the fences only the road is open, so zombies
+   there still climb them */
+const inWoods = (x, y) =>
+  x >= GS.RIM.x0 && x <= GS.RIM.x1 && y >= GS.RIM.y0 && y <= GS.RIM.y1;
 /* Duck Cabin (Sandbox's zombies there, sbcabin.js): the whole world; only what stands in it stops them (standable) */
 const hangMap = () => layoutVariant() === "";
 export const playable = (x, y) =>
@@ -716,9 +638,17 @@ export const FENCE = { from: 45, out: 22, mid: 34, across: 68, FALL: 0.35 };
 /* how far out from fence f's line (x, y) is (inside: below 0) */
 export const acrossFence = (f, x, y) =>
   ((f.axis === "y" ? x : y) - f.at) * f.out;
+/* the west and east sides stop at the road's banks: the road runs open off both ends, with no fence across it (the
+   owner's, Nov 28), so there a zombie walks in instead of climbing (open) */
 const RIM_SIDES = () => [
-  { axis: "y", at: GS.RIM.x0, out: -1, climb: [GS.RIM.y0, GS.RIM.y1] },
-  { axis: "y", at: GS.RIM.x1, out: 1, climb: [GS.RIM.y0, GS.RIM.y1] },
+  ...[
+    [GS.RIM.x0, -1],
+    [GS.RIM.x1, 1],
+  ].flatMap(([at, out]) => [
+    { axis: "y", at, out, climb: [GS.RIM.y0, GS.ROAD.y0] },
+    { axis: "y", at, out, climb: [GS.ROAD.y0, GS.ROAD.y1], open: true },
+    { axis: "y", at, out, climb: [GS.ROAD.y1, GS.RIM.y1] },
+  ]),
   { axis: "x", at: GS.RIM.y0, out: -1, climb: [GS.RIM.x0, GS.RIM.x1] },
   { axis: "x", at: GS.RIM.y1, out: 1, climb: [GS.RIM.x0, GS.RIM.x1] },
 ];
@@ -742,7 +672,7 @@ const DP_OPENINGS = [
       in: byFence(f, FENCE.out - FENCE.across, 0),
       from: byFence(f, FENCE.from, 0),
       fence: f,
-      ...(f.axis === "x" ? { rim: true } : {}), // (no moonlight pooled at its middle: l4dd.js)
+      ...(f.axis === "x" || f.open ? { rim: true } : {}), // (no moonlight pooled at its middle: l4dd.js)
     };
   }),
   ...GS.BOARDED.map((o) => {
@@ -781,7 +711,7 @@ export const OPENINGS = [...CABIN_OPENINGS];
 export const dp = () => layoutVariant() === "l4gs";
 /* the map's own roofs only (Sandbox's floors, sbfloors.js, aren't climbed to yet) */
 export const mapDeck = (d) => (d && !d.sb ? d : null);
-/* the map's own numbers in: its openings, the Butler's and the fireplace's spots, the start spots, the zombies' grid.
+/* the map's own numbers in: its openings, the Butler's spot, the start spots, the zombies' grid.
    Called wherever they're read; it does something only when layout.js has turned to the other map */
 let mapRev = -1;
 export function syncMap() {
@@ -792,7 +722,6 @@ export function syncMap() {
   OPENINGS.push(...(on ? DP_OPENINGS : CABIN_OPENINGS));
   const sp = on ? DP_SPOTS : CABIN_SPOTS;
   Object.assign(BUTLER, sp.butler);
-  Object.assign(BOX, sp.box);
   spots = null;
   setGrid(
     on
@@ -917,11 +846,11 @@ export const ptsOf = (s, id) => ((s && s.hang && s.hang.l4pt) || {})[id] ?? 0;
 export const upOf = (s, id) => ((s && s.hang && s.hang.l4u) || {})[id] || {};
 export const maxHp = (s, id) =>
   isWild(s, id) ? wildMax(s, id) : grHp(s, id, L4.HP + (upOf(s, id).hp || 0)); // (Sandbox: a group's Max HP over it, sbgroups.js)
-/* a weapon's wait between uses (each Attack speed: 10% shorter), a reload's time (Faster reload: 30% shorter), the
+/* a weapon's wait between uses, a reload's time (Faster reload: 30% shorter), the
    headshot chance (headOf, below) */
 export const l4Cool = (s, id, w) =>
   ARMS[w]
-    ? (((lmOf(s, id, w) || {}).c ||
+    ? ((lmOf(s, id, w) || {}).c ||
         (w === "laser" && angelOf(s, id, w)
           ? ANGEL.LASER.cool // (the Angelic Laser Rifle: its own, a beam every 0.75 s)
           : ARMS[w].cool *
@@ -929,8 +858,7 @@ export const l4Cool = (s, id, w) =>
               ? w === "handgun"
                 ? ANGEL.PISTOL.FIRE
                 : ANGEL.FAST
-              : 1))) * // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js; a loot orb's own wait first)
-        Math.pow(0.9, upOf(s, id).as || 0)) /
+              : 1))) / // (Angelic: 20% faster; the dual pistols twice as fast, l4ddangel.js; a loot orb's own wait first)
       grCool(s, id) // (Sandbox: a group's Cooldown speed, sbgroups.js)
     : 400;
 /* ---------- the Laser Rifle's heat ----------
@@ -1207,7 +1135,7 @@ function dropTick(s, L, zs, now, T) {
 const NUKE_CRIT = 0.05;
 /* what a drop does, for every duck */
 /* E near something on the ground (l4ddloot.js lootAt): a drop for everyone, or a weapon or an item into my slots, as
-   one the fireplace landed on (hand: the one in my hand) */
+   one bought (hand: the one in my hand) */
 function pickLoot(s, id, mx, my, hand, now) {
   const d = lootAt(s, mx, my, now);
   if (!d || (d.w && !give(s, id, d.w, hand))) return false;
@@ -1336,6 +1264,7 @@ function maxAmmo(s) {
       if (
         fullAmmo(w) &&
         w !== "medkit" &&
+        w !== "bandage" &&
         !angelOf(s, id, w) // (an Angelic gun never refills, not even here: the owner's, Nov 16 22:21Z)
       )
         m.am[w] = fullFor(s, id, w);
@@ -1346,7 +1275,7 @@ function maxAmmo(s) {
   s.hang.l4a = am;
 }
 function setUp(s, now) {
-  helperOut(s); // (a new game: the fireplace's Justin goes)
+  helperOut(s); // (a new game: Justin and Ethan go)
   s.hang.l4 = { r: 1, next: 1, over: null, g: now }; // (g: when this game began, for the stats)
   s.hang.zp = [];
   s.hang.zs = {};
@@ -1361,8 +1290,6 @@ function setUp(s, now) {
   s.hang.l4a = {};
   s.hang.l4pt = {};
   s.hang.l4u = {};
-  s.hang.l4box = {};
-  s.hidden = { ...(s.hidden || {}), l4sb: {} }; // (every duck's fireplace bags, new: fireRoll)
   s.hang.l4inv = {};
   s.hang.l4dr = [];
   s.hang.l4nk = null;
@@ -1378,7 +1305,7 @@ function setUp(s, now) {
   s.hidden = { ...(s.hidden || {}), l4back: {} }; // (the ducks that left this game: what they had, for when they're back)
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
   if (dp() || s.options.wildJustin)
-    for (const b of Object.keys(WILD_BREEDS)) helperIn(s, null, now, true, b); // (Downpour: Justin is out there, unarmed; the Justin in Duck Cabin setting brings him to the cabin too)
+    for (const b of Object.keys(WILD_BREEDS)) helperIn(s, now, b); // (Downpour: Justin is out there, unarmed; the Justin in Duck Cabin setting brings him to the cabin too)
   newRound(s, 0, now, 0);
   s.hang.l4 = {
     ...s.hang.l4,
@@ -1425,7 +1352,7 @@ export const srVote = (s) => {
 };
 export const srCan = (s, id) =>
   srOpen(s) && !srVote(s) && !s.hang.l4.srDone && !(s.hang.l4.srNo || {})[id];
-/* who End turn waits on: the fireplace's Justin never counts toward a turn */
+/* who End turn waits on: Justin and Ethan never count toward a turn */
 const voters = (s) => players(s).filter((id) => !isHelper(s, id));
 export const waitNeed = (s) =>
   Math.max(1, Math.ceil(voters(s).length * shareOf(s) - 1e-9));
@@ -1501,7 +1428,6 @@ rule("l4", {
         delete o[id];
         s.hang[k] = o;
       }
-    dropBox(s, id);
     angelLeft(s, id);
     const p4 = s.hang.l4p || {},
       now = Date.now();
@@ -1661,7 +1587,6 @@ function l4Act(s, a, now) {
   }
   if (a.do === "buy")
     return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
-  if (a.do === "box") return fireplace(s, id, a, now, mx, my);
   if (a.do === "pick") return pickLoot(s, id, mx, my, a.hand, now);
   if (a.do === "power") return powerAct(s, id, now, mx, my, PH);
   if (a.do === "pump") return powerPump(s, id, now, mx, my, PH);
@@ -1707,69 +1632,17 @@ function buy(s, id, what, mx, my, hand, now) {
   } // (its half price is spent)
   s.hang.l4u = { ...(s.hang.l4u || {}), [id]: { ...up, [what]: n + 1 } };
   soldSays(s, id, `bought ${it.name} from the merchant for ${price}.`);
-  /* he never runs out of upgrades (the owner's, Nov 19 22:25Z: "Upgrades are unlimited in terms of however many there
-     are"): the same one again while I can have more of it, else another I can still get */
+  /* the same one again while I can have more of it; once it's maxed he has no upgrade for me until his next visit
+     (the owner's, Nov 28) */
   const mm = merchantOf(s);
   s.hang.l4m = {
     ...mm,
-    ups: { ...(mm.ups || {}), [id]: n + 1 < it.most ? what : upFor(s, id) },
+    ups: { ...(mm.ups || {}), [id]: n + 1 < it.most ? what : "" },
   };
   if (what === "hp") {
     const p4 = s.hang.l4p || {};
     if (p4[id]) s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: p4[id].hp + 1 } };
   } // (the new HP comes full)
-  return true;
-}
-/* the fireplace: E pays and it spins; once it has landed, E takes the weapon (only whoever paid): a melee weapon or a
-   special takes its own slot, a ranged one the ranged weapon in hand (a.hand, else the one the duck holds out, else the
-   first ranged slot). Every duck spins its own (the owner's, Nov 3: one duck's weapon kept everyone else waiting) */
-const boxesOf = (s) => {
-  const b = s && s.hang && s.hang.l4box;
-  return b && !b.by ? b : {};
-};
-function dropBox(s, id) {
-  const b = { ...boxesOf(s) };
-  if (!b[id]) return;
-  delete b[id];
-  s.hang.l4box = b;
-}
-/* the weapon the fireplace shows for duck `id`; with no id, the newest one anyone spun */
-export const boxNow = (s, now, id) => {
-  const live = (b) => b && now < b.t + BOX.spin + BOX.keep;
-  if (id) return live(boxesOf(s)[id]) ? boxesOf(s)[id] : null;
-  return (
-    Object.values(boxesOf(s))
-      .filter(live)
-      .sort((a, b) => b.t - a.t)[0] || null
-  );
-};
-function fireplace(s, id, a, now, mx, my) {
-  if (Math.hypot(BOX.x - mx, BOX.y - my) > SHOP_REACH * 2) return false;
-  const b = boxNow(s, now, id),
-    kit = kitOf(s, id);
-  if (!kit) return false;
-  if (!b) {
-    if (boxNow(s, now)) return false; // (nobody spins while what it landed on is still there: it fades first, l4ddloot.js)
-    const price = priceFor(s, id, "box");
-    if (ptsOf(s, id) < price) return false;
-    const w = fireRoll(s, id, kit);
-    if (!w) return false; // (nothing left it could give this duck)
-    addPts(s, id, -price);
-    s.hang.l4hood = 1; // (Downpour: the hood-up car stops glowing once it's first used)
-    s.hang.l4box = {
-      ...boxesOf(s),
-      [id]: {
-        by: id,
-        t: now,
-        w,
-      },
-    };
-    return true;
-  }
-  if (b.by !== id || now < b.t + BOX.spin || b.w === HELPER.w) return false; // (Justin isn't taken: he climbs out)
-  if (!give(s, id, b.w, a.hand)) return false;
-  dropBox(s, id);
-  addFx(s, { kind: "l4take", by: id, who: [], w: b.w, t: now });
   return true;
 }
 /* the next one a bag gives duck by duck (bag: its things left, in their shuffled order; all: everything in it): the
@@ -1796,24 +1669,11 @@ function shuffled(xs) {
   }
   return a;
 }
-/* duck id's bags (s.hidden.l4sb, the host's only, new each game): { chair, special, item: [left], w: [the weapon
-   bags' turns left], b: { bag: [left] } } */
-const fireBags = (s, id) =>
-  ((s.hidden && s.hidden.l4sb) || {})[id] || { b: {} };
-function fireRoll(s, id, kit) {
-  const [got, bags] = bagRoll(fireBags(s, id), (w) => kit.sl.includes(w));
-  s.hidden = {
-    ...(s.hidden || {}),
-    l4sb: { ...((s.hidden && s.hidden.l4sb) || {}), [id]: bags },
-  };
-  return got;
-}
-/* one roll from a set of bags (a duck's fireplace, or a merchant's: merchantStock): the chair, the specials and the
-   items by SLOT_ODDS, else the weapon bags; has(w): skipped, kept in place. [what it gave (or null), the bags after] */
+/* one roll from a merchant's bags (merchantStock): the specials and the items by SLOT_ODDS, else the weapon bags; has(w): skipped, kept in place. [what it gave (or null), the bags after] */
 function bagRoll(bags0, has) {
   const bags = { ...bags0, b: { ...(bags0.b || {}) } },
     { odds, slot, weapon } = BAGS;
-  for (const k of ["chair", "special", "item"]) {
+  for (const k of ["special", "item"]) {
     if (Math.random() >= odds[k]) continue;
     const [w, rest] = fromBag(bags[k], slot[k], has);
     bags[k] = rest;
@@ -1830,27 +1690,16 @@ function bagRoll(bags0, has) {
   bags.b[n] = rest;
   return [w, bags];
 }
-/* the fireplace's Justin (the owner's, Nov 4): 1 spin in 100 lands on him (never while he's already here), and a
-   moment later he climbs out of the fire and joins as another player, to help. He starts with 1,500 points of his own,
-   all his HP, the knife, the LMG and the pistol; every rule is the same for him as for any duck (bots.js
-   plays him). He goes when the game does: Play again, or back to the lobby.
-   Off since Nov 16 (the owner's: "Justin will be removed from the zombie game because I do not want to force him into
-   it"): the fireplace never lands on him, and the General Settings Justin switch doesn't bring him in */
-export const HELPER = {
-  on: false,
-  id: "b-justin",
-  w: "justin",
-  chance: 0.01,
-  pts: 1500,
-  out: 1200,
-};
+/* Justin as a helping player is off since Nov 16 (the owner's: "Justin will be removed from the zombie game because I do
+   not want to force him into it"): the General Settings Justin switch doesn't bring him in */
+export const HELPER = { on: false };
 export const isHelper = (s, id) => !!(s.players[id] && s.players[id].helper);
 /* Justin in Dead Ducks Arcade (the owner's, Nov 17; Duck Cabin too, by default, Nov 17 20:02Z: "he spawns in cabin now
    by default the same, without a weapon and cannot get a weapon"): the map starts with him out there, unarmed and
    running from the zombies, for good: nobody can give him a weapon, and he has no down pistol. He has WILD.hp HP and
    gets 1 back every WILD.regen ms; zombies and players can hurt and kill him (ex: dead for good: his body stays, nobody
-   can revive him, he never comes back, not at a new round either). He is the fireplace's Justin (helperIn, the same
-   player and brain) with no weapon and no points */
+   can revive him, he never comes back, not at a new round either). He joins as a player (helperIn) with no weapon and
+   no points */
 export const WILD = { hp: 6, regen: 60000 };
 /* who is out there (the owner's, Nov 21 16:40Z: "Ethan is a character like Justin, and he spawns in cabin, or he spawns in
    downpour"; 16:45Z: "We can make it to where Ethan can spawn in and Justin ... they both spawn in"): one brain, a breed
@@ -1956,9 +1805,9 @@ function justinSays(s, id, key) {
 export function isWild(s, id) {
   return !!(s && s.players && s.players[id] && s.players[id].wild);
 }
-function helperIn(s, by, now, wild = false, breed = "justin") {
+function helperIn(s, now, breed) {
   const B = WILD_BREEDS[breed],
-    id = wild ? B.id : HELPER.id;
+    id = B.id;
   if (s.players[id]) return;
   s.players[id] = {
     id,
@@ -1966,7 +1815,7 @@ function helperIn(s, by, now, wild = false, breed = "justin") {
     ...(breed !== "justin" ? { breed } : {}),
     bot: true,
     helper: 1,
-    ...(wild ? { wild: 1 } : {}),
+    wild: 1,
     duck: B.look(),
     card: {},
     nameStyle: {},
@@ -1976,30 +1825,15 @@ function helperIn(s, by, now, wild = false, breed = "justin") {
   s.seat.push(id);
   bringBack(s, id, now, players(s).length, true);
   const kit = freshKit(s);
-  kit.sl = kitSlots(wild ? [] : ["knife", "handgun", "lmg"]);
-  kit.am = wild ? {} : { lmg: fullAmmo("lmg"), handgun: fullAmmo("handgun") };
+  kit.sl = kitSlots([]);
+  kit.am = {};
   s.hang.l4a = { ...s.hang.l4a, [id]: kit };
-  s.hang.l4pt = { ...s.hang.l4pt, [id]: wild ? 0 : HELPER.pts };
-  if (wild) {
-    s.pos[id] = { ...s.pos[id], w: "" };
-    return;
-  }
-  const out = [BOX.x, BOX.y + 70];
-  if (playable(...out) && standable(...out, heightAt(...out), STEP))
-    s.pos[id] = {
-      ...s.pos[id],
-      x: +(out[0] / W).toFixed(5),
-      y: +(out[1] / H).toFixed(5),
-      w: "lmg",
-    };
-  else s.pos[id] = { ...s.pos[id], w: "lmg" };
-  addFx(s, { kind: "l4justin", by, who: [], t: now });
-  say(s, "Justin joined.");
+  s.hang.l4pt = { ...s.hang.l4pt, [id]: 0 };
+  s.pos[id] = { ...s.pos[id], w: "" };
 }
 /* Justin goes (a new game, the lobby) */
 export function helperOut(s) {
-  for (const id of [HELPER.id, ...Object.values(WILD_BREEDS).map((b) => b.id)])
-    helperDrop(s, id);
+  for (const b of Object.values(WILD_BREEDS)) helperDrop(s, b.id);
 }
 function helperDrop(s, id) {
   if (!s.players[id]) return;
@@ -2013,7 +1847,7 @@ function helperDrop(s, id) {
     s.pw = pw;
   } // (his wounds go with him: a retry's Justin starts whole, his head on. The owner's, Nov 19 01:00Z: "Justin spawned in without his head in a retry of the game")
   if (s.hang)
-    for (const k of ["l4p", "l4a", "l4b", "l4f", "l4pt", "l4u", "l4box"])
+    for (const k of ["l4p", "l4a", "l4b", "l4f", "l4pt", "l4u"])
       if (s.hang[k] && s.hang[k][id] !== undefined) {
         const o = { ...s.hang[k] };
         delete o[id];
@@ -2086,10 +1920,10 @@ export function give(s, id, w, hand0) {
    shows. In the cabin he comes up the balcony's stairs, breaking their boards if they're up, and walks to the Butler's
    spot; on Downpour he climbs over the fence nearest the chapel and walks to the Priest's. Any merchant on either map.
    What he sells (MERCH): the bow always, for 250 ("priest or butler ALWAYS sells bow now, and for 250 points"); then one
-   thing for sure from his own bags, the fireplace's (bagRoll: the golden chair 1%, the specials 5%, the items 20%, else
+   thing for sure from his own bags (bagRoll: the specials 5%, the items 20%, else
    the weapon bags in turns), and a 50% chance of another, each one after it 10% less likely, and 2.5% more likely for
    each player past the first; never ammo, never the grenade. Its price is its color's: plain 300, green 500, blue 750,
-   purple 1,500, the golden chair 3,000. He has one of each, half the time two, and a quarter of the time three
+   purple 1,500. He has one of each, half the time two, and a quarter of the time three
    (MERCH.MORE_OF); the last one bought is gone for this visit, for everyone. He offers each duck one of the Butler's upgrades (SHOP), one it can still get (upOffers), and never runs
    out of them (buy), and
    in the cabin he always has gas (the pump's 25% for the pump's price, never running out). The Sale halves his prices
@@ -2111,8 +1945,8 @@ export function give(s, id, w, hand0) {
    three line bags, near: { id: 1 } the ducks he greeted standing by him, route: [legs], p: the leg he's on, t: since
    when, tk: his last step } */
 export const MERCH = {
-  NADE: 0.25, // (an item's chance to be grenades instead, NADE_EACH points for each one a duck is missing: the owner's, Nov 23 00:32Z, "sometimes sell grenades in place of items, and buying them just refills however many grenades you have missing. Each grenade only costing, let's say 75 points")
-  NADE_EACH: 75,
+  NADE: 0.25, // (an item's chance to be grenades instead: the owner's, Nov 23 00:32Z, "sometimes sell grenades in place of items")
+  NADE_EACH: 150, // (a grenade a buy, up to ARMS.grenade.most: the owner's, Nov 28 03:28Z, "they buy 1 grenade at a time with a maximum of 4"; Adam's 150)
   MISS: 0.05, // (each rest he didn't come adds this to the next rest's chance: the owner's, Nov 23 00:32Z "a 5% increased chance to show up for every time he doesn't show up")
   COME: 0.5, // (each rest's chance, round zero's too: the owner's, Nov 18 15:35Z "they come in at the rest phase, and it's a 50% chance that they do. It's not guaranteed")
   BOW: 250,
@@ -2156,10 +1990,10 @@ const setMh = (s, o) => {
 export const merchantPrice = (w) =>
   w === "bow" ? MERCH.BOW : MERCH.PRICES[TINTS[w] || "plain"];
 /* what he asks for it now (a Sale halves it, in fives) */
-/* grenades: each one I'm missing, so a buy fills me up (the owner's, Nov 23 00:32Z) */
+/* grenades: one a buy, none once I have them all */
 const lackOf = (w, kit) =>
-  w === "grenade" ? ARMS.grenade.most - ((kit && kit.g) || 0) : 1;
-/* what a buy costs me (w and kit: grenades count the ones I'm missing) */
+  w === "grenade" ? +(((kit && kit.g) || 0) < ARMS.grenade.most) : 1;
+/* what a buy costs me (w and kit: nothing to buy when my grenades are full) */
 export const stockPrice = (s, p, w, kit) =>
   (saleOn(s) ? fives(p / 2, 1) : p) * (w ? lackOf(w, kit) : 1);
 /* a new game: every merchant alive again, his bags new */
@@ -2217,10 +2051,14 @@ function merchantStock(s) {
     stock.push([w, merchantPrice(w)]);
   }
   setMh(s, { bags });
-  return stock.map(([w, p]) => [w, p, howMany()]);
+  return stock.map(([w, p]) => [
+    w,
+    p,
+    w === "grenade" ? ARMS.grenade.most : howMany(),
+  ]); // (grenades: enough for a full belt, one a buy)
 }
 /* his upgrades this visit: one for each duck, from the ones it can still get (the owner's, Nov 18 14:20Z); bought, it's
-   there again (buy); { id: upgrade id, or "" (none left) } */
+   there again till it's maxed (buy); { id: upgrade id, or "" (none left) } */
 function upOffers(s) {
   const ups = {};
   for (const id of players(s)) if (!isWild(s, id)) ups[id] = upFor(s, id);
@@ -2670,7 +2508,7 @@ const atMerchant = (s, x, y) => {
     !!m && m.st === "here" && Math.hypot(m.x - x, m.y - y) <= SHOP_REACH * 2
   );
 };
-/* a buy from his stock: into my slots, as the fireplace's (an item of mine that's used up: full again) */
+/* a buy from his stock: into my slots, as one picked up (an item of mine that's used up: full again) */
 function merchantBuy(s, id, w, mx, my, hand, now) {
   const m = merchantOf(s);
   if (!atMerchant(s, mx, my)) return false;
@@ -2681,7 +2519,10 @@ function merchantBuy(s, id, w, mx, my, hand, now) {
     have = kit.sl.includes(w);
   if (price <= 0 || ptsOf(s, id) < price) return false;
   if (w === "grenade") {
-    s.hang.l4a = { ...s.hang.l4a, [id]: { ...kit, g: ARMS.grenade.most } };
+    s.hang.l4a = {
+      ...s.hang.l4a,
+      [id]: { ...kit, g: Math.min(ARMS.grenade.most, (kit.g || 0) + 1) },
+    };
   } else if (have) {
     if (kindOf(w) !== "special" || hasLeft(s, id, w)) return false; // (one I have, or a gun of mine: no ammo from him)
     s.hang.l4a = {
@@ -2814,7 +2655,11 @@ export function l4Use(s, a, now) {
   const c = down ? [m.dg, ARMS.handgun.mag] : m.am[what];
   if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === rw))
     return false; // (empty, or reloading)
-  if (what === "medkit" && (P4(s, id) || {}).hp >= maxHp(s, id)) return false; // (nothing to heal)
+  if (
+    (what === "medkit" || what === "bandage") &&
+    (P4(s, id) || {}).hp >= maxHp(s, id)
+  )
+    return false; // (nothing to heal)
   if (heldBack(s, what, () => laserHeat(s, id, now).over)) return false; // (one zebra cake in the room at a time; the Laser Rifle overheated)
   m.u[what] = now;
   if (m.rw && m.rw !== rw) {
@@ -2883,6 +2728,19 @@ export function l4Use(s, a, now) {
     const p4 = s.hang.l4p || {};
     s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: maxHp(s, id), at: now } };
     if (!spare) m.am.medkit = [0, 0]; // (used up: it stays in its slot, empty, the owner's, Nov 18 12:19Z)
+  } else if (what === "bandage") {
+    const p4 = s.hang.l4p || {},
+      hp = p4[id].hp,
+      most = maxHp(s, id);
+    s.hang.l4p = {
+      ...p4,
+      [id]: {
+        ...p4[id],
+        hp: hpHeal(hp, Math.max(A.least, (most - hp) * A.heal), most),
+        at: now,
+      },
+    };
+    if (!spare) m.am.bandage = [0, 0];
   } else if (what === "adrenaline")
     s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
   else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
@@ -3626,11 +3484,17 @@ function meleeHits(s, now) {
       [px, py] = toPx(p),
       bx = px + k.dx * A.at * sz,
       by = py + k.dy * A.at * sz;
+    const push = meleePush(s, k.by, k.w); // (its push: its weapon's and my weight, push.js)
     for (const z of zs) {
-      if (z.st === 3 || k.hit.includes(z.i)) continue;
+      if (k.hit.includes(z.i)) continue;
       if (!overlapH(hz, h, zOf(z, "zombie"))) continue;
       if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
+      if (z.st === 3) {
+        knockZ(s, z, k.dx, k.dy, push);
+        any = true;
+        continue;
+      } // (a body slides by the same push: the owner's, Nov 28 04:05Z)
       if (missed(s, k.by, k.w, z, now)) continue; // (this one isn't hit by this swing; the others in it still can be)
       const dmg = Array.isArray(A.dmg)
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
@@ -3639,10 +3503,10 @@ function meleeHits(s, now) {
         dead = strike(s, z, dmg * sz, critRoll(s, k.by, k.w), k.by, k.w, now);
       wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
-      else if (z.st === 2) knockZ(z, k.dx, k.dy, knockOf(k.w) * sz); // (alive: pushed back, ARMS knock, harder from a bigger duck)
+      if (z.st === 2 || z.st === 3) knockZ(s, z, k.dx, k.dy, push); // (pushed back, alive or dead; not up a wall)
       any = true;
     }
-    /* another duck in the swing: a slight shove, no HP lost (nothing hurts another duck here) */
+    /* another duck in the swing: shoved by the same push over its weight, no HP lost (nothing hurts another duck here) */
     for (const id of s.seat) {
       const q = s.pos[id];
       if (id === k.by || !q || k.hit.includes("p" + id) || !standing(s, id))
@@ -3651,17 +3515,9 @@ function meleeHits(s, now) {
       if (Math.hypot(qx - bx, qy - by) > R) continue;
       if (!overlapH(hz, h, zOf(q, "body", now), DUCK * sizeOf(s, id))) continue;
       k.hit.push("p" + id);
-      shovePx(
-        s,
-        id,
-        k.dx,
-        k.dy,
-        knockOf(k.w) * KNOCK_DUCK * sz,
-        now,
-        inCabin(qx, qy) ? 1 : 0,
-      ); // (world px: boardfire.js)
+      shovePx(s, id, k.dx, k.dy, push, now, inCabin(qx, qy) ? 1 : 0); // (world px: boardfire.js)
     }
-    if (dp()) carsSwing(s, bx, by, R, k, knockOf(k.w) * KNOCK_DUCK * sz); // (Downpour's cars in it: carpush.js)
+    if (dp()) carsSwing(s, bx, by, R, k, push); // (Downpour's cars in it: carpush.js)
     if (L4_HOOKS.npc)
       L4_HOOKS.npc(s, k.by, bx, by, now, k.w, R, R, null, k.hit); // (Sandbox's NPCs in its bubble, each once a swing: sbcabin.js)
     for (const j of wilds(s))
@@ -3682,18 +3538,18 @@ const die = (z, T) => {
   Object.assign(z, { st: 3, d: T });
 };
 /* melee knockback (the owner's, Nov 18 15:25Z: "Every melee has slight knockback EVEN to players AND especially to
-   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): guns.js ARMS
-   knock, read by weaponuse.js knockOf */
-/* a living zombie inside pushed `far` world px along (ux, uy) (a unit), a few px at a time, stopping where it can't
-   stand (a wall, furniture, a step too high) */
-function knockZ(z, ux, uy, far0) {
-  const far = pushTaken(far0, immobile(z) ? Infinity : 1), // (a zombie weighs 1; an immobile one never moves: push.js)
+   zombies EVEN WHILE THEY ARE ALIVE ... Fireaxe has more knockback and the hammer has most knockback"): push.js */
+/* a zombie, alive or dead, pushed by px world px along (ux, uy) (a way), over its weight (push.js pushOn), a few px at a
+   time, stopping where it can't stand (a wall, furniture, a step too high) */
+function knockZ(s, z, ux, uy, px) {
+  const u = Math.hypot(ux, uy) || 1,
+    far = pushOn(s, "zombie", z, px),
     n = Math.max(1, Math.ceil(far / 8)),
     h = heightAt(z.x, z.y);
   [z.x, z.y] = pushAlong(
     [z.x, z.y],
     n,
-    (i, [x, y]) => [x + (ux * far) / n, y + (uy * far) / n],
+    (i, [x, y]) => [x + (ux * far) / u / n, y + (uy * far) / u / n],
     ([x, y]) => zOk(x, y, h),
     ([x, y]) => [Math.round(x), Math.round(y)],
   ); // (one loop for every push: push.js)
@@ -3917,8 +3773,8 @@ export function l4Shots(s, now) {
             if (sniper && crit) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmg, crit, sh.by, w, now)) die(z, T);
-            else if (w === "chair" && z.st === 2)
-              knockZ(z, sh.vx * W, sh.vy * H, knockOf("hammer")); // (the chair shoves like the hammer: the owner's, Nov 20 21:17Z)
+            else if (w === "chair")
+              knockZ(s, z, sh.vx * W, sh.vy * H, meleePush(s, null, "chair")); // (the chair shoves: the owner's, Nov 20 21:17Z; a thrown thing's push, push.js)
             hitAny = true;
             if (sh.hit.length >= pierce) break;
           }
@@ -4044,13 +3900,33 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
   const any = blast(near, [
     [
       zs,
-      (z) => z.st !== 3 && [z.x, z.y, zOf(z, "zombie")],
+      (z) => [z.x, z.y, zOf(z, "zombie")],
       (z, n) => {
-        if (!strike(s, z, n.dmg, n.crit, sh.by, "", now)) return true; // (its ring's damage, a crit twice: blast.js; it lives)
-        die(z, T);
-        mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
-        gore.push([Math.round(z.x), Math.round(z.y)]);
-        return true;
+        const alive = z.st !== 3;
+        if (alive && strike(s, z, n.dmg, n.crit, sh.by, "", now)) {
+          die(z, T);
+          mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
+          gore.push([Math.round(z.x), Math.round(z.y)]);
+        } // (its ring's damage, a crit twice: blast.js)
+        if (z.st === 2 || z.st === 3)
+          knockZ(s, z, n.dx, n.dy, blastPush(s, n.o).px); // (thrown away from it, a body too: push.js)
+        return alive;
+      },
+    ],
+    [
+      s.seat,
+      (id) => {
+        const q = s.pos[id];
+        return q && standing(s, id) && [...toPx(q), zOf(q, "body", now)];
+      },
+      (id, n) => {
+        const B = blastPush(s, n.o),
+          [qx, qy] = toPx(s.pos[id]);
+        shovePx(s, id, n.dx, n.dy, B.px, now, inCabin(qx, qy) ? 1 : 0, {
+          ms: 650,
+          h: B.h,
+          l: 0,
+        }); // (every duck in it thrown, higher the nearer the middle: push.js; its HP only the thrower's, below)
       },
     ],
     [
@@ -4221,9 +4097,8 @@ function l4Tick(s, now) {
       continue;
     } // (Sandbox: no next round to wait for, so a ghost is back up a moment later, at a start spot, with its weapons)
     if (p.gh) continue;
-    if (p.hp < maxHp(s, id)) {
-      const w = isWild(s, id),
-        [amt, at] = regenOf(s, p.at, now, w ? WILD.regen : L4.REGEN, w); // (a duck's in hundredths, smoothly; Justin's in whole HP: hpmath.js)
+    if (isWild(s, id) && p.hp < maxHp(s, id)) {
+      const [amt, at] = regenOf(p.at, now, WILD.regen); // (Justin's, in whole HP; a player's never comes back by itself: hpmath.js)
       if (amt) p4[id] = { ...p, hp: hpHeal(p.hp, amt, maxHp(s, id)), at };
     }
   }
@@ -4242,11 +4117,6 @@ function l4Tick(s, now) {
     )
       s.hang.l4a = { ...s.hang.l4a, [id]: { ...am[id], rl: 0, rw: "" } }; // (switched to another slot: the reload is lost, the owner's, Nov 16)
   justinChat(s, now);
-  for (const b of Object.values(boxesOf(s)))
-    if (b.w === HELPER.w && now >= b.t + BOX.spin + HELPER.out) {
-      dropBox(s, b.by);
-      helperIn(s, b.by, now);
-    } else if (now >= b.t + BOX.spin + BOX.keep) dropBox(s, b.by); // (nobody took it: the fire keeps it)
   const brd = { ...(s.hang.brd || {}) },
     bl = { ...(s.hang.l4b || {}) };
   for (const [id, b] of Object.entries(bl)) {

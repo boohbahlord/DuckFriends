@@ -216,7 +216,7 @@ import { mountWorld } from "./hangout/world.js";
 
 import { W as HW, H as HH } from "./hangout/layout.js";
 
-import { zOf } from "./heights.js";
+import { zOf, fallHurt } from "./heights.js";
 
 import { hangStill } from "./hangout/rules.js";
 
@@ -385,6 +385,7 @@ import {
 } from "./settings.js";
 
 import { setHideUi, uiHidden } from "./hideui.js";
+import { gameMsg } from "./gamemsg.js";
 
 import { musicBarHTML, mountMusicBar } from "./musicbar.js";
 
@@ -653,6 +654,15 @@ export let cam = null; // the bracket's camera: the diagram's corner on the boar
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (sprint: the whole game's, gamedefaults.js)
 
 /* ---------- drawing the ducks (every frame: jumps and glides) ---------- */
+/* a duck leans toward where it aims, the Enter the Gungeon way (the owner's, Nov 28 06:33Z,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtMGi9p5QVY9Wc7Lmvt6xZ1h): its body only flips left or right (face: 1 right, -1 left) and
+   leans at most TILT_MOST degrees, a straight-up or straight-down aim leaning it all the way, so it's never turned on
+   its side; its weapon turns in its hand to the exact aim, and its shadow doesn't turn. Degrees, clockwise */
+const TILT_MOST = 15,
+  TILT_ORG = "50% 55%"; // (about its middle)
+const tiltOf = ([dx, dy]) =>
+  Math.round((Math.atan2(dy, Math.abs(dx)) * 180 * TILT_MOST) / Math.PI / 90) ||
+  0; // (from the level, whichever side: a level aim either way doesn't lean it)
 const SQ = {
   l: ["0% 100%", 0.8, 1.12],
   r: ["100% 100%", 0.8, 1.12],
@@ -1140,13 +1150,15 @@ function drawDucks(now = clockNow()) {
         ? seatOf(s, id)
           ? -1
           : 1
-        : mine && me
-          ? me.face
-          : (hang && world.face(id)) ||
-            (d._x !== undefined && Math.abs(pos.x - d._x) > 0.0005
-              ? Math.sign(pos.x - d._x)
-              : d._face || 1);
+        : d._aimF || // (a weapon in hand: it faces the side it aims at, below)
+          (mine && me
+            ? me.face
+            : (hang && world.face(id)) ||
+              (d._x !== undefined && Math.abs(pos.x - d._x) > 0.0005
+                ? Math.sign(pos.x - d._x)
+                : d._face || 1));
     d._face = face || 1;
+    d._aimF = 0;
     d._x = pos.x;
     const q = mine ? (now - squash.t < 170 ? squash.q : "") : pos.q || "";
     const fx = turned() ? 1 : d._face,
@@ -1221,10 +1233,15 @@ function drawDucks(now = clockNow()) {
     let pic = d._pic;
     if (!pic || !d._bodyEl.contains(pic))
       pic = d._pic = d._bodyEl.querySelector("svg.duck, img.px"); // (found again only if its body was redrawn elsewhere)
-    if (pic && pic._sq !== squish + org) {
-      pic._sq = squish + org;
-      pic.style.transformOrigin = org;
-      pic.style.transform = squish;
+    /* turned toward where it aims (the weapons below set d._tilt each frame, for the next): about its middle */
+    const tilt = deadPose ? 0 : d._tilt || 0,
+      turn = tilt ? `rotate(${tilt}deg) ${squish}` : squish,
+      tOrg = tilt ? TILT_ORG : org;
+    d._tilt = 0;
+    if (pic && pic._sq !== turn + tOrg) {
+      pic._sq = turn + tOrg;
+      pic.style.transformOrigin = tOrg;
+      pic.style.transform = turn; // (its 0.1 s transition turns it: css .gduck-body svg)
     }
     /* the outlines (outlines.js; every zombie game and Hangout's world), seen through a wall, under a roof and a floor
        away: my own duck a darker blue that only I see, every other player green, Justin yellow (Good Justin God in Mad
@@ -1652,6 +1669,10 @@ function drawDucks(now = clockNow()) {
           : dk && dk._face < 0
             ? Math.PI
             : 0;
+    if (dk && dir && Math.hypot(dir[0], dir[1]) > 1) {
+      if (Math.abs(dir[0]) > 1) dk._aimF = Math.sign(dir[0]); // (it faces the side it aims at, as in Enter the Gungeon: the duck loop above, next frame)
+      dk._tilt = tiltOf(dir); // (and leans toward it)
+    }
     handed.add(id);
     let h = heldEls.get(id);
     if (h && !heldOn(h, fxl)) h = null;
@@ -1670,7 +1691,7 @@ function drawDucks(now = clockNow()) {
         art = lz
           ? laserArt(lz)
           : w === "chair" && isL4dd(s)
-            ? GOLD_CHAIR // (Quacky Zombies' chair, the fireplace's 1 in 100: golden)
+            ? GOLD_CHAIR // (Quacky Zombies' chair: golden)
             : holy
               ? heldHTML(w, duck) // (Angelic: its glow is drawn into the drawing, angelic())
               : heldPicHTML(w, duck, hs),
@@ -1690,6 +1711,11 @@ function drawDucks(now = clockNow()) {
       h._hs = hs;
       h._fxl = fxl; // (its board's: where it is drawn, fxl or the ducks' layer, below)
       fxl.append(h);
+      /* it fades in once, as it comes to hand: moved under a roof or out again (below), it would fade in again, a blink
+         every time a sprint takes it past something (the owner's, Nov 28) */
+      h.addEventListener("animationend", (e) => {
+        if (e.target === h) h.style.animation = "none";
+      });
       heldEls.set(id, h);
       if (holy) angelGlow(h); // (its glow as thin as every other Angelic weapon's: powerart.js)
     }
@@ -2649,10 +2675,11 @@ function hangStep(dt, now) {
   if (isL4dd(R.state)) me.aim = myAim(); // (Quacky Zombies: my flashlight shines where I aim)
   if (ev.whee) sfx.fall(); // off the deck: a slide whistle
   if (ev.thud > 90) sfx.bonk(); // and the landing
-  if (ev.thud >= SB_LAND_MIN)
+  if (ev.thud >= SB_LAND_MIN || (ev.thud > 0 && fallHurt(ev.thud, ev.side) > 0))
     R.send({
       t: "land",
       h: Math.round(ev.thud),
+      s: Math.round(ev.side || 0),
       x: +me.x.toFixed(4),
       y: +me.y.toFixed(4),
       z: Math.round(me.z || 0),
@@ -2802,13 +2829,12 @@ function paintNow(force) {
     if (was && was.split("|")[0] === "answer" && s.phase === "discuss")
       scene.cheer(topColors(s)); // the votes are in
     if ((s.phase === "answer" || inWorld(s)) && !touchTold && touchOnly()) {
-      // a touch screen: how to move, once
+      // a touch screen: how to move, once (a game message: gamemsg.js)
       touchTold = true;
-      toast(
+      gameMsg(
         profile.settings.touch === "tap"
           ? "Tap: walk there · Fast swipe: sprint · ⬆ jumps"
           : "Hold and drag: walk · Flick twice: sprint · ⬆ jumps",
-        5000,
       );
     }
     $(".phase", S).textContent =
@@ -3239,7 +3265,7 @@ function openPause() {
             resume() {},
             custom: () => openCustomize(),
             settings: () => openSettings(),
-            hideui: () => toast(setHideUi(!uiHidden())), // (hide ui: hideui.js)
+            hideui: () => gameMsg(setHideUi(!uiHidden())), // (hide ui: hideui.js; a game message, gamemsg.js)
             friends: () => openFriends(),
             lobby: () => R.send({ t: "toLobby" }),
             leave: () =>
@@ -3925,7 +3951,7 @@ register("game", {
     placed = placeKey(R.state);
     idleOff = trackIdle(() => R);
     if (isL4dd(R.state)) {
-      l4Held(heldNow); // (the fireplace asks which ranged weapon is in hand)
+      l4Held(heldNow); // (a buy or a pickup asks which ranged weapon is in hand)
       const l4 = {
           state: () => R.state,
           me: () => R.me,

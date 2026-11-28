@@ -177,7 +177,7 @@ export const ARMS = {
     swing: ARM_SWING.knife,
     at: 58,
     r: 34,
-    knock: 16, // (how far a hit pushes a living zombie back, world px: weaponuse.js knockOf)
+    knock: 2, // (how far a hit pushes a body of weight 1, world px, push.js meleePush: a blade almost nothing, a blunt hit hard: the owner's, Nov 28 04:05Z)
   }, // (four a second, as in every mode)
   hammer: {
     kind: "melee",
@@ -210,7 +210,7 @@ export const ARMS = {
     swing: ARM_SWING.sword,
     at: 54,
     r: 40,
-    knock: 16,
+    knock: 6, // (a blade: a little)
   },
   pan: {
     kind: "melee",
@@ -222,7 +222,7 @@ export const ARMS = {
     swing: ARM_SWING.pan,
     at: 54,
     r: 40,
-    knock: 16,
+    knock: 30, // (blunt: next to the hammer)
   },
   handgun: {
     kind: "ranged",
@@ -255,17 +255,20 @@ export const ARMS = {
     cal: "12 ga buckshot",
     barrel: "long",
     speed: ARM_SPEED.shotgun,
-    all: 72, // (no magazine: the owner's, Nov 4; 48, and 50% more: the owner's, Nov 16)
+    all: 72, // (48, and 50% more: the owner's, Nov 16)
+    mag: 8, // (a tube of 8, as the real SPAS-12's, loaded a shell at a time: the owner's, Nov 28 04:05Z)
+    shell: 500,
     pellets: 5,
     spread: 0.3,
     life: 420,
   },
   medkit: { kind: "special", cool: ITEM_COOL, all: 1 },
+  bandage: { kind: "special", cool: ITEM_COOL, all: 1, heal: 0.5, least: 1 }, // (half the HP I've lost back, but at least 1 and never more than I lost; one held: the owner's, Nov 28 03:28Z and 04:05Z)
   grenade: {
     kind: "grenade",
     cool: ITEM_COOL,
     far: 300, // (its blast: blast.js rings)
-    start: 4, // (players start with 4: the owner's, Nov 19 19:27Z)
+    start: 0, // (none at the start, bought from the merchant one at a time: the owner's, Nov 28 03:28Z)
     most: 4,
   }, // (r: 50% wider than its first 140, owner 2026-11-04)
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt
@@ -434,9 +437,15 @@ export const ARMS = {
   zebra: { kind: "special", cool: ITEM_COOL, all: 1, speed: 650, far: 520 },
   adrenaline: { kind: "special", cool: ITEM_COOL, all: 1, ms: 20000 },
   /* Justin's office chair (the owner's, Nov 3): thrown the way I aim, 3 to 5 HP to the zombie it hits and it shoves it
-     back like the hammer; no ammo unless a Sandbox sets one */
+     back (knock: on the board 2.4 duck lengths, as it always has); no ammo unless a Sandbox sets one */
   safekeep: { kind: "special", cool: 300, all: 1 }, // (Safe Keeping: never used by hand, SAFE below)
-  chair: { kind: "special", cool: ITEM_COOL, dmg: [3, 5], speed: 600 }, // (no ammo, thrown as often as you like; 3 to 5 whole: the owner's, Nov 20 21:17Z)
+  chair: {
+    kind: "special",
+    cool: ITEM_COOL,
+    dmg: [3, 5],
+    speed: 600,
+    knock: 27,
+  }, // (no ammo, thrown as often as you like; 3 to 5 whole: the owner's, Nov 20 21:17Z)
 };
 /* each gun's damage: its caliber's range plus its barrel, in steps of DMG_STEP (CALIBERS) */
 const cents = (n) => Math.round(n * 100) / 100;
@@ -525,6 +534,7 @@ export const GUN_NAMES = {
   dagger: "Dagger",
   shotgun: "Pump action shotgun", // (the owner's, Nov 21 17:25Z)
   medkit: "Medkit",
+  bandage: "Bandage",
   safekeep: "Safe Keeping",
   grenade: "Grenade",
   sniper: "Barrett .50 Cal", // (the owner's, Nov 18 12:19Z: named after its look)
@@ -569,7 +579,7 @@ export const WEAPONS = [
   "flamer",
   "laser",
 ];
-const ITEMS = ["medkit", "zebra", "adrenaline", "safekeep", "chair"]; // (no Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
+const ITEMS = ["medkit", "bandage", "zebra", "adrenaline", "safekeep"]; // (no chair in Dead Ducks Arcade: the owner's, Nov 28 04:05Z; no Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
 export const POOL = [...WEAPONS, ...ITEMS];
 /* the guns that fire while the button is down, in every mode: ARMS' auto (the Laser Rifle only as a Mad God Justin
    pickup) */

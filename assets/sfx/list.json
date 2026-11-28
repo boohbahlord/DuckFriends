@@ -79,7 +79,6 @@
   "defib": { "n": 1 },
   "merchantIn": { "n": 1 },
   "merchantOut": { "n": 1 },
-  "l4slot": { "n": 1 },
   "l4till": { "n": 1 },
   "dropIn": { "n": 1 },
   "dropGot": { "n": 1 },

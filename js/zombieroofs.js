@@ -175,8 +175,28 @@ export const jumpZ = (z) => {
       1,
       Math.hypot(z.x - x0, z.y - y0) / (Math.hypot(x1 - x0, y1 - y0) || 1),
     );
+  if (z.j[7]) return h0 + (h1 - h0) * u * u; // (a fall: faster as it goes, dropOff)
   return h0 + (h1 - h0) * u + (z.j[6] ? 0 : JUMP.arc * 4 * u * (1 - u));
 };
+/* a zombie stepping off a roof's edge, or into a hole in it, falls to what's under it and is seen falling, never put
+   there at once (the owner's, Nov 28 04:30Z): as a jump (st 8) whose height drops as a falling body's does, from where
+   it is to the ground FALL.out px on along (nx, ny), going on at the speed that takes as long as the fall (z.j[7], px a
+   second). Its height comes from how far along it is, so every screen draws the fall as it glides (jumpZ) */
+export const FALL = {
+  g: 1536, // px/s² (a duck's jump's gravity: world.js, 8 × its height over its time squared)
+  out: 12, // px on from the edge as it falls (a little: where it lands is still clear ground)
+};
+export function dropOff(z, nx, ny, h0, out = FALL.out) {
+  const d = Math.hypot(nx, ny) || 1,
+    x1 = z.x + (nx / d) * out,
+    y1 = z.y + (ny / d) * out,
+    h1 = heightAt(x1, y1),
+    t = Math.sqrt((2 * Math.max(1, h0 - h1)) / FALL.g);
+  z.st = 8;
+  z.n = 0;
+  delete z.k;
+  z.j = [z.x, z.y, x1, y1, h0, h1, 0, out / t];
+}
 /* the floor a duck on the plank is chased on: the canopy's (zombies come up the plank to it from the red car's roof,
    and claw at it on their way: zombies.js) */
 export const chaseDeck = (d) => (d && d.kind === "plank" ? canopyDeck() : d);

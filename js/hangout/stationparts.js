@@ -367,56 +367,33 @@ export function generatorSVG({ w = 140, d = 120, h = 100, cable = 44 } = {}) {
   s += F`<path d="M${w - 6} ${fy + h * 0.55}C${w + cable * 0.3} ${fy + h * 0.6} ${w + cable * 0.4} ${d + h - 6} ${W} ${d + h - 10}" fill="none" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M${w - 6} ${fy + h * 0.55}C${w + cable * 0.3} ${fy + h * 0.6} ${w + cable * 0.4} ${d + h - 6} ${W} ${d + h - 10}" fill="none" stroke="#353636" stroke-width="4" stroke-linecap="round"/>`;
   return wrap(W, d + h, s);
 }
-/* a piece of the tall chain-link fence across the road, running north-south, d long and h tall (the owner's, Nov 17:
-   "the fences will be chain linked fence btw and holding ur light to it helps see that"). Seen straight on it would be
-   a line, so it's drawn leaning: its foot on its line, its top lean px over to one side (dir: 1 east, -1 west, out
-   toward the map's edge), the way a tall thing leans away from the middle of a view from above, so a duck standing at
-   its foot is in front of it, never under it (the owner's, Nov 17 12:28Z: leaning in over the ducks, they looked to be
-   through it). The links are see-through wire, bright galvanized grey, so the
-   dark shows them faintly and a flashlight clearly; its posts, its top rail and the barbed wire along the top.
-   Drawn into (lean + 8) × (d + h); its foot's line at x 4 (dir 1) or lean + 4 (dir -1). fenceLean below */
-export function fenceSVG({
-  d = 200,
-  h = 200,
-  lean = 54,
-  dir = 1,
-  seed = 1,
-} = {}) {
+/* a piece of the tall chain-link fence round the map's west and east sides, running north-south, d long and h tall (the
+   owner's, Nov 17: "the fences will be chain linked fence btw and holding ur light to it helps see that"). Our camera
+   looks down from the south, so a north-south fence is seen edge on: its top straight over its foot, h up the picture,
+   a narrow band of its posts and wire from its north end's top to its south end's foot (the owner's, Nov 28 05:41Z: a
+   leaning one is a view the camera can't have, and met its corners' pillars at opposite corners). Drawn into
+   FENCE_W × (d + h); its foot's line down the middle */
+export const FENCE_W = 8;
+export function fenceSVG({ d = 200, h = 200, seed = 1 } = {}) {
   const id = uid(),
     r = rnd(seed),
-    W = lean + 8,
-    bx = dir > 0 ? 4 : W - 4, // (its foot's line)
-    tx = bx + dir * lean, // (its top's)
+    W = FENCE_W,
+    x = W / 2,
     C = 14; // (a link across)
-  /* a point on its face: u along it (0 … d, north to south), v up it (0 … h) */
-  const at = (u, v) => [n1(bx + (dir * lean * v) / h), n1(h + u - v)];
-  const line = (u0, v0, u1, v1) => {
-    const [x0, y0] = at(u0, v0),
-      [x1, y1] = at(u1, v1);
-    return `M${x0} ${y0}L${x1} ${y1}`;
-  };
-  const defs =
-    F`<pattern id="${id}" width="${C}" height="${C}" patternUnits="userSpaceOnUse"><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#1c1c28" stroke-width="3.6" opacity=".5"/><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#b9c3c8" stroke-width="1.8"/></pattern>` +
-    F`<clipPath id="${id}c"><path d="M${bx} ${h}L${bx} ${h + d}L${tx} ${d}L${tx} 0Z"/></clipPath>`;
-  // a little shadow on the ground along its foot, then the links (see-through) between its foot and its top
-  let s = F`<path d="M${bx} ${h}V${h + d}" stroke="#05060a" stroke-width="6" opacity=".35"/>`;
-  s += F`<rect x="0" y="0" width="${W}" height="${d + h}" fill="url(#${id})" clip-path="url(#${id}c)"/>`;
-  // its posts, every 100 or so and one at each end, from its foot up to its top
+  const defs = F`<pattern id="${id}" width="${C}" height="${C}" patternUnits="userSpaceOnUse"><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#1c1c28" stroke-width="3.6" opacity=".5"/><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#b9c3c8" stroke-width="1.8"/></pattern>`;
+  // a little shadow on the ground along its foot, then the links seen edge on (see-through)
+  let s = F`<path d="M${x} ${h}V${h + d}" stroke="#05060a" stroke-width="6" opacity=".35"/>`;
+  s += F`<rect x="${x - 2}" y="0" width="4" height="${d + h}" fill="url(#${id})"/>`;
+  // its posts, every 100 or so and one at each end, each from its foot straight up to its top
   const posts = [3];
   for (let u = 50 + r() * 30; u < d - 30; u += 100) posts.push(u);
   posts.push(d - 3);
   for (const u of posts)
-    s += `<path d="${line(u, 0, u, h)}" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="${line(u, 0, u, h)}" stroke="#9aa6ad" stroke-width="3.6" stroke-linecap="round"/>`;
-  // the top rail and the bottom wire
-  for (const [v, k] of [
-    [h - 4, 3.4],
-    [4, 2],
-  ])
-    s += F`<path d="${line(0, v, d, v)}" stroke="${O}" stroke-width="${k + 3}"/><path d="${line(0, v, d, v)}" stroke="#d6dde0" stroke-width="${k}"/>`;
+    s += F`<path d="M${x} ${h + u}V${u}" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M${x} ${h + u}V${u}" stroke="#9aa6ad" stroke-width="3.6" stroke-linecap="round"/>`;
   // the barbed wire, curled along over the top
-  let z = `M${tx} 0`;
+  let z = `M${x} 0`;
   for (let u = 6, k = 1; u <= d; u += 7, k = -k)
-    z += `L${n1(tx + k * 4)} ${n1(u)}`;
+    z += `L${n1(x + k * 3)} ${n1(u)}`;
   s += `<path d="${z}" fill="none" stroke="${O}" stroke-width="3.6" stroke-linejoin="round"/><path d="${z}" fill="none" stroke="#d6dde0" stroke-width="1.6" stroke-linejoin="round"/>`;
   return wrap(W, d + h, s, defs);
 }
@@ -450,6 +427,26 @@ export function fenceXSVG({ w = 400, d = 12, h = 200, seed = 1 } = {}) {
   s += `<path d="${z}" fill="none" stroke="${O}" stroke-width="3.6" stroke-linejoin="round"/><path d="${z}" fill="none" stroke="#d6dde0" stroke-width="1.6" stroke-linejoin="round"/>`;
   return wrap(w, d + h, s, defs);
 }
-/* how far a fence's top leans, and which way: out, away from the middle of the map, mapW wide. Its drawing (shapes.js)
-   and the flashlights (l4dd.js) both ask */
-export const fenceLean = (p, mapW) => (p.x < mapW / 2 ? -1 : 1) * p.h * 0.6;
+/* where two fences meet at a corner of the map (the owner's, Nov 28 04:58Z: "corners of stone or something, or some kind
+   of pillar in between to connect them"; 05:21Z: "actual corners of a different material that wasn't fence, like some
+   kind of pillar or solid or rock, stone"): a square stone pillar, wider than a fence and upright as they are, so
+   both fences' ends meet its sides flush, laid in blocks with a cap on top. Drawn into PILLAR_W × (h + d); its foot at
+   y h + d / 2, as fenceXSVG's */
+export const PILLAR_W = 36;
+export function fenceCornerSVG({ d = 12, h = 200 } = {}) {
+  const W = PILLAR_W,
+    cap = 12, // (the cap's top, then its front)
+    foot = h + d / 2,
+    row = 22; // (a course of blocks)
+  let s = F`<rect x="1" y="${cap}" width="${W - 2}" height="${foot - cap}" fill="#767c84"/>`;
+  for (let y = foot - row, k = 0; y > cap; y -= row, k++) {
+    s += F`<path d="M1 ${y}H${W - 1}" stroke="#4d525a" stroke-width="2"/>`; // (the mortar under each course)
+    for (let x = k % 2 ? W / 3 : (2 * W) / 3; x < W - 4; x += W / 1.5)
+      s += F`<path d="M${n1(x)} ${y}V${Math.min(foot, y + row)}" stroke="#4d525a" stroke-width="2"/>`;
+    s += F`<path d="M3 ${y + 3}H${W - 3}" stroke="#9aa1a9" stroke-width="2" opacity=".6"/>`; // (each course's lit top edge)
+  }
+  s += F`<rect x="1" y="${cap}" width="5" height="${foot - cap}" fill="#5c6169" opacity=".7"/>`; // (its shaded side)
+  s += F`<rect x="0" y="0" width="${W}" height="${cap}" fill="#a7adb4"/><rect x="0" y="${cap - 4}" width="${W}" height="4" fill="#80868e"/>`;
+  s += F`<rect x="1" y="1" width="${W - 2}" height="${foot - 1}" fill="none" ${ln(2.4)}/>`;
+  return wrap(W, h + d, s);
+}

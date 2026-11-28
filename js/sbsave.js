@@ -31,7 +31,7 @@ import { TILE } from "./units.js";
 import { FLOOD } from "./hangout/stationmap.js";
 import { ELEV } from "./heights.js";
 
-export const SAVE_V = 3; // (a save's version: a newer game still opens an older save. 2: sizes typed in tiles; 3: the ground at elevation 0)
+export const SAVE_V = 4; // (a save's version: a newer game still opens an older save. 2: sizes typed in tiles; 3: the ground at elevation 0; 4: Downpour's 0 the one-depth flood's bottom)
 const MINE = ["sbsv", "sbpk", "sbAsked"]; // (this file's own parts: never in a save)
 export const isPart = (k) => /^(sb|nb)/.test(k) && !MINE.includes(k);
 const isOpt = (k) => /^sb/.test(k);
@@ -126,8 +126,8 @@ const down = (t, f, by) =>
         ),
       )
     : t;
-function fromGround1(sb, world) {
-  const by = world === "downpour" ? 1 + FLOOD.floor / ELEV : 1;
+const DP_FLOOR_V3 = -48; // (Downpour's flood bottom, world px, in versions 3 and before: its deep west end, gone since Nov 28)
+function levelDown(sb, by) {
   for (const p of Object.values((sb && sb.pts) || {}))
     for (const f of LEVELED)
       if (p && p.f && p.f[f])
@@ -238,7 +238,10 @@ export function sbPick(s, a, now) {
   clear(s);
   for (const [k, v] of Object.entries(d.parts)) if (isPart(k)) s[k] = copy(v);
   if (!(+d.v >= 2)) inTiles(s.sb); // (from before tiles: its sizes as big as they were)
-  if (!(+d.v >= 3)) fromGround1(s.sb, d.world); // (from before the ground was 0: its zones as high as they were)
+  if (!(+d.v >= 3))
+    levelDown(s.sb, d.world === "downpour" ? 1 + DP_FLOOR_V3 / ELEV : 1); // (from before the ground was 0: its zones as high as they were)
+  if (!(+d.v >= 4) && d.world === "downpour")
+    levelDown(s.sb, (FLOOD.floor - DP_FLOOR_V3) / ELEV); // (from before the flood was one depth: its 0 is higher now, so each zone's number is less by that)
   for (const [k, v] of Object.entries(d.options || {}))
     if (isOpt(k)) s.options[k] = v;
   s.options.sbMap = SB_WORLDS[d.world] ? d.world : ""; // (a world save brings its world; a board save, the board)

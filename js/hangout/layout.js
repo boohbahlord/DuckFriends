@@ -688,10 +688,10 @@ function makeSolids() {
         y1: p.block[3],
         top: p.top,
         roof: p.roof || 0, // (Downpour: under a roof, it stops a duck's feet up to the roof's height, a shot up to its top)
-        zx: !!p.zx, // (zombies climb over it: the fallen tree)
         pass: !!p.pass, // (it stops shots only: walking over it is a floor's, a car's glass, vehicles.js)
         noLand: !!p.noLand, // (its top can't be stood on: a trunk, landOff)
         car: p.car, // (Downpour's car i, or its glass: carClear)
+        fy: p.fy ?? FOOT, // (how near feet get to it north and south: a fence seen face on, right up to its line)
       });
   for (const b of SOLIDS)
     for (
@@ -841,7 +841,7 @@ export function useMode(mode) {
   LIGHTS.push(...lightsOf());
 }
 const hits = (b, x, y) =>
-  x > b.x0 - FOOT && x < b.x1 + FOOT && y > b.y0 - FOOT && y < b.y1 + FOOT;
+  x > b.x0 - FOOT && x < b.x1 + FOOT && y > b.y0 - b.fy && y < b.y1 + b.fy;
 /* the solids a duck's feet at (x, y) touch, below height z (all of them without z) */
 export function solidsAt(x, y, z = -Infinity) {
   return (
@@ -932,10 +932,9 @@ const SOLID_DECKS = GS.DECKS.filter((d) => d.solid);
 export function standable(x, y, z, up = STEP, from = null, zombie = false) {
   if (variant === "l4gs") {
     // (the second map: a duck walks anywhere, past the forest line too (only the trunks stop it, the owner's, Nov 17
-    // 03:34Z), and swims the deep flood (Nov 17 05:46Z), short of the world's edge, which keeps it this side of the
-    // fences; zombies come from past the fences)
+    // 03:34Z), and swims the deep flood (Nov 17 05:46Z), up to the fence round the map, which stops it as a wall does,
+    // right at it, with no invisible wall short of it (the owner's, Nov 28 04:05Z); zombies come from past the fences)
     if (x < 0 || x > W || y < 0 || y > H) return false;
-    if (!zombie && (x < 70 || x > W - 70 || y < 70 || y > H - 70)) return false;
     if (!zombie && z < GS.STATION.wall - 1 && boardAt(x, y)) return false; // (up on a roof, over the boards: no)
     if (
       SOLID_DECKS.some((d) => onDeck(d, x, y) && deckH(d, x, y) > z + up + 1e-6)
@@ -944,7 +943,7 @@ export function standable(x, y, z, up = STEP, from = null, zombie = false) {
   } else if (x < EDGE || x > W - EDGE || y < EDGE || y > H - EDGE) return false;
   if (heightAt(x, y) > z + up + 1e-6) return false; // (a deck never stops a duck: it walks under it, or onto it from one as high)
   return !solidsAt(x, y, z).some(
-    (b) => !(from && hits(b, from[0], from[1])) && !(zombie && b.zx) && !b.pass,
+    (b) => !(from && hits(b, from[0], from[1])) && !b.pass,
   );
 }
 /* the second map's boarded holes: a duck never gets through one (zombies do, once the boards are down: l4ddrules.js) */

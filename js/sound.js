@@ -167,12 +167,11 @@ export const VOL = {
   pop: -16,
   boop: -15,
   tileIn: -21, // (stepping onto another tile: faint)
-  // Dead Ducks Arcade: boards, groans, the fireplace's spin, a sale, drops, the flashlight
+  // Dead Ducks Arcade: boards, groans, a sale, drops, the flashlight
   l4crack: -12,
   l4nail: -14,
   l4groan: -20,
   zwindup: -22, // (a zombie's swing winding up: the tell, quiet; l4ddsfx.js)
-  l4slot: -15,
   l4till: -16,
   dropIn: -16,
   dropGot: -12,
@@ -275,7 +274,6 @@ const GROUPS = {
       "l4nail",
       "l4groan",
       "zwindup",
-      "l4slot",
     ],
     ...["l4till", "dropIn", "dropGot", "flashOn", "flashOff"],
     ...["powerUp", "powerDown", "partGot", "partIn", "gasPour"],
@@ -876,6 +874,11 @@ const SFX = {
     return play("nuke", o);
   },
   boomBig: (o = {}) => play("boom", { ...o, k: (o.k ?? 1) * 1.6 }), // (the same boom, about 4 dB louder)
+  /* a game message (gamemsg.js): a soft, short double ding, the chat's ping higher, twice (the owner's, Nov 28 04:05Z) */
+  gameMsg: () => {
+    play("ping", { k: 0.55, rate: 1.35 });
+    setTimeout(() => play("ping", { k: 0.45, rate: 1.6 }), 120);
+  },
   steam,
   meteor: (fall = 1.4) =>
     setTimeout(() => play("meteor"), Math.max(0, fall - 0.05) * 1000), // (when it lands)

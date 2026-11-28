@@ -32,14 +32,12 @@ export const artKey = (svg, box, hash, steady) =>
    in bands across (each file within its budget), put back together here pixel for pixel */
 const DATA = {
   "": () => import("./pxw-cabin.js"),
-  l4: () => import("./pxw-cabin-l4.js"),
   l4gs: () => import("./pxw-downpour.js"),
 };
 const loaded = new Map();
 /* (each world's name, for the loading screen: loading.js) */
 const NAMES = {
   "": "Duck Cabin's pictures",
-  l4: "Duck Cabin's pictures",
   l4gs: "Downpour's pictures",
 };
 export function worldArt(variant) {

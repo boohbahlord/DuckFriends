@@ -89,13 +89,6 @@ def ui(path, credit=("Kenney, Interface Sounds", KENNEY_IFACE)):
     return one(path, 0.6, credit, room=False, kbps=32)
 
 
-# the fireplace's spin: its clicker's ticks, close together at first and slowing to a stop (s)
-TICKS, _t, _gap = [], 0.0, 0.055
-while _t < 4.0:
-    TICKS.append(_t)
-    _t += _gap
-    _gap *= 1.085
-
 GUNS = ("Still North Media, The Free Firearm Sound Library", OGA_URL["guns"])
 
 """Each sound: layers [(file, from s, length s, at s in the sound, gain[, low-pass Hz])], and how it's treated:
@@ -763,24 +756,6 @@ SOUNDS = {
         sf="cheat_off",
         lp=4000,
         credit=("GeneralUser GS SoundFont (S. Christian Collins)", None),
-    ),
-    # the fireplace's spin, 4.2 s: a prize wheel's clicker slowing down, then a bell as it stops on a weapon
-    "l4slot": dict(
-        layers=[
-            (
-                KR + "metalClick.ogg",
-                0.065,
-                0.07,
-                round(t, 3),
-                round(0.55 - 0.2 * t / 4, 3),
-            )
-            for t in TICKS
-        ]
-        + [(KI + "impactBell_heavy_001.ogg", 0, 1.2, 4.12, 0.9, 4000)],
-        credit=(
-            "Kenney, RPG Audio (metalClick) and Impact Sounds (impactBell_heavy)",
-            KENNEY_RPG,
-        ),
     ),
     # a sale: coins in the hand and a small ding
     "l4till": dict(
