@@ -242,17 +242,21 @@ const hasSafe = (s, id) => hasLeft(s, id, "safekeep");
 const invulnOf = (s, id, now) =>
   ((s && s.hang && s.hang.l4inv) || {})[id] > now;
 export const WALK = 380 * 0.6 * 1.05; // world px a second: ducks at 63% of Duck Cabin's walk (world.js SPEED, l4dd.js SPEED: 5% faster than 60%, the owner's, Nov 3), at the Normal Walking speed; every zombie's speed is a share of it
-export const Z_SLOW = 0.8 / 1.05; // (and the zombies 20% slower than they were, whatever the ducks' speed did)
-/* the owner's rounds: up to which round, the zombies' speed as a share of the ducks' [slowest, fastest] and the most on
-   the board at once. The steps come every 4 rounds, not 5 (the owner's, Nov 4: 5, 10, 15 and 25 became 4, 8, 12 and
-   20). How many come: zombiesFor. Their swipes are rounds 1 to 4's in every round (zombies.js SWIPE) */
+/* a zombie's speed as a share of the ducks' [slowest, fastest], each zombie its own, in every round: as fast as round 8's
+   fastest, or faster (the owner's, Nov 28 01:57Z: "we will make every zombie as fast as they are already on round 8
+   let's say, if not faster"). Hit, it staggers: STAGGER.ms at STAGGER.k of its speed */
+export const Z_SPEED = [0.6, 0.8],
+  STAGGER = { ms: 300, k: 0.3 };
+/* the owner's rounds: up to which round, the most on the board at once. The steps come every 4 rounds, not 5 (the
+   owner's, Nov 4: 5, 10, 15 and 25 became 4, 8, 12 and 20). How many come: zombiesFor. Their swipes are rounds 1 to
+   4's in every round (zombies.js SWIPE) */
 const ROUNDS = [
-  [4, [0.5, 0.67], Infinity],
-  [8, [0.5, 0.75], 35],
-  [12, [0.75, 0.75], 35],
-  [20, [0.75, 0.75], 45],
-  [Infinity, [0.75, 0.75], 50],
-]; // (after round 12, every zombie keeps round 9-12's speed and swipes; only the most at once still grows: the owner's, Nov 18 13:46Z, "the stat for every zombie AFTER round 12 now (but ignore the most at map at once, that still changes as the rounds go up)")
+  [4, Infinity],
+  [8, 35],
+  [12, 35],
+  [20, 45],
+  [Infinity, 50],
+];
 export const roundOf = (r) => ROUNDS.find((x) => r <= x[0]);
 /* the zombies in round r with p players (the owner's, Nov 16 22:11Z and 22:16Z; the sheet: charts/zombies-per-round.xlsx).
    Each phase of rounds has its base [first round, last round, base]; every player past the first adds a share of it
@@ -542,10 +546,6 @@ const SHOT_LIFE = 2000;
 export const RX = 56,
   RY = 25.6,
   CLAW = 1.35,
-  /* a zombie waiting behind another that's at a duck (it never walks into it: stepZombie, roofStep) claws from where it
-     stands, this much farther (duck lengths), so a crowd hits a duck as hard as when they squeezed in on top of each
-     other: one that's at the duck counts if it's within CLAW + near of it */
-  QUEUE = { reach: 1, near: 0.4 },
   ROOF_BACK = 1.25; // (on a roof: one pushed back by the others (separate) goes for its duck again only past this, still in reach, so it doesn't shake there)
 /* a new zombie's HP (the owner's, Nov 16 21:47Z: 3, then a 50% roll for 4; if that fails, a 50% roll for 5): 5 a
    quarter of the time, 3 a quarter, 4 half. Rolled the rarer first (the owner's, Nov 18 10:38Z), the same odds */
@@ -2925,6 +2925,7 @@ function strike(s, z, dmg, crit, by, w = "", now = 0) {
     all = !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
   z.hp = all ? 0 : hpHurt(z.hp, dmg);
+  if (z.hp > 0 && now) z.sg = Math.round(now + STAGGER.ms); // (a short stagger: zombies.js walkAll)
   const head = !!crit && z.hp <= 0;
   if (w) wound(s, z, w, crit);
   if (crit)
@@ -4249,7 +4250,7 @@ function l4Tick(s, now) {
     }
   }
   if (L2.owe > 0) {
-    const room = Math.max(0, R[2] - live),
+    const room = Math.max(0, R[1] - live),
       k = Math.min(L2.owe, room);
     for (let q = 0; q < k; q++) {
       zs.push(newZombie(s, L2, T, zs));

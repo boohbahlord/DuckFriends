@@ -41,7 +41,7 @@ color.js 165 choosing a color
 corners.js 94 full screen
 court.js 230 Lawyering: what the screen shows
 courtrules.js 17 the courtroom's seats: Lawyering and
-crowd.js 376 crowds: walkers never stand in
+crowd.js 295 crowds: walkers keep out of
 customize.js 1760 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 233 Democracy of Ducklings:
@@ -117,7 +117,7 @@ l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4439 the rules of Quacky Zombies
+l4ddrules.js 4440 the rules of Quacky Zombies
 l4ddsfx.js 509 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -263,8 +263,8 @@ weaponuse.js 104 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 482 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
-zombieroofs.js 327 the zombies' walk over Downpour's
-zombies.js 1305 the zombies: one module for
+zombieroofs.js 294 the zombies' walk over Downpour's
+zombies.js 1294 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the
