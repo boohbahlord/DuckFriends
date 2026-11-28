@@ -578,6 +578,7 @@ export const setCam = (v) => {
 export const setBbZoom = (v) => {
   bbZoom = v;
 };
+let thrown = 0; // how far the last hit threw my duck (world px), till it lands: its fall damage (step)
 export let shovedAt = 0,
   putAt = 0; // the handgun or dagger kept out (Shift and its key), and where the mouse is on the screen
 export let shows = {}; // a handgun just fired, shown turned toward its aim for a moment: by player id
@@ -2686,11 +2687,16 @@ function hangStep(dt, now) {
   if (isL4dd(R.state)) me.aim = myAim(); // (Quacky Zombies: my flashlight shines where I aim)
   if (ev.whee) sfx.fall(); // off the deck: a slide whistle
   if (ev.thud > 90) sfx.bonk(); // and the landing
-  if (ev.thud >= SB_LAND_MIN || (ev.thud > 0 && fallHurt(ev.thud, ev.side) > 0))
+  /* a fall's damage counts its drop only; the way across counts only when a hit threw my duck and it had airtime, and
+     then only the hit's own throw, never my steering in the air (the owner's, Nov 28 07:38Z and 07:48Z,
+     cmsg_01LTpp6fzv8sfYUR5KoHADKtLW5YEtHzaRtQz2MurzDnGc, cmsg_01LTpp6fzv8sfYUR5KoHADKt85QTZdsCLKuJ9bJ1LRRDyx) */
+  const side = (ev.thud > 0 && thrown) || 0;
+  if (ev.thud > 0 || (me.vz == null && !me.j)) thrown = 0; // (landed, or never left the ground)
+  if (ev.thud >= SB_LAND_MIN || (ev.thud > 0 && fallHurt(ev.thud, side) > 0))
     R.send({
       t: "land",
       h: Math.round(ev.thud),
-      s: Math.round(ev.side || 0),
+      s: Math.round(side),
       x: +me.x.toFixed(4),
       y: +me.y.toFixed(4),
       z: Math.round(me.z || 0),
@@ -2949,6 +2955,7 @@ function paintNow(force) {
     const p = s.pos[R.me];
     if (p.kb && p.kb.t !== shovedAt) {
       shovedAt = p.kb.t;
+      thrown = Math.hypot((p.x - p.kb.x) * HW, (p.y - p.kb.y) * HH); // (how far the hit itself threw me, never my own steering: its fall damage, below)
       me.x = p.x;
       me.y = p.y;
       target = null;

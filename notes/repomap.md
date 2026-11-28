@@ -64,11 +64,11 @@ front.js 150 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4385 the game screen
+game.js 4392 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 84 the game's own numbers, for
+gamedefaults.js 86 the game's own numbers, for
 gamefx.js 691 the board's specials and the
 gamehand.js 506 the hand: the number-key specials,
 gamemsg.js 93 lines by the chat button:
@@ -89,7 +89,7 @@ gunparts.js 15 the pieces every weapon's drawing
 guns.js 656 every weapon's numbers: one sheet
 hats.js 1003 hats
 heat.js 93 a gun's heat: the spread
-heights.js 95 a shot's height, Doom's way
+heights.js 97 a shot's height, Doom's way
 hideui.js 30 hide ui
 homeapp.js 44 Download Duck Friends
 hotbar.js 515 the specials on the number
@@ -265,7 +265,7 @@ weaponuse.js 100 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
-zombieroofs.js 314 the zombies' walk over Downpour's
+zombieroofs.js 322 the zombies' walk over Downpour's
 zombies.js 1305 the zombies: one module for
 
 ## js/hangout/
@@ -332,7 +332,7 @@ trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on
 water.js 442 the pool: ducks in the
-world.js 1781 Hangout on the screen: the
+world.js 1777 Hangout on the screen: the
 
 ## js/pxm/
 board-light.js 7 the menus' background in the
