@@ -1155,7 +1155,7 @@ export const chaseField = (goals) =>
   );
 /* one zombie z ({ x, y } in world px) walks far px toward goal [x, y]: straight at it once nothing is in between,
    else down the field. ducks: [{ xy, zz }], the ones it never walks into */
-function chaseStep(z, dist, goal, far, ducks = []) {
+export function chaseStep(z, dist, goal, far, ducks = []) {
   const aim =
     (Math.hypot(goal[0] - z.x, goal[1] - z.y) < 240 &&
       walkable(z.x, z.y, ...goal) &&

@@ -14,7 +14,7 @@ import { playable, OPENINGS, dp, syncMap } from "./l4ddrules.js";
    the way of least walking, never the duck nearest through a wall. */
 let GX = 1280,
   GY = 580;
-let GW = 82,
+export let GW = 82,
   GH = 52; // (Downpour's grid covers its whole world: syncMap)
 export const setGrid = (g) => ([GX, GY, GW, GH] = g); // (the map's grid, as syncMap finds it: l4ddrules.js)
 const BOARD_COST = 6; // (cells' worth of walking)

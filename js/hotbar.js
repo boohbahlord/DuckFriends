@@ -29,7 +29,8 @@ const drain = (c) =>
 /* api: keys() → the ten ids (or null), kept() → the set of ids kept on, use(i, keep), cool() → for each key, null or
    [when it works again, how long it waits, now] (an item just used: its key shows a bar draining until then), duck() →
    my duck (the hammer shows as a wrench on a duck that picked it), ammo() → the handgun's shots left (dots under its key),
-   select(i) → the slider picked key i, tap(i) → its middle one was tapped, caption(id) → the small text over the slider (or none).
+   dots(id) → the dots under a key, when the game has its own (a gun's shots in its magazine),
+   select(i) → the slider picked key i, tap(i) → its middle one was tapped, current() → the id the game wants in the slider's middle (or null), caption(id) → the small text over the slider (or none).
    A game with slots of its own (Quacky Zombies) gives look(id) → { id, name, icon, off, keep, cls } for each (keep:
    false, the square can't switch it; cls, the slot's color) and sig() → what changes how they look. own(id) → the same for
    only some slots (Sandbox's spawn buttons), null for the rest, which look as specials do */
@@ -64,7 +65,11 @@ export function mountHotbar(S, api) {
     lookS = (id) =>
       hole(id) ? { id, name: "Empty slot", icon: "", cls: "empty" } : look(id);
   const dots = (id) =>
-    id === "handgun" && api.ammo ? ammoHTML(api.ammo()) : "";
+    api.dots
+      ? api.dots(id)
+      : id === "handgun" && api.ammo
+        ? ammoHTML(api.ammo())
+        : "";
 
   const draw = () => {
     const k = api.keys(),
@@ -220,7 +225,8 @@ export function mountHotbar(S, api) {
     cur = null, // the id in the middle
     pos = 0, // where the slider is: the list index in the middle (between two while a finger slides it)
     slideSig = "",
-    listSig = "";
+    listSig = "",
+    lastWant = null;
   /* the screen's size, kept here: reading innerWidth or innerHeight makes the browser lay the page out first, and
      lay() ran every frame in a swarm, when the page is never settled (the owner's phone measure, Nov 20: 645 ms of
      8 s at 4x). It changes only on a resize; a slot's step likewise */
@@ -374,6 +380,14 @@ export function mountHotbar(S, api) {
       }
     }
     /* the one in the middle stays (gone from my keys, like a medkit used: the nearest one) */
+    const want = api.current && api.current();
+    if (want !== lastWant) {
+      lastWant = want;
+      if (want && list.some(([id]) => id === want) && cur !== want) {
+        cur = want;
+        peekSwitch(false);
+      }
+    } // (the game put another in hand: Dead Ducks Arcade's number keys)
     if (curI() < 0 && list.length)
       pick(Math.min(Math.round(pos), list.length - 1), !!cur);
     else if (!track.classList.contains("sliding")) {

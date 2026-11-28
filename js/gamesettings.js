@@ -425,6 +425,8 @@ export function openGameSettings(R, start = null) {
       `<div class="gs-pic gs-keep">${keep}</div><div class="gs-text">`,
     );
   }
+  /* the map the options name, as its row says it: Dead Ducks Arcade's Duck Cabin is Downpour */
+  const mapShown = (o) => (modeOf(o.mode).l4map ? "downpour" : o.map);
   function stageCard(s, o) {
     let p = peek;
     if (!p)
@@ -433,7 +435,7 @@ export function openGameSettings(R, start = null) {
           ? { kind: "mode", id: o.mode }
           : { kind: "map", id: "cabin" }
         : page === "map"
-          ? { kind: "map", id: o.mapPick ? o.mapPick : o.map }
+          ? { kind: "map", id: o.mapPick || mapShown(o) }
           : page === "opts"
             ? { kind: "opts" }
             : page && page.startsWith("cat:")
@@ -475,6 +477,8 @@ export function openGameSettings(R, start = null) {
           .join(", "),
       );
     if (p.kind === "map") {
+      if (p.id === "downpour")
+        return card("Downpour", "", mapPic(s, "cabin", "l4dd")); // (Dead Ducks Arcade's own map)
       if (p.id === "vote" || p.id === "random")
         return card(
           p.id === "vote" ? "Vote Mode & Map" : "Random",
@@ -590,7 +594,7 @@ export function openGameSettings(R, start = null) {
     else if (r && r.dataset.p === "mode")
       p = { kind: "mode", id: S().options.modePick || S().options.mode };
     else if (r && r.dataset.p === "map")
-      p = { kind: "map", id: S().options.mapPick || S().options.map };
+      p = { kind: "map", id: S().options.mapPick || mapShown(S().options) };
     else if (r && r.dataset.p === "opts") p = { kind: "opts" };
     else if (set) p = describe(set.dataset.d);
     if (!p || JSON.stringify(p) === JSON.stringify(peek)) return;
