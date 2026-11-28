@@ -5,24 +5,38 @@
    allDecks, not a car's solid top) higher than the light is drawn now, the cone is cut back out over it, so a light under
    a roof never lights its top, nor what stands under it seen through it (the pumps' squares on the canopy). The other way
    needs nothing: a duck up on a roof is out of sight from under it (layout.js seenFrom), and so is its light */
-import { allDecks, deckH } from "./hangout/layout.js";
+import { allDecks, deckH, onDeck } from "./hangout/layout.js";
 
+/* the roofs a cone is cut over: not a car's solid top, nor a building's roof while I'm inside (it isn't drawn then) */
+const cuts = (d, inside) => !d.solid && !(d.bldg && inside);
+/* is (x, y) under or on a roof higher than a light at z: its cone is cut there, so it lights nothing there (l4dd.js paint:
+   a duck or a zombie in its beam, a duck's name) */
+export const roofOver = (x, y, z, inside) =>
+  allDecks().some(
+    (d) => cuts(d, inside) && onDeck(d, x, y) && deckH(d, x, y) > z + 1,
+  );
+const CX = [0, 0, 0, 0],
+  CY = [0, 0, 0, 0],
+  CH = [0, 0, 0, 0]; // (a roof's corners, reused: a moving light redraws its cone often)
 export function cutRoofsOver(g, Wd, z, q) {
   g.globalCompositeOperation = "destination-out";
   g.globalAlpha = 1;
   g.fillStyle = "#000";
   for (const d of allDecks()) {
-    if (d.solid || (d.bldg && Wd.inside)) continue; // (a building's roof isn't drawn while I'm inside)
-    const c = [
-      [d.x0, d.y0],
-      [d.x1, d.y0],
-      [d.x1, d.y1],
-      [d.x0, d.y1],
-    ].map(([x, y]) => [x, y, deckH(d, x, y)]);
-    if (c.every((p) => p[2] <= z + 1)) continue; // (no higher than the light: it lights it)
+    if (!cuts(d, Wd.inside)) continue;
+    CX[0] = CX[3] = d.x0;
+    CX[1] = CX[2] = d.x1;
+    CY[0] = CY[1] = d.y0;
+    CY[2] = CY[3] = d.y1;
+    let high = false;
+    for (let i = 0; i < 4; i++) {
+      CH[i] = deckH(d, CX[i], CY[i]);
+      if (CH[i] > z + 1) high = true;
+    }
+    if (!high) continue; // (no higher than the light: it lights it)
     g.beginPath();
-    for (const [x, y, h] of c) {
-      const e = Wd.toScreen(x, y, h);
+    for (let i = 0; i < 4; i++) {
+      const e = Wd.toScreen(CX[i], CY[i], CH[i]);
       g.lineTo(e.left * q, e.top * q);
     }
     g.closePath();

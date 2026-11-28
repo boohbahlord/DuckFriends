@@ -1184,8 +1184,7 @@ planBuild({
   wallY: (...a) => CALLS.push(["wallY", ...a]),
   T: 12 / K,
 });
-for (const o of [ROAD, WATER, TOP, BOT, STATION, CHAPEL, TOWER, RIM])
-  scaled(o);
+for (const o of [ROAD, WATER, TOP, BOT, STATION, CHAPEL, TOWER, RIM]) scaled(o);
 for (const o of [
   WALK_HOLES,
   BOARDED,
@@ -1278,20 +1277,22 @@ DECKS.push(
     at = (x, y) =>
       parts.filter((q) => x >= q.x0 && x < q.x1 && y >= q.y0 && y < q.y1),
     F = FALLEN;
-  DECKS.push({
-    kind: "log",
-    x0: Math.min(...parts.map((q) => q.x0)),
-    y0: Math.min(...parts.map((q) => q.y0)),
-    x1: Math.max(...parts.map((q) => q.x1)),
-    y1: Math.max(...parts.map((q) => q.y1)),
-    h: Math.max(...parts.map((q) => q.top)),
-    hAt: (x, y) => Math.max(0, ...at(x, y).map((q) => q.top)),
-    inside: (x, y) => at(x, y).length > 0,
-    key: (F.y0 + F.y1) / 2,
-    holes: [],
-    bldg: 0,
-    solid: true,
-  });
+  DECKS.push(
+    /** @type {(typeof DECKS)[0]} */ ({
+      kind: "log",
+      x0: Math.min(...parts.map((q) => q.x0)),
+      y0: Math.min(...parts.map((q) => q.y0)),
+      x1: Math.max(...parts.map((q) => q.x1)),
+      y1: Math.max(...parts.map((q) => q.y1)),
+      h: Math.max(...parts.map((q) => q.top)),
+      hAt: (x, y) => Math.max(0, ...at(x, y).map((q) => q.top)),
+      inside: (x, y) => at(x, y).length > 0,
+      key: (F.y0 + F.y1) / 2,
+      holes: [],
+      bldg: 0,
+      solid: true,
+    }),
+  );
 }
 export function build(b) {
   for (const [f, ...a] of CALLS) {

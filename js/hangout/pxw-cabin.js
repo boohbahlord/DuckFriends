@@ -1,15 +1,15 @@
 /* made by tools/pixel-world.cjs: don't change it by hand (pxworld.js) */
 export const GROUND = {
   parts: [
-    "assets/px/world/cabin-ground1-b8d5e9d3.webp",
-    "assets/px/world/cabin-ground2-8257654f.webp",
+    "assets/px/world/cabin-ground1-5649119e.webp",
+    "assets/px/world/cabin-ground2-c66ce96e.webp",
   ],
   x: -512,
   y: -1024,
   w: 3584,
   h: 3072,
 };
-export const ATLAS = "assets/px/world/cabin-props-7e90b461.webp";
+export const ATLAS = "assets/px/world/cabin-props-f3ceec83.webp";
 export const INDEX = {
   "1yk5tkwqk@336x102": { "": [1294, 4880, 336, 102] },
   "ydkmgv3en@1136x102": { "": [0, 5001, 1136, 102] },

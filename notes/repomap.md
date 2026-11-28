@@ -105,7 +105,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3256 Quacky Zombies on every screen
+l4dd.js 3260 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -126,7 +126,7 @@ laserart.js 95 the laser gun, drawn
 laserfx.js 135 the Laser Rifle on the
 later.js 66 the rest of the game,
 lawrules.js 360 the rules of Lawyering
-lightlevel.js 32 one rule by level for
+lightlevel.js 46 one rule by level for
 loading.js 404 the start: a slow fade
 loadlines.js 590 the lines under the loading
 lobby.js 614 the lobby, laid out like
@@ -164,7 +164,7 @@ players.js 342 the player menu and the
 pointer.js 54 a computer or a phone
 powerart.js 377 Dead Ducks Arcade: the power
 push.js 87 push and knock-back: one module
-pxa.js 954 made by tools/pixel-art.cjs:
+pxa.js 669 made by tools/pixel-art.cjs:
 pxbake.js 627 a map's pictures made into
 pxcard.js 259 the player cards' pattern motifs
 pxdom.js 764 the pixel look for drawings
@@ -209,7 +209,7 @@ sbnpcart.js 162 Sandbox: a spawned NPC's picture,
 sbnpcs.js 73 Sandbox: the NPCs I make
 sbout.js 62 Sandbox off the zombie maps:
 sbrotate.js 102 Sandbox, Direction's Rotate in the
-sbsave.js 328 Sandbox: saving a Sandbox as
+sbsave.js 331 Sandbox: saving a Sandbox as
 sbsaves.js 734 Sandbox's saves: kept on the
 sbseriat.js 477 Sandbox: NPCs that run a
 sbsfx.js 74 Sandbox's sounds
@@ -306,10 +306,9 @@ plank.js 90 the plank from the red
 poker.js 1172 poker at the blackjack table
 pool.js 9 down the hill: the water
 power.js 501 the power box, the blackout,
-pxw-cabin-l4.js 418 made by tools/pixel-world.cjs:
 pxw-cabin.js 433 made by tools/pixel-world.cjs:
-pxw-downpour.js 344 made by tools/pixel-world.cjs:
-pxworld.js 87 Duck Cabin's and Downpour's art
+pxw-downpour.js 333 made by tools/pixel-world.cjs:
+pxworld.js 85 Duck Cabin's and Downpour's art
 registry.js 106 Hangout's two registries: what each
 rubberducks.js 183 the little rubber ducks in
 rules.js 88 Hangout's rules: s.hang and the
@@ -325,7 +324,7 @@ stage.js 134 the stage: half an oval
 stationart.js 51 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 523 Downpour's drawings: the cars, the
-stationmap.js 1308 Dead Ducks Arcade's second map:
+stationmap.js 1309 Dead Ducks Arcade's second map:
 stationparts.js 477 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
 stationtrees.js 592 Downpour's drawings: the swamp's trees
@@ -333,7 +332,7 @@ trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on
 water.js 442 the pool: ducks in the
-world.js 1779 Hangout on the screen: the
+world.js 1781 Hangout on the screen: the
 
 ## js/pxm/
 board-light.js 7 the menus' background in the

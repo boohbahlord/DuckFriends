@@ -64,7 +64,7 @@ import {
 } from "./hangout/stationmap.js";
 import { floatDuck, SINK, WADE_SINK } from "./hangout/water.js";
 import { fenceLean } from "./hangout/stationart.js";
-import { cutRoofsOver } from "./lightlevel.js";
+import { cutRoofsOver, roofOver } from "./lightlevel.js";
 import { bellSwing, bellReset, flareDraw, flareOn } from "./l4ddbell.js";
 import {
   L4,
@@ -1272,10 +1272,10 @@ function aimOf(s, id, ctx) {
   return [dx, dy];
 }
 let CTX = null, // (the screen's camera and state, as paint() last had them)
-  BEAMS = []; // (every flashlight on now: [x, y, its angle] on the floor)
+  BEAMS = []; // (every flashlight on now: [x, y, its angle, its height] on the floor)
 /* is (x, y) on the floor in a flashlight's beam (and no wall between)? */
-function inBeam(x, y) {
-  for (const [bx, by, t] of BEAMS) {
+function inBeam(x, y, inside) {
+  for (const [bx, by, t, bz] of BEAMS) {
     const dx = x - bx,
       dy = y - by,
       d = Math.hypot(dx, dy);
@@ -1283,7 +1283,11 @@ function inBeam(x, y) {
     const off = Math.abs(
       ((Math.atan2(dy, dx) - t + 3 * Math.PI) % (2 * Math.PI)) - Math.PI,
     );
-    if (off < CONE.half && rayTo(bx, by, dx / d, dy / d, d) >= d - 8)
+    if (
+      off < CONE.half &&
+      rayTo(bx, by, dx / d, dy / d, d) >= d - 8 &&
+      !roofOver(x, y, bz, inside)
+    )
       return true;
   }
   return false;
@@ -1306,7 +1310,7 @@ export function laserEnd(id) {
 }
 /* other ducks' names show only while a flashlight (anyone's but their own) reaches them (the owner's, Nov 16; the CSS
    puts them small over the head, and always shows them on a phone, which has no flashlight). beams: [id, x, y, angle,
-   each ray's reach], from paint() */
+   each ray's reach, the light's height], from paint() */
 let litSig = "";
 function litNames(s, ctx, beams) {
   const Wd = ctx.world,
@@ -1316,8 +1320,8 @@ function litNames(s, ctx, beams) {
     if (id === ctx.me) continue;
     const a = Wd.at(id);
     if (!a) continue;
-    for (const [by, x, y, t, ds] of beams) {
-      if (by === id) continue;
+    for (const [by, x, y, t, ds, z] of beams) {
+      if (by === id || roofOver(a.x, a.y, z, Wd.inside)) continue;
       const dx = a.x - x,
         dy = a.y - y,
         d = Math.hypot(dx, dy);
@@ -1482,14 +1486,14 @@ function paint(now, ctx) {
       [a.x, a.y, ends, a.z],
       roof,
     ]);
-    BEAMS.push([a.x, a.y, t]);
-    beams.push([id, a.x, a.y, t, pts.map((e) => e[2])]);
+    BEAMS.push([a.x, a.y, t, a.z]);
+    beams.push([id, a.x, a.y, t, pts.map((e) => e[2]), a.z]);
   }
   /* a duck or a zombie in a beam is as bright as the beam's middle, all of it (owner, Nov 16: "zombie ducks and players
      should become a matching brightness of the flashlight when they are in it") */
   if (BEAMS.length) {
     const lit = (x, y, z, k) => {
-      if (!inBeam(x, y)) return;
+      if (!inBeam(x, y, Wd.inside)) return;
       const p = Wd.toScreen(x, y, z + 30 * k);
       if (on(p.left * q, p.top * q, 50 * sc))
         holes.push([p.left * q, p.top * q, 50 * sc * k, 0.92]);
