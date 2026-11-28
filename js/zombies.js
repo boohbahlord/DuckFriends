@@ -200,7 +200,7 @@ export function store(s, zs, keepStatic) {
     for (const k of KEEP) if (z[k] !== undefined) x[k] = z[k];
     if (Object.keys(x).length) mine[z.i].push(x);
     zl[z.i] = z.l;
-    if (z.st === 8 && z.j) zj[z.i] = z.j;
+    if ((z.st === 8 || z.st === 9) && z.j) zj[z.i] = z.j; // (9: a Flyer's duck's height, flyerStep)
   }
   const sig = (o) => JSON.stringify(o);
   if (sig(zp) !== sig(s.hang.zp)) s.hang.zp = zp;
@@ -369,17 +369,19 @@ export function flyerOff(z, now) {
   z.n = 0;
   z.fc = now + F.rest;
   delete z.fy;
+  delete z.j;
 }
 /* a Flyer's heartbeat, before the walk every zombie has: true when this did it (it holds on, or leapt) */
 function flyerStep(z, c, fly) {
   const { now, pls } = c;
   if (z.st === 9) {
     const q = z.fy && pls.find((p) => p.id === z.fy[0]);
-    if (!q) {
-      flyerOff(z, now); // (its duck is down, or gone)
+    if (!q || c.down(q)) {
+      flyerOff(z, now); // (its duck is down, or gone; Safe Keeping keeps a downed one in pls)
       return true;
     }
     [z.x, z.y] = q.xy;
+    z.j = [Math.round(q.zz)]; // (its duck's height, up a floor or in a jump, for every screen: store's zj, zombieZ)
     if (now >= z.fy[1]) {
       z.fy = [z.fy[0], now + F.bite, z.fy[2]];
       if (c.latch(q, rnd(...F.dmg))) flyerOff(z, now);
@@ -397,7 +399,7 @@ function flyerStep(z, c, fly) {
     }
     return true;
   }
-  if (z.st !== 2 || (z.fc || 0) > now) return false;
+  if (z.st !== 2 || (z.fc || 0) > now || c.cake) return false; // (the zebra cake draws it too)
   const h = zOf(z, "zombie");
   let q = null;
   for (const p of pls) {
@@ -661,6 +663,7 @@ export function moveZombies(s, zs, now, T, up, seers = up) {
     way: (x, y, tx, ty) => wayTo(x, y, tx, ty, now),
     bite: (x, y) => addFx(s, { kind: "l4bite", who: [], t: now, x, y }),
     claw: (target, z) => mapClaw(s, p4, target, z, now),
+    down: (q) => !!(p4[q.id] || {}).dn, // (a duck down, Safe Keeping's too: a Flyer lets go)
     latch: (q, dmg) => hurtDuck(s, p4, q.id, now, "claw", dmg), // (a Flyer's bite: true once its duck is down)
     tug: (q, ux, uy) => tugDuck(s, q.id, ux, uy, F.pull.px, now), // (a Flyer's tug: as a shove, l4ddrules.js)
   };
@@ -1142,7 +1145,7 @@ const zombieZ = (z) =>
         : z.st === 8 && z.j
           ? jumpZ(z)
           : z.st === 9
-            ? gr().h(z.x, z.y) + F.ride // (a Flyer on a duck: on its back)
+            ? (z.j ? z.j[0] : gr().h(z.x, z.y)) + F.ride // (a Flyer on a duck: on its back, at its duck's height)
             : gr().h(z.x, z.y);
 heightWay("zombie", zombieZ); // (every zombie's height is asked through heights.js zOf)
 /* an opening's two spots for zombie z: out (where it waits and tears) and in (where it's through). A fence's at the

@@ -2989,6 +2989,7 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
     for (const z of zs)
       if (
         z.st !== 3 &&
+        z.st !== 9 && // (a Flyer on a duck: only melee reaches it)
         !hits.includes(z) &&
         Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
         canShoot(z, px, py, hz)
@@ -3140,6 +3141,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
   for (const z of zs)
     if (
       z.st !== 3 &&
+      z.st !== 9 && // (a Flyer on a duck: only melee reaches it)
       inCone((z.x - px) / D, (z.y - py) / D, dx, dy, far / D + 0.4) &&
       canShoot(z, px, py, hz)
     ) {
@@ -3209,6 +3211,7 @@ function flameTick(s, zs, now, T) {
       for (const z of zs)
         if (
           z.st !== 3 &&
+          z.st !== 9 && // (a Flyer on a duck: only melee reaches it)
           Math.hypot(z.x - x, (z.y - y) * 1.3) < r &&
           (!dp() || Math.abs(zOf(z, "zombie") - (h || 0)) < SAME_FLOOR)
         )
@@ -3219,6 +3222,7 @@ function flameTick(s, zs, now, T) {
     const hot = zs.filter(
       (z) =>
         z.st !== 3 &&
+        z.st !== 9 && // (a Flyer on a duck: only melee reaches it)
         fz[z.i] &&
         fz[z.i][3] &&
         now >= fz[z.i][3] &&
@@ -3229,6 +3233,7 @@ function flameTick(s, zs, now, T) {
         if (
           b !== a &&
           b.st !== 3 &&
+          b.st !== 9 &&
           !(fz[b.i] && fz[b.i][0] > now) &&
           Math.hypot((a.x - b.x) / 26, (a.y - b.y) / 22) < TOUCH_Z &&
           (!dp() || Math.abs(zOf(a, "zombie") - zOf(b, "zombie")) < SAME_FLOOR)
@@ -3252,7 +3257,7 @@ export function fireTick(s, zs, now, T, p4) {
   for (const k of Object.keys(fz)) {
     const z = zs.find((q) => q.i === +k),
       f = fz[k];
-    if (!z || z.st === 3 || now >= f[0] || wetZ(z)) {
+    if (!z || z.st === 3 || z.st === 9 || now >= f[0] || wetZ(z)) {
       delete fz[k];
       continue;
     } // (gone, out, or in the water: put out)
@@ -3710,6 +3715,7 @@ export function l4Shots(s, now) {
         nearby(grid, zs, x, y).some(
           (z) =>
             z.st !== 3 &&
+            z.st !== 9 && // (a Flyer on a duck: only melee reaches it)
             Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
             hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
             !past(sh, "glauncher", z),
