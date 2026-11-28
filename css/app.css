@@ -16271,6 +16271,20 @@ body:has(> .win-back) .screen > .l4-srb,
   opacity: var(--f, 1);
   mix-blend-mode: screen;
 } /* (its glow: pixels of the grid's size, drawn by l4dd.js flarePic, flickering there) */
+.l4-crate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(44px * var(--k, 1));
+  height: calc(52px * var(--k, 1));
+  margin: calc(-52px * var(--k, 1)) 0 0 calc(-22px * var(--k, 1));
+  pointer-events: none;
+}
+.l4-crate svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .l4-drop {
   position: absolute;
   left: 0;

@@ -1,7 +1,10 @@
-/* I want the supply crate checked (the director plan, Nov 28; l4ddrules.js crateCome, crateTick): when a round ends with a
-   duck low on ammo that can't afford a refill, a crate is on its way (heard first), and DIRECTOR.CRATE.HEAR later its
-   things lie by the soldier's red flare: one or two for each of the two ducks here. A round that ends with every duck
-   full sends none.
+/* I want the supply crate checked (the director plan, Nov 28, and the owner's changes that day,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtBUzMwY1XKox5HKv4m8BzaU; l4ddrules.js crateCome, crateTick, crateSolid, crateTake): when
+   a round ends with a duck low on ammo that can't afford a refill, a crate is on its way (heard first) with one or two
+   things for each of the two ducks here, and DIRECTOR.CRATE.HEAR later it lands on the gas station's roof by the
+   soldier's red flare; it's solid up there and nothing under it; from the ground it can't be opened, from beside it on
+   the roof it opens and a thing of it is taken; opened, it's gone when the next rest begins. A round that ends with
+   every duck full sends none.
    Run: node tools/check/run.mjs crate */
 const { fail, noErrors, fakedPage } = require("./lib.cjs");
 (async () => {
@@ -10,6 +13,7 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     const R = await import("./js/l4ddrules.js"),
       Z = await import("./js/zombies.js"),
       GS = await import("./js/hangout/stationmap.js"),
+      LY = await import("./js/hangout/layout.js"),
       { DIRECTOR } = await import("./js/gamedefaults.js"),
       { l4Room } = await import("./tools/check/l4room.js");
     const tick = (room, ms) => {
@@ -18,7 +22,7 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
         room.send({ t: "tick", id: room.me });
       }
     };
-    /* round 1 under way, then every zombie of it gone: the rest comes on the next beat */
+    /* a round under way, then every zombie of it gone: the rest comes on the next beat */
     const endRound = (room, poor) => {
       const s = room.state,
         me = room.me;
@@ -41,26 +45,61 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     };
     const play = async (name, poor) => {
       const room = await l4Room(
-        name,
-        (r) => r.state.hang && r.state.hang.l4 && r.state.hang.l4.r >= 1,
-      );
+          name,
+          (r) => r.state.hang && r.state.hang.l4 && r.state.hang.l4.r >= 1,
+        ),
+        me = room.me,
+        { W, H } = LY;
       tick(room, 4000);
-      const before = (room.state.hang.l4dr || []).length;
       endRound(room, poor);
       const coming = room.state.hang.l4cr,
         heard = (room.state.fx || []).some((f) => f.kind === "l4heli");
       tick(room, DIRECTOR.CRATE.HEAR + 400);
-      const near = (room.state.hang.l4dr || []).filter(
-        (d) => Math.hypot(d.x - GS.FLARE.x, d.y - GS.FLARE.y) < 1300,
+      const c = room.state.hang.l4cr,
+        at = c && c.at,
+        out = {
+          wait: !!room.state.hang.l4.wait,
+          coming: coming ? coming.w.length : 0,
+          heard,
+        };
+      if (!at) return out;
+      const roof = LY.floorH(GS.FLARE.x, GS.FLARE.y, 1e4),
+        kind = (z) => LY.solidsAt(at[0], at[1], z).map((q) => q.kind);
+      Object.assign(out, {
+        roof: at[2] === roof && roof > 0,
+        flare: Math.round(Math.hypot(at[0] - GS.FLARE.x, at[1] - GS.FLARE.y)),
+        solid: kind(at[2]).includes("crate"),
+        under: kind(0).includes("crate"),
+      });
+      /* from the ground under it: no */
+      const to = (x, y, z) =>
+        (room.state.pos[me] = {
+          ...room.state.pos[me],
+          x: x / W,
+          y: y / H,
+          z,
+        });
+      to(at[0] + 60, at[1], 0);
+      room.send({ t: "hang", k: "l4", do: "crate", open: true });
+      out.ground = !!room.state.hang.l4cr.op;
+      /* beside it on the roof: it opens, and its first thing is taken */
+      to(at[0] + DIRECTOR.CRATE.HALF + 30, at[1], at[2]);
+      room.send({ t: "hang", k: "l4", do: "crate", open: true });
+      out.op = !!room.state.hang.l4cr.op;
+      const w = room.state.hang.l4cr.w[0];
+      room.send({ t: "hang", k: "l4", do: "crate", what: w });
+      out.took = room.state.hang.l4cr.w.length === out.coming - 1;
+      /* the next round, ended with everyone full: it's gone */
+      for (const id of room.state.seat)
+        room.send({ t: "hang", k: "l4", do: "endturn", on: true, id });
+      tick(room, 12000);
+      endRound(room, false);
+      out.gone = !room.state.hang.l4cr;
+      out.free = !LY.solidsAt(at[0], at[1], at[2]).some(
+        (q) => q.kind === "crate",
       );
       room.leave && room.leave();
-      return {
-        wait: !!room.state.hang.l4.wait,
-        coming: coming ? coming.n : 0,
-        heard,
-        laid: (room.state.hang.l4dr || []).length - before,
-        near: near.length,
-      };
+      return out;
     };
     const out = { poor: await play("C1", true), full: await play("C2", false) };
     window.__fake = false;
@@ -73,6 +112,10 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
   if (!P.wait) return bad("the round didn't end");
   if (!(P.coming >= 2 && P.coming <= 4) || !P.heard)
     bad("low on ammo and poor: a crate of 2 to 4 things on its way, heard");
-  if (P.near !== P.coming) bad("its things by the flare");
-  if (got.full.coming || got.full.near) bad("every duck full: no crate");
+  if (!P.roof || !(P.flare < 600)) bad("it lands on the flare's roof, by it");
+  if (!P.solid || P.under) bad("solid on the roof, nothing under it");
+  if (P.ground || !P.op || !P.took)
+    bad("opened and taken from beside it on the roof only");
+  if (!P.gone || !P.free) bad("opened: gone when the next rest begins");
+  if (got.full.coming) bad("every duck full: no crate");
 })();
