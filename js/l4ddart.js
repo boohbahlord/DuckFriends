@@ -457,7 +457,7 @@ export function zombieDK(l, n = 0, hits = "") {
 /* its box: 64 wide, as tall as its drawing (a hat makes it taller); feet 10 units over the bottom, as a duck's */
 const BOXES = new Map();
 export function zombieBox(l) {
-  const k = [l[3], l[4], l[5], l[6], l[7]].join();
+  const k = [l[3], l[4], l[5], l[6], l[7], l[8]].join();
   if (!BOXES.has(k)) {
     const v = duckSVG(zombieLook(l), { size: 64, dead: true })
       .match(/viewBox="([^"]+)"/)[1]

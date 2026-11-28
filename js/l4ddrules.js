@@ -140,6 +140,8 @@ import {
   pwAdd,
   explodedLook,
   DEATH,
+  armorHit,
+  helmeted,
 } from "./wounds.js";
 /* a line in the chat (as rules.js' logLine) */
 function logIn(s, line) {
@@ -194,6 +196,9 @@ import {
   store,
   minus,
   newZombie,
+  specialTick,
+  zArmor,
+  flyerOff,
   moveZombies,
   STATION,
   zFloor,
@@ -535,7 +540,11 @@ export const zombieLook = (l) => ({
   ...(l[5] >= 0 ? { hat: { id: ZHATS[l[5]] } } : {}),
   ...(l[6] >= 0 ? { outfit: { id: ZOUTFITS[l[6]] } } : {}),
   ...(l[7] ? { face: { id: "glasses" }, outfit: { id: "jeans" } } : {}),
+  ...(l[8] === Z_BREED.moto ? { face: { id: "moto" } } : {}),
 });
+/* a zombie's breed (l[8]; 0 or none a plain one): its armor (zombies.js armorRoll: an army helmet, a motorcycle helmet,
+   or SWAT gear, until its own look is drawn an army helmet and a police uniform), or a special one (specialTick) */
+export const Z_BREED = { helmet: 1, moto: 2, swat: 3, flyer: 4, giant: 5 };
 
 /* ---------- the map: only inside and the deck ----------
    The deck's stairs are boarded at the top (their landing is part of the deck). The openings: where zombies come in,
@@ -2789,6 +2798,9 @@ function merchantFight(s, m0, now, dt) {
     f: fx < m.x ? -1 : 1,
   };
 }
+/* what merchant m wears that stops hits (wounds.js armorHit): Brah's motorcycle helmet */
+const merchantArmor = (m) =>
+  helmeted(merchantLook(merchantById(m.id), m.roll)) ? "helmet" : "";
 /* a shot or a swing at (x, y) by duck `by` with weapon w: on him? (as wildHurt for Justin: 1 HP, a crit 2) */
 function merchantShot(s, ...a) {
   return eachMerchant(s, () => merchantShot1(s, ...a));
@@ -2798,8 +2810,10 @@ function merchantShot1(s, by, x, y, now, w, rx, ry, from, dr) {
   if (!m || m.st === "dead" || m.st === "jump" || !s.players[by]) return false;
   if (Math.hypot((m.x - x) / rx, (m.y - y) / ry) >= 1) return false;
   if (from && slabBetween(...from, m.x, m.y, heightAt(m.x, m.y))) return false;
-  const n = Math.random() < critOf(w, dr) ? 2 : 1, // (a crit doubles it; dr: a drawn arrow's draw)
-    head = n > 1 && m.hp <= n; // (a crit that kills him: his head bursts as a zombie's does, game.js draws it)
+  const ar = armorHit(merchantArmor(m), w, 1, Math.random() < critOf(w, dr)), // (Brah's motorcycle helmet turns a crit away)
+    n = ar.crit ? 2 : 1, // (a crit doubles it; dr: a drawn arrow's draw)
+    head = n > 1 && m.hp <= n;
+  if (ar.defl) deflected(s, by, m, now); // (a crit that kills him: his head bursts as a zombie's does, game.js draws it)
   if (n > 1)
     addFx(s, {
       kind: "l4crit",
@@ -3368,10 +3382,26 @@ export function zombieTakes(s, by, w, dr = 0) {
 /* a zombie takes damage from a duck, and the duck gets its points: 5 for each HP it took, or 25 for a headshot. A crit
    doubles the damage; one that kills blows the head off with a CRIT over it (the owner's, Nov 21 17:25Z: "a critical hit
    on any duck will give a headshot effect only if it is the killing blow"); true when it died */
-function strike(s, z, dmg, crit, by, w = "", now = 0, mad = true) {
+function strike(
+  s,
+  z,
+  dmg,
+  crit,
+  by,
+  w = "",
+  now = 0,
+  mad = true,
+  boom = false,
+) {
   if (z.st === 3) return false;
   dmg = lootDmg(s, by, w, dmg);
   if (w && w !== "laser" && angelOf(s, by, w)) dmg += angelDmg(w); // (Angelic: by its fire rate, l4ddangel.js; the Laser Rifle has its own, laser)
+  if (w || boom) {
+    const ar = armorHit(zArmor(z.l), w, dmg, crit, boom); // (a hit or a blast on a helmet or SWAT gear; burning isn't a hit)
+    dmg = ar.dmg;
+    crit = ar.crit;
+    if (ar.defl) deflected(s, by, z, now);
+  }
   if (crit) dmg *= 2;
   const on = s.hang.l4on || {},
     all = !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
@@ -3424,6 +3454,19 @@ function mark(s, z, code) {
     had = zw[z.i] || "";
   if (!had.includes(code)) s.hang.zw = { ...zw, [z.i]: had + code };
 }
+/* a crit a helmet turned away: every screen shows "Deflected" over the one wearing it (a zombie, or the merchant), as a
+   miss's "missed" */
+const deflected = (s, by, z, now) =>
+  addFx(s, {
+    kind: "l4miss",
+    d: 1,
+    by,
+    z: z.i,
+    who: [],
+    t: now,
+    x: Math.round(z.x),
+    y: Math.round(z.y),
+  });
 /* a crit, now and then (the weapon's chance, a drawn arrow's its draw's, and the duck's Accuracy): strike doubles it */
 const critRoll = (s, by, w, sh) =>
   Math.random() < headOf(s, by, w, sh && sh.dr);
@@ -3466,6 +3509,7 @@ function laser(s, id, m, px, py, dx, dy, hz, now) {
     for (const z of zs)
       if (
         z.st !== 3 &&
+        z.st !== 9 && // (a Flyer on a duck: only melee reaches it)
         !hits.includes(z) &&
         Math.hypot((z.x - x) / 26, (z.y - y) / 22) < 1 &&
         canShoot(z, px, py, hz)
@@ -3617,6 +3661,7 @@ function flame(s, id, m, px, py, dx, dy, hz, now) {
   for (const z of zs)
     if (
       z.st !== 3 &&
+      z.st !== 9 && // (a Flyer on a duck: only melee reaches it)
       inCone((z.x - px) / D, (z.y - py) / D, dx, dy, far / D + 0.4) &&
       canShoot(z, px, py, hz)
     ) {
@@ -3688,6 +3733,7 @@ function flameTick(s, zs, now, T) {
       for (const z of zs)
         if (
           z.st !== 3 &&
+          z.st !== 9 && // (a Flyer on a duck: only melee reaches it)
           Math.hypot(z.x - x, (z.y - y) * 1.3) < r &&
           (!dp() || Math.abs(zOf(z, "zombie") - (h || 0)) < SAME_FLOOR)
         )
@@ -3698,6 +3744,7 @@ function flameTick(s, zs, now, T) {
     const hot = zs.filter(
       (z) =>
         z.st !== 3 &&
+        z.st !== 9 && // (a Flyer on a duck: only melee reaches it)
         fz[z.i] &&
         fz[z.i][3] &&
         now >= fz[z.i][3] &&
@@ -3708,6 +3755,7 @@ function flameTick(s, zs, now, T) {
         if (
           b !== a &&
           b.st !== 3 &&
+          b.st !== 9 &&
           !(fz[b.i] && fz[b.i][0] > now) &&
           Math.hypot((a.x - b.x) / 26, (a.y - b.y) / 22) < TOUCH_Z &&
           (!dp() || Math.abs(zOf(a, "zombie") - zOf(b, "zombie")) < SAME_FLOOR)
@@ -3731,7 +3779,7 @@ export function fireTick(s, zs, now, T, p4) {
   for (const k of Object.keys(fz)) {
     const z = zs.find((q) => q.i === +k),
       f = fz[k];
-    if (!z || z.st === 3 || now >= f[0] || wetZ(z)) {
+    if (!z || z.st === 3 || z.st === 9 || now >= f[0] || wetZ(z)) {
       delete fz[k];
       continue;
     } // (gone, out, or in the water: put out)
@@ -3772,6 +3820,9 @@ export function fireTick(s, zs, now, T, p4) {
     Object.keys(fz).length || Object.keys(fp).length ? { z: fz, p: fp } : null;
   if (JSON.stringify(out) !== JSON.stringify(F)) s.hang.l4fire = out;
 }
+/* duck id shoved px world px along (ux, uy), as a swing shoves it (a Flyer's tug: zombies.js flyerStep) */
+export const tugDuck = (s, id, ux, uy, px, now) =>
+  shovePx(s, id, ux, uy, px, now, inCabin(...toPx(s.pos[id])) ? 1 : 0);
 /* a zombie's claw: 0.6 to 1, in tenths */
 export const clawDmg = () => 0.6 + Math.floor(Math.random() * 5) / 10;
 /* a duck takes 1 (a claw, fire); true when that put it down. A claw leaves a wound on it now and then, as hits do in
@@ -3999,8 +4050,13 @@ function meleeHits(s, now) {
     const push = meleePush(s, k.by, k.w); // (its push: its weapon's and my weight, push.js)
     for (const z of zs) {
       if (k.hit.includes(z.i)) continue;
-      if (!overlapH(hz, h, zOf(z, "zombie"))) continue;
-      if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
+      const held = z.st === 9; // (a Flyer on a duck: at any height; the held duck's own swing always reaches it, a friend's as it reaches that duck)
+      if (!held && !overlapH(hz, h, zOf(z, "zombie"))) continue;
+      if (
+        !(held && z.fy && z.fy[0] === k.by) &&
+        Math.hypot(z.x - bx, z.y - by) > R
+      )
+        continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (z.st === 3) {
         knockZ(s, z, k.dx, k.dy, push);
@@ -4012,9 +4068,11 @@ function meleeHits(s, now) {
         ? A.dmg[0] + Math.floor(Math.random() * (A.dmg[1] - A.dmg[0] + 1))
         : A.dmg; // (the fire axe: 1 to 4; times my Size, push.js)
       const hp0 = z.hp,
-        dead = strike(s, z, dmg * sz, critRoll(s, k.by, k.w), k.by, k.w, now);
+        crit = critRoll(s, k.by, k.w),
+        dead = strike(s, z, dmg * sz, crit, k.by, k.w, now);
       wearDown(s, k.by, k.w, hp0 - Math.max(0, z.hp)); // (the HP it took off, not the overkill)
       if (dead) die(z, T);
+      else if (held && crit) flyerOff(z, now); // (a crit throws the Flyer off at once; still alive if it didn't kill it: the owner's, Nov 28)
       if (z.st === 2 || z.st === 3) knockZ(s, z, k.dx, k.dy, push); // (pushed back, alive or dead; not up a wall)
       any = true;
     }
@@ -4187,6 +4245,7 @@ export function l4Shots(s, now) {
         big = w === "chair" ? chairReach(sh.sc) : 1, // (the chair: as far as its picture, chair.js)
         near = (z) =>
           z.st !== 3 &&
+          z.st !== 9 && // (a Flyer on a duck: only melee reaches it, the owner's "Only melee can be used against it")
           Math.hypot((z.x - x) / (26 * big), (z.y - y) / (22 * big)) < 1 &&
           hOk(sh, zOf(z, "zombie"), z.x, z.y, sh.x0 * W, sh.y0 * H) &&
           !hLock(sh, zOf(z, "zombie")), // (at its height, the first one setting it: heights.js)
@@ -4251,10 +4310,10 @@ export function l4Shots(s, now) {
         if (w === "handgun" && angelOf(s, sh.by, w)) {
           /* the Angelic pistol: every bullet kills at once, and a crit sets off a grenade's blast there (its shooter
              isn't hurt by it: no sh.k) */
-          const crit = critRoll(s, sh.by, w);
-          strike(s, z, z.hp, crit, sh.by, w, now);
-          die(z, T);
-          if (crit)
+          const crit = critRoll(s, sh.by, w),
+            defl = armorHit(zArmor(z.l), w, 0, crit).defl; // (a crit a helmet turned away sets nothing off)
+          if (strike(s, z, z.hp, crit, sh.by, w, now)) die(z, T); // (SWAT gear takes only half of it)
+          if (crit && !defl)
             boom(
               s,
               { by: sh.by, hz: sh.hz },
@@ -4375,8 +4434,8 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       zs,
       (z) => [z.x, z.y, zOf(z, "zombie")],
       (z, n) => {
-        const alive = z.st !== 3;
-        if (alive && strike(s, z, n.dmg, n.crit, sh.by, "", now)) {
+        const alive = z.st !== 3 && z.st !== 9; // (a Flyer on a duck: only melee reaches it)
+        if (alive && strike(s, z, n.dmg, n.crit, sh.by, "", now, true, true)) {
           die(z, T);
           mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
           gore.push([Math.round(z.x), Math.round(z.y)]);
@@ -4420,16 +4479,18 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
           .filter((m) => m.st !== "dead" && m.st !== "jump"),
       (m) => [m.x, m.y, heightAt(m.x, m.y)],
       (m, n) =>
-        asMerchant(s, m.k, () =>
+        asMerchant(s, m.k, () => {
+          const ar = armorHit(merchantArmor(m), "", n.dmg, n.crit, true); // (a helmet turns the middle ring's crit away, as a zombie's)
+          if (ar.defl) deflected(s, sh.by, m, now);
           merchantHurt(
             s,
             s.players[sh.by] ? sh.by : null,
-            hitOf(n).dmg,
+            hitOf(ar).dmg,
             now,
             "grenade",
             "blast",
-          ),
-        ),
+          );
+        }),
     ], // (the merchant: his ring's damage)
     [
       () =>
@@ -4698,6 +4759,7 @@ function l4Tick(s, now) {
     }
     L2.owe -= k;
   }
+  if (T >= 0 && !isSb(s)) specialTick(s, L2, zs, T); // (the Flyer and the Giant: zombies.js)
   /* the zombies walk, tear boards down, climb in, swipe: at every duck standing, Justin out there too (the owner's,
      Nov 17 20:02Z: "zombies will attack justin now, because they literally arent"; he only doesn't keep the game going) */
   setZWall(sbZombieWall(s, W, H, true)); // (Sandbox: its walls)

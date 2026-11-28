@@ -3,6 +3,7 @@
    own). Why its own file: it is the walk over one kind of ground, as zombiepath.js is the ways over the map, and
    zombies.js had grown past the 1,500 lines a file may have (tools/health/metrics.mjs). Moved as it was, unchanged */
 import * as GS from "./hangout/stationmap.js";
+import { SPECIAL_Z } from "./gamedefaults.js";
 import {
   heightAt,
   deckH,
@@ -183,8 +184,16 @@ export const jumpZ = (z) => {
         ((z.x - x0) * dx + (z.y - y0) * dy) / (dx * dx + dy * dy || 1),
       ),
     );
+  if (z.j[8]) return h0 + (h1 - h0) * u + z.j[8] * flight(u); // (the Flyer's leap: zombies.js flyerStep)
   if (z.j[7]) return h0 + (h1 - h0) * u * u; // (a fall: faster as it goes, dropOff)
   return h0 + (h1 - h0) * u + (z.j[6] ? 0 : JUMP.arc * 4 * u * (1 - u));
+};
+/* the Flyer's height over its leap's line at u (0 to 1 along it), its top 1: it rises the first SPECIAL_Z.flyer.peak of
+   the way, fast and slowing, and comes down the rest, slow and speeding up as a falling body does (the owner's, Nov 28:
+   "their jump and flight accelerate fast while their fall accelerates downward into normal fall speed") */
+const flight = (u) => {
+  const p = SPECIAL_Z.flyer.peak;
+  return u < p ? 1 - (1 - u / p) ** 2 : 1 - ((u - p) / (1 - p)) ** 2;
 };
 /* a zombie stepping off a roof's edge, or into a hole in it, falls to what's under it and is seen falling, never put
    there at once (the owner's, Nov 28 04:30Z): as a jump (st 8) whose height drops as a falling body's does, from where

@@ -96,7 +96,7 @@ export function npcShape(o) {
   if (o.im && imgOf(o.im)) return { k: "i" + o.im, url: () => imgOf(o.im) };
   if (isZombie(o))
     return {
-      k: "z" + [o.l[3], o.l[4], o.l[5], o.l[6], o.l[7]].join(),
+      k: "z" + [o.l[3], o.l[4], o.l[5], o.l[6], o.l[7], o.l[8]].join(),
       url: () => svgDataURL(duckSVG(zombieLook(o.l), { size: 64, dead: true })),
     };
   return {

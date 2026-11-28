@@ -41,6 +41,7 @@ import { isL4dd, inHand } from "./l4ddrules.js";
 import { ARMS, BOARD_WEAPONS, AUTO } from "./guns.js";
 
 import { l4Got } from "./l4dd.js";
+import { l4Pick } from "./hotpick.js";
 
 import { isSb, boardDuck, sbSfx, sbCellMids } from "./sandboxrules.js";
 
@@ -655,19 +656,21 @@ export function playFx(f) {
     setTimeout(() => word.remove(), 1200);
   } else if (f.kind === "l4miss") {
     /* a miss in Dead Ducks Arcade (the owner's, Nov 16 21:47Z): "missed", small and white over that zombie, rising and
-       fading as the HP numbers do */
+       fading as the HP numbers do; d: a crit a helmet turned away, "Deflected" (the owner's, Nov 28) */
     if (!geo.hang && !f.b) return;
     sfx.miss(f.b ? {} : { x: f.x, y: f.y }); // (a wispy blip: the owner's, Nov 17 12:28Z)
     const a = f.b
         ? place({ x: f.x, y: f.y }, 0, 1)
         : world.place({ x: f.x / HW, y: f.y / HH }, 0),
       word = el(
-        `<div class="l4-miss" style="left:${a.left.toFixed(1)}px;top:${(a.top - size * 1.05).toFixed(1)}px" aria-hidden="true">missed</div>`,
+        `<div class="l4-miss" style="left:${a.left.toFixed(1)}px;top:${(a.top - size * 1.05).toFixed(1)}px" aria-hidden="true">${f.d ? "Deflected" : "missed"}</div>`,
       );
     fxl.append(word);
     setTimeout(() => word.remove(), 1100);
   } else if (f.kind === "l4drop") {
     l4Got(f.k); // (a drop was taken: its name for everyone)
+  } else if (f.kind === "l4latch") {
+    if (f.who[0] === R.me) l4Pick(0); // (a Flyer holds my duck: my melee weapon in hand at once, the owner's, Nov 28; key 1, kitslots.js)
   } else if (f.kind === "l4thud") {
     gameMsg("A helicopter dropped a crate on the gas station roof."); // (the supply crate landed: the owner's words, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtWmvetXKX5VuDrMVgtW1GSM)
   } else if (f.kind === "l4bite") {
