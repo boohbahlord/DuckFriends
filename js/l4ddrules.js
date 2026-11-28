@@ -2215,17 +2215,18 @@ function restCome(s, now) {
   if (dp() && !isSb(s))
     s.hang.l4 = {
       ...s.hang.l4,
-      wk: { at: now, lit: rnd(...DIRECTOR.WALKERS.LIT) },
+      wk: { at: now },
     }; // (its walkers: walkersTick)
 }
 /* a rest's walkers (DIRECTOR.WALKERS; old Survival's): one turns up every so often, out of every duck's sight, while
    there are fewer than the most (zombies.js walkerAt); its pace by how the team does (director.js pressure) and the
    lights; they wander, and come for a duck that makes them (zombies.js walkerWatch). up: the ducks standing. L.wk = {
-   at: when the last turned up, lit: how many more with the lights on, this rest } */
+   at: when the last turned up, lit: how many more with the lights on, rolled once this rest when they first are } */
 function walkersTick(s, L, zs, now, T, up) {
-  const w = L.wk,
-    K = DIRECTOR.WALKERS;
+  const K = DIRECTOR.WALKERS;
+  let w = L.wk;
   if (!w) return;
+  if (powerOn(s) && !w.lit) L.wk = w = { ...w, lit: rnd(...K.LIT) };
   const lit = powerOn(s) ? w.lit : 1,
     most = Math.round((K.MOST[0] + K.MOST[1] * ducks(s).length) * lit),
     pace =
@@ -2237,14 +2238,16 @@ function walkersTick(s, L, zs, now, T, up) {
       if (z) zs.push(z);
     }
   }
+  const ws = zs.filter((z) => z.wk);
+  if (!ws.length) return;
   moveZombies(
     s,
-    zs,
+    ws,
     now,
     T,
     up.filter((id) => !godOn(s, id)),
     up,
-  );
+  ); // (only the walkers move in a rest)
   store(
     s,
     zs.filter(
