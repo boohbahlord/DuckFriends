@@ -876,6 +876,11 @@ const SFX = {
     return play("nuke", o);
   },
   boomBig: (o = {}) => play("boom", { ...o, k: (o.k ?? 1) * 1.6 }), // (the same boom, about 4 dB louder)
+  /* a game message (gamemsg.js): a soft, short double ding, the chat's ping higher, twice (the owner's, Nov 28 04:05Z) */
+  gameMsg: () => {
+    play("ping", { k: 0.55, rate: 1.35 });
+    setTimeout(() => play("ping", { k: 0.45, rate: 1.6 }), 120);
+  },
   steam,
   meteor: (fall = 1.4) =>
     setTimeout(() => play("meteor"), Math.max(0, fall - 0.05) * 1000), // (when it lands)

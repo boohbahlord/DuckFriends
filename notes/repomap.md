@@ -30,7 +30,7 @@ brainbuild.js 330 Sandbox: M's Brain builder
 card.js 424 the player card
 carpush.js 101 a car pushed: Downpour's cars
 chair.js 14 the chair: one thing in
-chat.js 445 text chat
+chat.js 428 text chat
 chatmutes.js 284 The chat's suggestions, mutes and
 cheatflag.js 16 a game with test commands
 cheats.js 78 test commands: round N, give
@@ -71,6 +71,7 @@ gameboard.js 582 the board: each mode's board
 gamedefaults.js 72 the game's own numbers, for
 gamefx.js 690 the board's specials and the
 gamehand.js 506 the hand: the number-key specials,
+gamemsg.js 92 lines by the chat button:
 gameplace.js 480 where things are put on
 gameready.js 47 
 gameround.js 551 round
@@ -104,20 +105,20 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3365 Quacky Zombies on every screen
+l4dd.js 3354 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
-l4ddbar.js 324 Quacky Zombies' weapons bar
+l4ddbar.js 334 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
-l4ddcatalog.js 228 Quacky Zombies: the Butler's Items
+l4ddcatalog.js 230 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 42 Dead Ducks Arcade: what lies
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 337 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4503 the rules of Quacky Zombies
+l4ddrules.js 4476 the rules of Quacky Zombies
 l4ddsfx.js 509 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -230,7 +231,7 @@ settings.js 298 Settings
 sfxlist.js 157 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the
 slices.js 31 long work cut into slices
-sound.js 886 the game's sounds: real recordings,
+sound.js 891 the game's sounds: real recordings,
 specials.js 849 Specials
 spectate.js 98 Sandbox: watching the others once
 splash.js 71 the start screen: your duck
