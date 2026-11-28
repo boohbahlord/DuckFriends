@@ -64,7 +64,7 @@ front.js 151 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4359 the game screen
+game.js 4360 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
@@ -88,7 +88,7 @@ gunparts.js 15 the pieces every weapon's drawing
 guns.js 646 every weapon's numbers: one sheet
 hats.js 1003 hats
 heat.js 83 a gun's heat: the spread
-heights.js 93 a shot's height, Doom's way
+heights.js 95 a shot's height, Doom's way
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hotbar.js 515 the specials on the number
@@ -331,7 +331,7 @@ trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on
 water.js 442 the pool: ducks in the
-world.js 1748 Hangout on the screen: the
+world.js 1752 Hangout on the screen: the
 
 ## js/pxm/
 board-light.js 7 the menus' background in the

@@ -18,12 +18,14 @@ export const ELEV = 108;
    levelZero); levelZ(n): level n's height */
 export const levelOf = (z) => (z - levelZero()) / ELEV;
 export const levelZ = (n) => n * ELEV + levelZero();
-/* fall damage, every mode with falls (the owner's, Nov 28 02:07Z: yes, "not too punishing"; Adam's numbers): a fall of
-   h world px takes this share of a duck's most HP: none for 1 elevation or less, 10% for each elevation past that, 50%
-   at most (actplay.js act_land) */
-export const FALL = { free: 1, each: 0.1, most: 0.5 };
-export const fallShare = (h) =>
-  Math.min(FALL.most, Math.max(0, (+h || 0) / ELEV - FALL.free) * FALL.each);
+/* fall damage, every mode with falls (the owner's, Nov 28 03:28Z: "fall damage includes elevation added laterally and
+   takes effect at elevation of 1.5 or higher", doubling each elevation; Adam's 0.25 HP at 1.5): a fall h world px down
+   and side px across, along its path, takes this many HP (actplay.js act_land) */
+export const FALL = { from: 1.5, hp: 0.25 };
+export const fallHurt = (h, side = 0) => {
+  const e = Math.hypot(+h || 0, +side || 0) / ELEV;
+  return e < FALL.from ? 0 : FALL.hp * 2 ** (e - FALL.from);
+};
 /* how high shot sh flies now (world px) */
 const shotH = (sh) => sh.lh ?? (sh.hz || 0) + MID;
 /* ---------- the height of a body: one way to ask it, for every body in every mode (the cornerstone's one module per
