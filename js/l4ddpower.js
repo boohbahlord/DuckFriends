@@ -22,7 +22,8 @@
 import { PROPS, layoutVariant } from "./hangout/layout.js";
 import * as GS from "./hangout/stationmap.js";
 /* Downpour (Dead Ducks Arcade's second map, the owner's Nov 16 23:15Z): the generator's power box east of the gas
-   station, running from the start with 8 rounds of gas (Nov 17 05:46Z: dpSetUp); jerry cans turn up at the spots in
+   station, off as the game starts, with no gas, as on every map (the owner's, Nov 28 04:58Z; it ran from the start
+   before, Nov 17 05:46Z); jerry cans turn up at the spots in
    stationmap.js PART_SPOTS; the flashlights stay as they are when the power comes on (23:29Z); and the pumps fill the
    row's jerry cans (Nov 18 12:19Z: "the gas station now fills up an empty jerry can every player shares on the left
    screen ONLY in downpour") */
@@ -51,7 +52,7 @@ export const PW = {
   },
   PUMP: 300, // a quarter can (25%) of gas: at a pump on Downpour, and from Cabin's merchant, the same (was 150, the owner's, Nov 18 12:19Z; Nov 20 18:46Z: "For gas, on number 6, raise it to 300")
   REACH: 130, // world px from there
-  DP_GAS: 8, // Downpour: the rounds of gas the generator holds as the game starts
+  DP_GAS: 8, // Downpour: the rounds of gas that count as full (how often jerry cans turn up: canOdds)
   CAN_ZOMBIE: 0.00375, // jerry cans: from a zombie that dies (half again, the owner's, Nov 23 00:32Z: "Gasoline should be half as likely to drop"; before: the owner's, Nov 18 12:19Z: "Gasoline is still a 1% chance of dropping in zombies"; then 75% of that, Nov 19 19:27Z: "multiplying it by 3/4"; Duck Cabin and Downpour share it),
   CAN_ROUND: 0.00375, // (half, Nov 23) and at a round's start in a part's spot (each 1% only: the owner's, Nov 17 13:43Z; 75% of that now)
   FULL: 4, // quarter cans (rounds) in a full jerry can (the owner's, Nov 18 12:19Z: "4 rounds for a 100% full jerry can, 3 rounds for 75%, and 2 rounds for 50%, and 1 round for 25%")
@@ -161,26 +162,11 @@ const canOdds = (s, base) => {
 };
 
 /* ---------- the rules' side (l4ddrules.js calls these; h: its helpers) ---------- */
-/* a new game: the box built, the power off and no gas (Downpour: dpSetUp) */
+/* a new game: the box built, the power off and no gas (Downpour's too) */
 export function powerSetUp(s) {
-  if (dpOn()) return dpSetUp(s);
   s.hang.pw = { fit: [...PARTS], on: 0, left: 0, gas: 0, cr: 0, n: 0 };
   s.hang.pk = [];
   s.hang.power = 0;
-}
-/* Downpour: the generator is already running, holding DP_GAS rounds of gas (the round about to start counted too: it
-   goes out as the round after them starts) */
-function dpSetUp(s) {
-  s.hang.pw = {
-    fit: [...PARTS],
-    on: 1,
-    left: PW.DP_GAS + 1,
-    gas: 0,
-    cr: 0,
-    n: 0,
-  };
-  s.hang.pk = [];
-  s.hang.power = 1;
 }
 /* the power on or off, for everyone: the lights, the TV, and every flashlight off (on) or back on (off). I want every
    flashlight to turn back on by itself when the power goes out, on Cabin and on every map where it can (Downpour's
