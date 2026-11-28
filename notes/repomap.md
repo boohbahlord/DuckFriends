@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3411 Quacky Zombies on every screen
+l4dd.js 3413 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -116,7 +116,7 @@ l4ddcatalog.js 214 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 58 Dead Ducks Arcade: what lies
 l4ddmap.js 252 Quacky Zombies' minimap
-l4ddpower.js 325 Dead Ducks Arcade's power box
+l4ddpower.js 327 Dead Ducks Arcade's power box
 l4ddpowerui.js 276 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
 l4ddrules.js 4882 the rules of Quacky Zombies
@@ -263,12 +263,12 @@ vellum.js 28 The King's Festival
 vote.js 265 Vote Mode & Map: the
 voterules.js 323 the lobby's vote for the
 walkgrid.js 83 the walking grid: which 40-px
-weaponuse.js 202 using a weapon: one module
+weaponuse.js 207 using a weapon: one module
 who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 314 the zombies' walk over Downpour's
-zombies.js 1429 the zombies: one module for
+zombies.js 1430 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the

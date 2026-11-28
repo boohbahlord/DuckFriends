@@ -4232,10 +4232,10 @@ export function l4Shots(s, now) {
         for (const z of big > 1 ? zs : nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
             const sniper = w === "sniper",
-              crit = (sniper && !!sh.crit) || critRoll(s, sh.by, w),
+              crit = (sniper && !!sh.crit) || critRoll(s, sh.by, w, sh),
               dmg = sniper
                 ? Math.max(1, dmgOf(A) - (sh.hit || []).length)
-                : dmgOf(A);
+                : dmgOf(A) + drawDmg(sh.dr); // (an Angelic bow's arrow through them: its draw counts, bowdraw.js)
             if (sniper && crit) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmg, crit, sh.by, w, now)) die(z, T);

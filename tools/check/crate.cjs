@@ -102,7 +102,10 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
       to(at[0] + DIRECTOR.CRATE.HALF + 30, at[1], at[2]);
       room.send({ t: "hang", k: "l4", do: "crate", open: true });
       out.op = !!room.state.hang.l4cr.op;
-      const w = room.state.hang.l4cr.w[0];
+      const has = R.kitOf(room.state, me).sl || [],
+        w =
+          room.state.hang.l4cr.w.find((x) => !has.includes(x)) ||
+          room.state.hang.l4cr.w[0]; // (one it hasn't got: one it has stays in the crate)
       room.send({ t: "hang", k: "l4", do: "crate", what: w });
       out.took = room.state.hang.l4cr.w.length === out.coming - 1;
       /* the next round, ended with everyone able to buy a refill (no new crate): it's gone */

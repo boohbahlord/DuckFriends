@@ -22,9 +22,15 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     if (!m) return { err: "no merchant" };
     const h = s.hidden.l4mh,
       GS = await import("./js/hangout/stationmap.js");
-    out.door = (h.route || []).some(
-      (l) => Math.abs(l.to[1] - GS.CHAPEL.y0) < 100,
-    );
+    const D = GS.CHAPEL_DOOR,
+      y0 = GS.CHAPEL.y0;
+    out.door = (h.route || []).some((l, i, all) => {
+      const p = i && all[i - 1].to,
+        q = l.to;
+      if (!p || !(p[1] < y0 && q[1] > y0)) return false; // (one leg outside the north wall, the next in)
+      const x = p[0] + ((q[0] - p[0]) * (y0 - p[1])) / (q[1] - p[1]);
+      return x > D.a && x < D.b; // (through the entrance)
+    });
     out.again = h.pw[m.id];
     const ids = R.merchantsOf(s).map((x) => x.id);
     out.many = ids.length;

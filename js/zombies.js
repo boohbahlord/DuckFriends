@@ -406,6 +406,7 @@ export function walkerAt(s, L, ids) {
 export function walkerJoins(z) {
   for (const k of ["wk", "wt", "wd", "wn", "lt", "lw", "li"]) delete z[k];
   z.a = -1e6; // (its last swipe was on the rest's clock)
+  if (z.st === 2) z.n = z.wu = 0; // (and so was its wind-up by a duck)
   z.l = [...z.l];
   z.l[1] = Math.round(WALK * rnd(...Z_SPEED));
 }

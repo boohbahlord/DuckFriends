@@ -2964,6 +2964,8 @@ activity({
     hud?.remove();
     over?.remove();
     closeShop();
+    clearTimeout(pwHold); // (an E held as I leave switches nothing)
+    pwHold = 0;
     ctx.world.board.classList.remove("l4-waiting");
     for (const e of [
       ptsEl,

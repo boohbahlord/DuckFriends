@@ -154,8 +154,13 @@ function nadeFly(sh, now, F) {
         continue;
       }
     }
-    const fl = F.floor(at.x * w, at.y * h, z),
-      vz = sh.vz - (sh.g * (t2 - sh.tb)) / 1000;
+    const vz = sh.vz - (sh.g * (t2 - sh.tb)) / 1000,
+      hi = sh.hz + was.z,
+      past = vz < 0 && hi > z ? F.floor(at.x * w, at.y * h, hi) : -Infinity,
+      fl = Math.max(
+        F.floor(at.x * w, at.y * h, z),
+        past <= hi ? past : -Infinity,
+      ); // (falling: a roof it was over and went down past this step stops it too)
     if (vz > 0 && fl > sh.hz + was.z && fl <= z) {
       Object.assign(sh, {
         tb: t,
