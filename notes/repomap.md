@@ -60,7 +60,7 @@ flamer.js 49 the flamethrower
 flowfield.js 173 the zombies' flow field, worked
 format.js 15 numbers as the settings ask
 friends.js 236 friends
-front.js 151 the front page
+front.js 150 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
@@ -90,7 +90,7 @@ hats.js 1003 hats
 heat.js 83 a gun's heat: the spread
 heights.js 93 a shot's height, Doom's way
 hideui.js 30 hide ui
-homeapp.js 43 Install Duck Friends
+homeapp.js 44 Download Duck Friends
 hotbar.js 515 the specials on the number
 hotpick.js 278 What goes in my duck's
 hpmath.js 63 HP in hundredths
@@ -285,7 +285,7 @@ chalk.js 627 the chalk floor: draw on
 characters.js 592 Duck Cabin's characters on the
 death.js 99 how long a knocked-down duck
 doors.js 32 the doors: they swing open
-dpflood.js 72 Downpour's flood over its bed
+dpflood.js 89 Downpour's flood over its bed
 dpground.js 323 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 174 fireflies

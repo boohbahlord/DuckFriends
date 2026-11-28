@@ -1,5 +1,5 @@
 /* ---------- the front page ----------
-   The name at the top in the middle (on a phone, above the buttons); Play (it opens the choice of Single player and Multiplayer), Customize, Settings, Updates and Install Duck Friends on the left with one short line
+   The name at the top in the middle (on a phone, above the buttons); Play (it opens the choice of Single player and Multiplayer), Customize, Settings, Updates and Download Duck Friends on the left with one short line
    under them; a ball pit across the whole bottom of the page with the duck sitting in it on the right. */
 import { register, go } from "./router.js";
 import { el, openWindow } from "./ui.js";
@@ -23,7 +23,7 @@ let mbarOff = null;
    game on the device (offline.js, the installed app) */
 const soloNote = (k) =>
   !inApp()
-    ? "You need to download the game to play Single player: use Install Duck Friends on the front page."
+    ? "You need to download the game to play Single player: use Download Duck Friends on the front page."
     : k.ready
       ? "Plays on this device: no internet needed."
       : k.total
@@ -118,7 +118,6 @@ register("front", {
           <button type="button" class="btn big ghost" data-a="settings">Settings</button>
           <button type="button" class="btn big ghost up-btn" data-a="updates">Updates</button>
           ${installBtnHTML()}
-          <a class="btn big ghost site-btn" href="https://boohbahlord.github.io/Nous-Within-Kenoma/">My Other Website<small>Nous Within Kenoma</small></a>
         </div>
         <p class="front-line">Party games for friends on a voice call.</p>
       </div>
