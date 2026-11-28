@@ -45,7 +45,7 @@ crowd.js 297 crowds: walkers keep out of
 customize.js 1760 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 233 Democracy of Ducklings:
-director.js 68 the director: how Dead Ducks
+director.js 52 the director: how Dead Ducks
 dock.js 73 the docks: where Notes and
 duck.js 799 the rubber duck avatar
 duckparts.js 598 the ducks made from pixel
