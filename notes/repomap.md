@@ -72,7 +72,7 @@ gameboard.js 582 the board: each mode's board
 gamedefaults.js 149 the game's own numbers, for
 gamefx.js 694 the board's specials and the
 gamehand.js 514 the hand: the number-key specials,
-gamemsg.js 93 lines by the chat button:
+gamemsg.js 108 lines by the chat button:
 gameplace.js 480 where things are put on
 gameready.js 47 
 gameround.js 551 round
