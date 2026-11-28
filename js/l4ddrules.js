@@ -1168,7 +1168,24 @@ function dropTick(s, L, zs, now, T) {
     L.due = [...(L.due || []), k0 || pickDrop(s)]; // (it waits for the next kill)
   }
   const was = s.hang.l4dr || [],
-    dr = was.filter((d) => now < d.until); // (taken only with E: pickLoot)
+    ids = players(s);
+  let dr = was.filter((d) => now < d.until);
+  /* a special drop (Max Ammo, Nuke ...: one with no weapon or item in it) is taken by walking over it, on a phone and a
+     computer alike (the owner's, Nov 28 01:57Z: "Special drops should not require interact button to pick up"); a
+     weapon or an item still takes E (pickLoot) */
+  for (const d of dr.filter((x) => !x.w)) {
+    const by = ids.find((id) => {
+      const p = s.pos[id];
+      return (
+        standing(s, id) &&
+        p &&
+        Math.hypot(p.x * W - d.x, p.y * H - d.y) < LOOT_REACH
+      );
+    });
+    if (!by) continue;
+    dr = dr.filter((x) => x !== d);
+    takeDrop(s, d.k, by, now, ids);
+  }
   if (dr.length !== was.length) s.hang.l4dr = dr; // (only when one went: the state stays the same object)
   /* a drop due: the next zombie killed (a Nuke taken just now too) drops it where it fell */
   const fell = zs.filter((z) => z.st === 3 && T - z.d <= L4.FELL_MS); // (killed in the last second)
