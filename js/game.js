@@ -661,12 +661,9 @@ const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (
    its side; its weapon turns in its hand to the exact aim, and its shadow doesn't turn. Degrees, clockwise */
 const TILT_MOST = 15,
   TILT_ORG = "50% 55%"; // (about its middle)
-const tiltOf = ([dx, dy], face) =>
-  Math.round(
-    (Math.max(-90, Math.min(90, (Math.atan2(dy, dx * face) * 180) / Math.PI)) *
-      TILT_MOST) /
-      90,
-  ) || 0;
+const tiltOf = ([dx, dy]) =>
+  Math.round((Math.atan2(dy, Math.abs(dx)) * 180 * TILT_MOST) / Math.PI / 90) ||
+  0; // (from the level, whichever side: a level aim either way doesn't lean it)
 const SQ = {
   l: ["0% 100%", 0.8, 1.12],
   r: ["100% 100%", 0.8, 1.12],
@@ -1685,7 +1682,7 @@ function drawDucks(now = clockNow()) {
             : 0;
     if (dk && dir && Math.hypot(dir[0], dir[1]) > 1) {
       if (Math.abs(dir[0]) > 1) dk._aimF = Math.sign(dir[0]); // (it faces the side it aims at, as in Enter the Gungeon: the duck loop above, next frame)
-      dk._tilt = tiltOf(dir, turned() ? 1 : dk._aimF || dk._face || 1); // (and leans toward it)
+      dk._tilt = tiltOf(dir); // (and leans toward it)
     }
     handed.add(id);
     let h = heldEls.get(id);
