@@ -184,6 +184,7 @@ import {
   minus,
   newZombie,
   specialTick,
+  zArmor,
   moveZombies,
   STATION,
   zFloor,
@@ -528,9 +529,6 @@ export const zombieLook = (l) => ({
 /* a zombie's breed (l[8]; 0 or none a plain one): its armor (zombies.js armorRoll: an army helmet, a motorcycle helmet,
    or SWAT gear, until its own look is drawn an army helmet and a police uniform), or a special one (specialTick) */
 export const Z_BREED = { helmet: 1, moto: 2, swat: 3, flyer: 4, giant: 5 };
-/* what a zombie of look l wears that stops hits: "", "helmet" or "swat" (wounds.js armorHit) */
-export const zArmor = (l) =>
-  l[8] === Z_BREED.swat ? "swat" : helmeted(zombieLook(l)) ? "helmet" : "";
 
 /* ---------- the map: only inside and the deck ----------
    The deck's stairs are boarded at the top (their landing is part of the deck). The openings: where zombies come in,

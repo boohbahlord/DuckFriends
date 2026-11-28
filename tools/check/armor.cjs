@@ -14,7 +14,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
     const W = await import("./js/wounds.js"),
       R = await import("./js/l4ddrules.js"),
       M = await import("./js/merchants.js"),
-      z = (h, o, arm) => R.zArmor([1, 0, 0, 0, 0, h, o, 0, arm]);
+      Z = await import("./js/zombies.js"),
+      z = (h, o, arm) => Z.zArmor([1, 0, 0, 0, 0, h, o, 0, arm]);
     return {
       helmet: W.armorHit("helmet", "ak", 2, true),
       fifty: W.armorHit("helmet", "sniper", 2, true),
