@@ -65,6 +65,7 @@ import {
 } from "./hangout/stationmap.js";
 import { floatDuck, SINK, WADE_SINK } from "./hangout/water.js";
 import { fenceLean } from "./hangout/stationart.js";
+import { cutRoofsOver } from "./lightlevel.js";
 import { bellSwing, bellReset, flareDraw, flareOn } from "./l4ddbell.js";
 import {
   L4,
@@ -1496,7 +1497,7 @@ function paint(now, ctx) {
       o.top * q,
       pts,
       CONE.far * sc,
-      [a.x, a.y, ends],
+      [a.x, a.y, ends, a.z],
       roof,
     ]);
     BEAMS.push([a.x, a.y, t]);
@@ -1653,6 +1654,7 @@ function coneSprite(i, c, key, Wd, q, w, h) {
     }
   }
   shineProps(c2, Wd, [c], q);
+  cutRoofsOver(c2, Wd, c[4][3], q); // (a roof over the light stays dark: lightlevel.js)
   return o;
 }
 /* the tallest prop a flashlight lights (litProps), in world px */

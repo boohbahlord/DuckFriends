@@ -140,7 +140,8 @@ export function mountWorld(board, api) {
      (in its own px, at the camera's scale). It used to be one big box-shadow cut by a clip-path; on a graphics card that
      clip-path made the whole 11000 px layer a mask every frame (Downpour standing: 15-20 fps against 35-44 without it) */
   const peeks = () => L.PEEKS.filter((k) => !k.bldg || k.bldg === bldg); // (Downpour: the building I'm in's only)
-  const SPREAD = 4000;
+  const SPREAD = 4000,
+    FADE = 110; // (world px: how far in from a notch's edge the black fades out)
   const shadeRects = () => {
     const k = cam.sc,
       W0 = (HOLE.r - HOLE.l) * k,
@@ -197,10 +198,36 @@ export function mountWorld(board, api) {
       });
       above = now;
     }
+    /* the way out seen through a hole fades into the black at its edges, never a stark line (the owner's, Nov 28 04:58Z:
+       "gradually becomes more easy to see outside of it, rather than it just being like a stark contrast"): along each
+       side of a notch that meets the black, a band inside it going from the black to clear */
+    for (const [x0, y0, x1, y1] of open.slice(1))
+      for (const [to, mx, my, f] of [
+        ["right", x0 - 1, (y0 + y1) / 2, x1 - x0],
+        ["left", x1 + 1, (y0 + y1) / 2, x1 - x0],
+        ["bottom", (x0 + x1) / 2, y0 - 1, y1 - y0],
+        ["top", (x0 + x1) / 2, y1 + 1, y1 - y0],
+      ]) {
+        if (isOpen(mx, my)) continue;
+        const e = Math.min(FADE * k, f * 0.4),
+          across = to === "right" || to === "left", // (a band up the notch's side: it stops at the building, the way in)
+          r = {
+            x0: to === "left" ? x1 - e : x0,
+            y0: to === "top" ? y1 - e : y0,
+            x1: to === "right" ? x0 + e : x1,
+            y1: to === "bottom" ? y0 + e : y1,
+            to,
+          },
+          [a, b, n] = across ? ["y0", "y1", H0] : ["x0", "x1", W0];
+        if (r.x0 < W0 && r.x1 > 0 && r.y0 < H0 && r.y1 > 0)
+          if (r[a] < 0) r[b] = Math.min(r[b], 0);
+          else r[a] = Math.max(r[a], n);
+        if (r[b] > r[a]) out.push(r);
+      }
     return out
       .map(
         (r) =>
-          `<i style="left:${r.x0.toFixed(1)}px;top:${r.y0.toFixed(1)}px;width:${(r.x1 - r.x0).toFixed(1)}px;height:${(r.y1 - r.y0).toFixed(1)}px"></i>`,
+          `<i style="left:${r.x0.toFixed(1)}px;top:${r.y0.toFixed(1)}px;width:${(r.x1 - r.x0).toFixed(1)}px;height:${(r.y1 - r.y0).toFixed(1)}px${r.to ? `;--to:to ${r.to}" class="fade` : ""}"></i>`,
       )
       .join("");
   };
