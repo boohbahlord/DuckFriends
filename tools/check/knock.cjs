@@ -114,7 +114,9 @@ const PIN = path.join(__dirname, "knock.json");
       for (let k = 0; k < 600 && room.state.phase !== "hang"; k++) beat();
       for (
         let k = 0;
-        k < 400 && Z.zombies(room.state).filter((z) => z.st !== 3).length < 2;
+        k < 400 &&
+        (Z.zombies(room.state).filter((z) => z.st !== 3 && !z.wk).length < 2 ||
+          !(room.state.hang.l4.r >= 1)); // (a round's zombies, not a rest's walkers)
         k++
       )
         beat();
