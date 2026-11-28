@@ -347,7 +347,7 @@ export const INNER_DOORS = [
   { id: "gs-rest", at: 1600, a: 1400, b: 1560 },
 ];
 /* where things stand. GEN: the generator and the power box, east of the gas station. HOOD: the car with its hood up
-   (it does the fireplace's job, and glows until it's first used); spot: its open hood, where E uses it. PRIEST (he
+   (scenery that blocks the way; it no longer spins for a weapon, the owner's, Nov 28). PRIEST (he
    does Justin's Butler's job, at the chapel's south end). ANGEL: the Angel machine, against the south wall. START: where everyone starts,
    inside the gas station by the front door */
 export const GEN = { x0: 3650, y0: 1000, x1: 3850, y1: 1160 };
@@ -357,7 +357,6 @@ export const HOOD = {
   y0: 1990,
   x1: 3710,
   y1: 2190,
-  spot: { x: 3270, y: 2090 },
 };
 export const PRIEST = { x: 2550, y: 5360 };
 export const ANGEL = { x: 2250, y: 5717 }; // (against the chapel's south wall: its front on the wall's inside face)
@@ -381,8 +380,7 @@ const CAR_LOOKS = [
 ];
 /* a seed from where a thing stands (world px): its look, the same on every device */
 export const seedAt = (x, y) => Math.abs(Math.round(x / 7 + y / 13)) + 1;
-/* which way a car faces (its box's corner, world px): east on an even seed; the hood-up car west, its hood where E uses
-   it */
+/* which way a car faces (its box's corner, world px): east on an even seed; the hood-up car west */
 export const carEast = (x, y, hood) => !hood && seedAt(x, y) % 2 === 0;
 /* the cars stopped on the road (420 by 200 each; one more by the hood-up car is HOOD) */
 export const CARS = [
@@ -693,18 +691,7 @@ function planBuild(b) {
     ); // (its glass and roof: they stop a shot up to the roof; walking over them is its floor's)
     return solid("car", r, T.h, { top: z + T.waist, pass: true, ...o });
   };
-  car(HOOD, {
-    hood: true,
-    smash: "side",
-    light: {
-      x: HOOD.spot.x + 40,
-      y: HOOD.spot.y,
-      r: 300,
-      c: "#ffb24a",
-      k: 0.45,
-      flick: 0.6,
-    },
-  });
+  car(HOOD, { hood: true, smash: "side" });
   CARS.forEach((c, i) => car(c, { ...CAR_LOOKS[i], car: i })); // (car: its index, so a push moves it: layout.js carAt)
   /* the fallen tree: a row of low blocks along it (a jump clears them; zombies climb over: zx) */
   {

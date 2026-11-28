@@ -4,14 +4,12 @@
    numbers come from the rules (l4ddrules.js), so they stay right when the rules change. */
 import {
   BURN,
-  SLOT_ODDS,
   SLOT_BAGS,
   SHOP,
   DROPS,
   weaponName,
   dropName,
   priceOf,
-  BOX,
   WEAPON_BAGS,
   merchantPrice,
   missOf,
@@ -21,7 +19,6 @@ import {
   ARMS,
   kindOf,
   POOL,
-  WEAPONS,
   critOf,
   recoilOf,
   recoilWord,
@@ -67,15 +64,13 @@ const SAY = {
   zebra:
     "Thrown. Every zombie goes for it and bites it until it's gone. Justin's favorite.",
   adrenaline: "You walk at the game's usual speed for 20 seconds.",
-  chair:
-    "Justin's office chair, thrown the way you aim, as often as you like; it shoves what it hits.",
   grenade: "Thrown with G. Kills every zombie in its blast.",
   kill: "Every hit kills, for 45 seconds.",
   ammo: "Fills everyone's ammo and grenades (not the medkit).",
   nuke: "Kills every zombie on the map, and everyone gets the points.",
   speed: "Everyone walks faster for a minute.",
   double: "Double points for 45 seconds.",
-  sale: "Half price at the merchant and the fireplace for 45 seconds (each upgrade once).",
+  sale: "Half price at the merchant for 45 seconds (each upgrade once).",
 };
 
 /* a number without its trailing zeros (1.75, 5, 0.4) */
@@ -136,15 +131,6 @@ function stats(w) {
     )
   )
     out.push(["A merchant may sell it", merchantPrice(w)]);
-  /* where the fireplace has it: its bag, and that bag's chance on a spin (l4ddrules.js fireRoll) */
-  const bag = Object.keys(SLOT_BAGS).find((k) => SLOT_BAGS[k].includes(w));
-  if (bag)
-    out.push([
-      "Where",
-      `The fireplace, the ${bag === "chair" ? "golden chair" : bag} bag (${Math.round(SLOT_ODDS[bag] * 100)}% of spins)`,
-    ]);
-  else if (WEAPONS.includes(w) && POOL.includes(w))
-    out.push(["Where", "The fireplace, the weapon bags (the rest of spins)"]);
   return out;
 }
 
@@ -174,7 +160,7 @@ export const statLineOf = (w) => {
 export const itemCardHTML = (w) =>
   ARMS[w] || w === "grenade"
     ? `<b class="itip-name">${weaponName(w)}</b><p>${SAY[w] || ""}</p>${(() => {
-        const list = stats(w).filter(([k]) => k !== "Where");
+        const list = stats(w);
         return list.length
           ? `<dl>${list.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`
           : "";
@@ -216,13 +202,10 @@ export function catalogHTML() {
       ),
     ],
   ];
-  return (
-    cats
-      .map(
-        ([h, rows]) =>
-          `<h4 class="l4-shop-h">${h}</h4><ul class="l4-cat">${rows.join("")}</ul>`,
-      )
-      .join("") +
-    `<p class="l4-shop-key">A spin at the fireplace: ${BOX.price} points.</p>`
-  );
+  return cats
+    .map(
+      ([h, rows]) =>
+        `<h4 class="l4-shop-h">${h}</h4><ul class="l4-cat">${rows.join("")}</ul>`,
+    )
+    .join("");
 }

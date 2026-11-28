@@ -167,12 +167,11 @@ export const VOL = {
   pop: -16,
   boop: -15,
   tileIn: -21, // (stepping onto another tile: faint)
-  // Dead Ducks Arcade: boards, groans, the fireplace's spin, a sale, drops, the flashlight
+  // Dead Ducks Arcade: boards, groans, a sale, drops, the flashlight
   l4crack: -12,
   l4nail: -14,
   l4groan: -20,
   zwindup: -22, // (a zombie's swing winding up: the tell, quiet; l4ddsfx.js)
-  l4slot: -15,
   l4till: -16,
   dropIn: -16,
   dropGot: -12,
@@ -275,7 +274,6 @@ const GROUPS = {
       "l4nail",
       "l4groan",
       "zwindup",
-      "l4slot",
     ],
     ...["l4till", "dropIn", "dropGot", "flashOn", "flashOff"],
     ...["powerUp", "powerDown", "partGot", "partIn", "gasPour"],

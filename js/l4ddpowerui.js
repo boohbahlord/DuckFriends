@@ -16,8 +16,6 @@ import {
   canRow,
   gasFull,
   partName,
-  isPw,
-  pwOf,
   pumpNear,
 } from "./l4ddpower.js";
 import { powerBoxSVG, PART_ICONS, jerrySVG } from "./powerart.js"; // (Noah's drawings)
@@ -68,12 +66,6 @@ export function pwUnmount() {
 }
 const ITEM_ICON = (o) =>
   o.k === "can" ? jerrySVG(canPct(o.r)) : PART_ICONS[o.k] || "";
-/* a part or a jerry can in the fireplace's spin, as an orb */
-export const pwOrbHTML = (w) => {
-  const { k, r } = pwOf(w);
-  return `<span class="l4orb k-part${k === "can" ? " c-orange" : ""}"><i>${k === "can" ? jerrySVG(canPct(r)) : PART_ICONS[k]}</i></span>`; // (a jerry can's orb orange, glowing)
-};
-export { isPw };
 
 /* a new state: what lies about, the pool, the sounds */
 export function pwSee(s, ctx) {

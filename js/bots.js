@@ -68,8 +68,6 @@ import {
   merchantOf,
   upOffer,
   selling,
-  BOX,
-  boxNow,
   isHelper,
   laserHeat,
   wildCrying,
@@ -79,7 +77,7 @@ import {
 import { endless } from "./ammo.js";
 import { kindOf } from "./guns.js";
 import { draws } from "./bowdraw.js";
-import { gunsIn, itemsIn, PRIMARY } from "./kitslots.js";
+import { gunsIn, itemsIn } from "./kitslots.js";
 import { lootAt } from "./l4ddloot.js";
 import { sbOrbFor } from "./sbloot.js";
 import {
@@ -838,13 +836,11 @@ function storyBot(s, id, now, wait, late, people, out) {
    A computer goes to a downed teammate and holds E by it; otherwise it shoots the nearest zombie it can see (a ranged
    weapon with something left in it, the melee weapon up close, the medkit when it's hurt), backs away from one that's
    too close, throws a grenade into a crowd now and then, and keeps near the middle of the great room. With no zombie in
-   sight it spends its points: an upgrade from Justin's Butler, or a spin at the fireplace (and it goes to take what
-   lands, swapping its emptier ranged weapon). A ghost or a downed computer does nothing. */
+   sight it spends its points on the upgrade the merchant offers it. A ghost or a downed computer does nothing. */
 const SEE = 460; // world px: how far a computer looks for a zombie to shoot
 const TOO_CLOSE = 95;
 const STEP_MS = 200; // (the TEST room's heartbeat: how far it walks each time)
-const AT = 90; // world px: near enough to the Butler or the fireplace
-const spinAt = new Map(); // computer → when it last spun the fireplace (one spin in a while, not every time it can)
+const AT = 90; // world px: near enough to the merchant
 const readyAt = new Map(); // "computer round" → when it presses End turn (Ready in round 0): a few seconds into the wait
 
 /* the one walk on a walkable map: steps of px toward (tx, ty), as far as far, each one only if ok(nx, ny, z, x, y) lets it
@@ -1014,7 +1010,7 @@ export function l4Bot(s, id, now, out) {
     out.push(useOf(id, "grenade", ax, ay));
     return;
   }
-  /* the special from the fireplace, now and then, with a zombie close (the medkit waits for low HP below; the long
+  /* its special, now and then, with a zombie close (the medkit waits for low HP below; the long
      jump stays as it is) */
   const sp = itemsIn(sl).find(
     (w) => ["zebra", "adrenaline"].includes(w) && m.am[w] && m.am[w][0] > 0,
@@ -1038,46 +1034,24 @@ export function l4Bot(s, id, now, out) {
   send(nx, ny, w, ax, ay);
   if (now - (u[w] || 0) >= l4Cool(s, id, w)) out.push(useOf(id, w, ax, ay));
 }
-/* no zombie in sight: walk to the Butler or the fireplace and spend points there, or take what the fireplace landed on;
-   true while it's busy with that */
+/* no zombie in sight: walk to the merchant and buy the upgrade he offers; true while it's busy with that */
 function shopping(s, id, now, x, y, far, m, send, out) {
-  const b = boxNow(s, now, id),
-    pts = ptsOf(s, id),
-    mine = !!b;
-  let to = null,
-    act = null,
-    hand = m.sl[1];
-  if (mine) {
-    if (now < b.t + BOX.spin) return true; // (it waits by the fire while it spins)
-    if (kindOf(b.w) === "ranged") {
-      const left = (w) =>
-        endless(w) ? Infinity : m.am[w] ? m.am[w][0] + m.am[w][1] : 0;
-      hand = PRIMARY.map((i) => m.sl[i]).sort((a, c) => left(a) - left(c))[0];
-    } // (a primary: it gives up the emptier one, an empty slot first; kitslots.js)
-    to = BOX;
-    act = { t: "hang", k: "l4", do: "box", hand, id };
-  } else {
-    const up = upOf(s, id),
-      want = SHOP.find(
-        (it) =>
-          it.id === upOffer(s, id) &&
-          (up[it.id] || 0) < it.most &&
-          pts >= priceOf(it.id, up[it.id] || 0),
-      ); // (only the one the merchant offers it this visit)
-    if (want && selling(s)) {
-      to = merchantOf(s); // (only while a merchant is here and selling)
-      act = { t: "hang", k: "l4", do: "buy", what: want.id, id };
-    } else if (!b && pts >= BOX.price && now - (spinAt.get(id) || 0) > 45000) {
-      to = BOX;
-      act = { t: "hang", k: "l4", do: "box", id };
-    }
-  }
-  if (!to) return false;
+  const pts = ptsOf(s, id),
+    hand = m.sl[1],
+    up = upOf(s, id),
+    want = SHOP.find(
+      (it) =>
+        it.id === upOffer(s, id) &&
+        (up[it.id] || 0) < it.most &&
+        pts >= priceOf(it.id, up[it.id] || 0),
+    ); // (only the one the merchant offers it this visit)
+  if (!want || !selling(s)) return false; // (only while a merchant is here and selling)
+  const to = merchantOf(s),
+    act = { t: "hang", k: "l4", do: "buy", what: want.id, id };
   const d = Math.hypot(to.x - x, to.y - y);
   if (d < AT) {
     send(x, y, hand, to.x - x || 1, to.y - y);
     out.push(act);
-    if (act.do === "box" && !mine) spinAt.set(id, now);
     return true;
   }
   const way = wayTo(x, y, to.x, to.y, now) || [to.x, to.y],

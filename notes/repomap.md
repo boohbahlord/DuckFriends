@@ -23,7 +23,7 @@ boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
-bots.js 1349 computers
+bots.js 1323 computers
 bowdraw.js 46 the bow, drawn to shoot
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 330 Sandbox: M's Brain builder
@@ -104,21 +104,21 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3315 Quacky Zombies on every screen
+l4dd.js 3200 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 609 Quacky Zombies' pictures
 l4ddbar.js 324 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
-l4ddcatalog.js 228 Quacky Zombies: the Butler's Items
+l4ddcatalog.js 211 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
-l4ddloot.js 42 Dead Ducks Arcade: what lies
+l4ddloot.js 39 Dead Ducks Arcade: what lies
 l4ddmap.js 253 Quacky Zombies' minimap
-l4ddpower.js 337 Dead Ducks Arcade's power box
-l4ddpowerui.js 278 Dead Ducks Arcade's power box
+l4ddpower.js 326 Dead Ducks Arcade's power box
+l4ddpowerui.js 270 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4525 the rules of Quacky Zombies
-l4ddsfx.js 509 Dead Ducks Arcade's sounds
+l4ddrules.js 4382 the rules of Quacky Zombies
+l4ddsfx.js 499 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
 laserart.js 95 the laser gun, drawn
@@ -227,10 +227,10 @@ seriatrun.js 1671 Seriat: files that do things
 seriattheme.js 63 Seriat's and the command line's
 seriatwin.js 556 Sandbox: the Seriat window
 settings.js 298 Settings
-sfxlist.js 157 the sound files
+sfxlist.js 156 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the
 slices.js 31 long work cut into slices
-sound.js 886 the game's sounds: real recordings,
+sound.js 884 the game's sounds: real recordings,
 specials.js 849 Specials
 spectate.js 98 Sandbox: watching the others once
 splash.js 71 the start screen: your duck
@@ -323,7 +323,7 @@ stage.js 134 the stage: half an oval
 stationart.js 50 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 513 Downpour's drawings: the cars, the
-stationmap.js 1304 Dead Ducks Arcade's second map:
+stationmap.js 1291 Dead Ducks Arcade's second map:
 stationparts.js 455 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
 stationtrees.js 599 Downpour's drawings: the swamp's trees

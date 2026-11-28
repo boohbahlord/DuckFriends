@@ -1681,7 +1681,7 @@ function drawDucks(now = clockNow()) {
         art = lz
           ? laserArt(lz)
           : w === "chair" && isL4dd(s)
-            ? GOLD_CHAIR // (Quacky Zombies' chair, the fireplace's 1 in 100: golden)
+            ? GOLD_CHAIR // (Quacky Zombies' chair: golden)
             : holy
               ? heldHTML(w, duck) // (Angelic: its glow is drawn into the drawing, angelic())
               : heldPicHTML(w, duck, hs),
@@ -3936,7 +3936,7 @@ register("game", {
     placed = placeKey(R.state);
     idleOff = trackIdle(() => R);
     if (isL4dd(R.state)) {
-      l4Held(heldNow); // (the fireplace asks which ranged weapon is in hand)
+      l4Held(heldNow); // (a buy or a pickup asks which ranged weapon is in hand)
       const l4 = {
           state: () => R.state,
           me: () => R.me,
