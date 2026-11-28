@@ -183,6 +183,7 @@ import {
   store,
   minus,
   newZombie,
+  specialTick,
   zArmor,
   moveZombies,
   STATION,
@@ -523,11 +524,11 @@ export const zombieLook = (l) => ({
   ...(l[5] >= 0 ? { hat: { id: ZHATS[l[5]] } } : {}),
   ...(l[6] >= 0 ? { outfit: { id: ZOUTFITS[l[6]] } } : {}),
   ...(l[7] ? { face: { id: "glasses" }, outfit: { id: "jeans" } } : {}),
-  ...(l[8] === Z_ARMOR.moto ? { face: { id: "moto" } } : {}),
+  ...(l[8] === Z_BREED.moto ? { face: { id: "moto" } } : {}),
 });
-/* a zombie's armor (l[8], zombies.js armorRoll): an army helmet, a motorcycle helmet, or SWAT gear (until its own look
-   is drawn, an army helmet and a police uniform) */
-export const Z_ARMOR = { helmet: 1, moto: 2, swat: 3 };
+/* a zombie's breed (l[8]; 0 or none a plain one): its armor (zombies.js armorRoll: an army helmet, a motorcycle helmet,
+   or SWAT gear, until its own look is drawn an army helmet and a police uniform), or a special one (specialTick) */
+export const Z_BREED = { helmet: 1, moto: 2, swat: 3, flyer: 4, giant: 5 };
 
 /* ---------- the map: only inside and the deck ----------
    The deck's stairs are boarded at the top (their landing is part of the deck). The openings: where zombies come in,
@@ -4247,6 +4248,7 @@ function l4Tick(s, now) {
     }
     L2.owe -= k;
   }
+  if (T >= 0 && !isSb(s)) specialTick(s, L2, zs, T); // (the Flyer and the Giant: zombies.js)
   /* the zombies walk, tear boards down, climb in, swipe: at every duck standing, Justin out there too (the owner's,
      Nov 17 20:02Z: "zombies will attack justin now, because they literally arent"; he only doesn't keep the game going) */
   setZWall(sbZombieWall(s, W, H, true)); // (Sandbox: its walls)

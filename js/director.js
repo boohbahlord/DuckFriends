@@ -50,6 +50,14 @@ export const lowHp = (d) => d.hp < DIRECTOR.HP_LOW;
 const lowAmmo = (d) => d.ammo < DIRECTOR.AMMO_LOW;
 /* doing badly: low on health or on ammo */
 export const badly = (d) => lowHp(d) || lowAmmo(d);
+/* for pressure: the team doing well (its average health and ammo high, and no duck low on health): the Flyer and the
+   Giant come more often (zombies.js specialTick) */
+export function doingWell(s) {
+  const all = ducks(s);
+  if (!all.length || all.some(lowHp)) return false;
+  const avg = (k) => all.reduce((t, d) => t + d[k], 0) / all.length;
+  return avg("hp") > DIRECTOR.WELL.hp && avg("ammo") > DIRECTOR.WELL.ammo;
+}
 /* the share of the ducks doing badly, 0 to 1 (armored zombies come fewer by it: zombies.js armorRoll) */
 export function badShare(s) {
   const all = ducks(s);

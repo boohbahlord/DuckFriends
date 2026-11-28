@@ -25,10 +25,10 @@ const { url, fail, noErrors } = require("./lib.cjs");
       boom: W.armorHit("swat", "", 4, true, true),
       none: W.armorHit("", "ak", 2, true),
       plain: z(-1, -1, 0),
-      army: z(R.ZHATS.indexOf("helmet"), -1, R.Z_ARMOR.helmet),
-      moto: z(-1, -1, R.Z_ARMOR.moto),
+      army: z(R.ZHATS.indexOf("helmet"), -1, R.Z_BREED.helmet),
+      moto: z(-1, -1, R.Z_BREED.moto),
       fire: z(R.ZHATS.indexOf("fire"), -1, 0),
-      swatZ: z(R.ZHATS.indexOf("helmet"), 9, R.Z_ARMOR.swat),
+      swatZ: z(R.ZHATS.indexOf("helmet"), 9, R.Z_BREED.swat),
       brah: W.helmeted(M.merchantLook(M.merchantById("brah"))),
     };
   });

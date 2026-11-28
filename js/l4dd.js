@@ -107,7 +107,7 @@ import {
   MERCH,
   ZHATS,
   ZOUTFITS,
-  Z_ARMOR,
+  Z_BREED,
   standing,
 } from "./l4ddrules.js";
 import { SLOT_KINDS } from "./kitslots.js";
@@ -530,8 +530,8 @@ function warmZombies(sc) {
     ...ZHATS.map((_, h) => [h, -1]),
     ...ZOUTFITS.map((_, o) => [-1, o]),
     [-1, -1],
-    [-1, -1, Z_ARMOR.moto], // (a motorcycle helmet: armor, zombies.js armorRoll)
-    [ZHATS.indexOf("helmet"), ZOUTFITS.indexOf("police"), Z_ARMOR.swat],
+    [-1, -1, Z_BREED.moto], // (a motorcycle helmet: armor, zombies.js armorRoll)
+    [ZHATS.indexOf("helmet"), ZOUTFITS.indexOf("police"), Z_BREED.swat],
   ];
   for (const size of [-1, 0, 1])
     for (const [h, o, arm = 0] of looks) {
