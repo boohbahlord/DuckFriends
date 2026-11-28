@@ -15044,7 +15044,6 @@ html.moving .l4-ammo.rl {
   height: 1.15rem;
   background: #0b0b0f;
   border: 0.1rem solid #000;
-  border-radius: 0.24rem;
   box-shadow: 0 0 0 0.08rem #fff5;
   overflow: hidden;
   transition: opacity 0.2s;
@@ -15063,7 +15062,7 @@ html.moving .l4-ammo.rl {
 .l4-fly .w {
   left: calc(var(--hpw) + var(--w, 0.5) * (100% - var(--hpw)));
   background: #fff;
-  box-shadow: 0 0 0.3rem #fff;
+  box-shadow: 0 0 0 0.08rem #000;
 }
 html.moving .l4-fly .w {
   animation: l4-fly-blink 0.24s steps(1) infinite;
@@ -15071,7 +15070,7 @@ html.moving .l4-fly .w {
 .l4-fly .r {
   left: calc(var(--hpw) + var(--r, 0) * (100% - var(--hpw)));
   background: #ff2d3a;
-  box-shadow: 0 0 0.3rem #ff2d3a;
+  box-shadow: 0 0 0 0.08rem #000;
   z-index: 2;
 }
 .l4-fly em {
