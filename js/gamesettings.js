@@ -120,7 +120,9 @@ export function openGameSettings(R, start = null) {
       ? "Vote Mode & Map"
       : s.options.mapPick === "random"
         ? "Random"
-        : mapName(s.options.map);
+        : modeOf(s.options.mode).l4map
+          ? "Downpour"
+          : mapName(s.options.map);
 
   /* Gore and Heavy effects: a "Low" chip by their name while my own Low graphics (Settings → Performance: Graphics Low,
      Data saving or Poor connection) lighten them on my screen, whatever the room picked (fx.js) */

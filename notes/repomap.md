@@ -76,7 +76,7 @@ gamehand.js 506 the hand: the number-key
 gameplace.js 480 where things are put
 gameready.js 47 
 gameround.js 551 round
-gamesettings.js 770 Game Settings: the whole
+gamesettings.js 772 Game Settings: the whole
 gameshots.js 135 The bullets in the
 gamestats.js 179 what `stats` and `roundstats`
 gfx.js 8 Low graphics
