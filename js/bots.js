@@ -62,7 +62,7 @@ import {
   kitOf,
   ptsOf,
   upOf,
-  priceOf,
+  priceFor,
   maxHp,
   SHOP,
   merchantOf,
@@ -1045,7 +1045,7 @@ function shopping(s, id, now, x, y, far, m, send, out) {
       (it) =>
         it.id === upOffer(s, id) &&
         (up[it.id] || 0) < it.most &&
-        pts >= priceOf(it.id, up[it.id] || 0),
+        pts >= priceFor(s, id, it.id, up[it.id] || 0),
     ); // (only the one the merchant offers it this visit)
   if (!want || !selling(s)) return false; // (only while a merchant is here and selling)
   const to = merchantOf(s),
