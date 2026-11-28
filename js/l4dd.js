@@ -1791,25 +1791,36 @@ const mWounds = (s, m) => {
 const mMax = (m) => Math.max(1, +m.max || 4.5); // (m.max: the HP he rolled, as a zombie's: the rules' hp0)
 /* several merchants here (the rules' merchantsOf): each one drawn by drawMerchant in turn, his own drawing kept by his
    visit (butler, mSig, mAt, mSeen and mPoolAt are the one being drawn's) */
-const MDRAWN = new Map(); // visit → { butler, mSig, mAt, mSeen, mPoolAt }
+const MDRAWN = new Map(); // visit → { butler, mSig, mAt, mSeen, mPoolAt, f: the frame it was last drawn }
+let mFrame = 0;
 function drawMerchants(ctx, t) {
-  const list = merchantsOf(ctx.state()),
-    seen = new Set();
+  const list = merchantsOf(ctx.state());
+  mFrame++;
   for (const mm of list) {
-    const o = MDRAWN.get(mm.v) || {
-      butler: null,
-      mSig: "",
-      mAt: null,
-      mSeen: { v: null, hp: null, alive: false, fx: 0, stab: 0 },
-      mPoolAt: 0,
-    };
+    let o = MDRAWN.get(mm.v);
+    if (!o)
+      MDRAWN.set(
+        mm.v,
+        (o = {
+          butler: null,
+          mSig: "",
+          mAt: null,
+          mSeen: { v: null, hp: null, alive: false, fx: 0, stab: 0 },
+          mPoolAt: 0,
+          f: 0,
+        }),
+      ); // (made once a visit, then kept: nothing new each frame)
     ({ butler, mSig, mAt, mSeen, mPoolAt } = o);
     drawMerchant(ctx, t, { ...mm, who: merchantById(mm.id) });
-    MDRAWN.set(mm.v, { butler, mSig, mAt, mSeen, mPoolAt });
-    seen.add(mm.v);
+    o.butler = butler;
+    o.mSig = mSig;
+    o.mAt = mAt;
+    o.mSeen = mSeen;
+    o.mPoolAt = mPoolAt;
+    o.f = mFrame;
   }
   for (const [v, o] of MDRAWN)
-    if (!seen.has(v)) {
+    if (o.f !== mFrame) {
       o.butler?.el.remove();
       MDRAWN.delete(v);
     }
