@@ -389,7 +389,7 @@ function flyerStep(z, c, fly) {
     if (z.st === 9 && now >= z.fy[2]) {
       z.fy = [z.fy[0], z.fy[1], now + F.pull.ms];
       const a = Math.random() * 2 * Math.PI,
-        [hx, hy] = fly.none ? q.xy : minus(fly.horde, q.xy),
+        [hx, hy] = fly.none ? [0, 0] : minus(fly.horde, q.xy), // (no horde: no pull its way)
         hd = Math.hypot(hx, hy) || 1;
       c.tug(
         q,

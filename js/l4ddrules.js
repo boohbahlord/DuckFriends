@@ -3528,12 +3528,11 @@ function meleeHits(s, now) {
     const push = meleePush(s, k.by, k.w); // (its push: its weapon's and my weight, push.js)
     for (const z of zs) {
       if (k.hit.includes(z.i)) continue;
-      const held = z.st === 9; // (a Flyer on a duck: any swing that reaches that duck reaches it, at any height)
+      const held = z.st === 9; // (a Flyer on a duck: at any height; the held duck's own swing always reaches it, a friend's as it reaches that duck)
       if (!held && !overlapH(hz, h, zOf(z, "zombie"))) continue;
       if (
-        held
-          ? Math.hypot(z.x - px, z.y - py) > A.at * sz + R
-          : Math.hypot(z.x - bx, z.y - by) > R
+        !(held && z.fy && z.fy[0] === k.by) &&
+        Math.hypot(z.x - bx, z.y - by) > R
       )
         continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
