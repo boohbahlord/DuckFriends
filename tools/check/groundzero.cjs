@@ -46,7 +46,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
     ].map(r3);
     L.useMode("hang", "");
     out.box = [SR.SB_ZONE.fl.min, SR.SB_ZONE.fl.def];
-    const old = (world) => {
+    const old = (world, v = 2) => {
       const box = (v) => ({ t: v, ok: v }),
         s = { players: {}, options: {}, seat: [] };
       SV.sbPick(
@@ -55,7 +55,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
           save: {
             id: "x",
             data: {
-              v: 2,
+              v,
               world,
               parts: {
                 sb: {
@@ -75,9 +75,13 @@ const { url, fail, noErrors } = require("./lib.cjs");
     };
     out.cabinSave = old("cabin");
     out.dpSave = old("downpour");
+    out.dp3Save = old("downpour", 3);
+    const r20 = (n) => Math.round(n * 20) / 20,
+      up = (GS.FLOOD.floor + 48) / H.ELEV; // (its flood's bottom since version 4 over the one before: sbsave.js DP_FLOOR_V3)
     out.dpWant = [2, 3, 1]
-      .map((n) => String(Math.round((n - 1 + 48 / H.ELEV) * 20) / 20)) // (its grass over its flood's bottom then: sbsave.js DP_FLOOR_V3)
+      .map((n) => String(r20(r20(n - 1 + 48 / H.ELEV) - up))) // (its grass over its flood's bottom then, then down to version 4's)
       .concat("0");
+    out.dp3Want = [2, 3, 1].map((n) => String(r20(n - up))).concat("0");
     return out;
   });
   const same = (a, c) => JSON.stringify(a) === JSON.stringify(c);
@@ -101,6 +105,13 @@ const { url, fail, noErrors } = require("./lib.cjs");
         JSON.stringify(got.dpSave) +
         ", not " +
         JSON.stringify(got.dpWant),
+    );
+  if (!same(got.dp3Save, got.dp3Want))
+    fail(
+      "a version 3 save on Downpour: " +
+        JSON.stringify(got.dp3Save) +
+        ", not " +
+        JSON.stringify(got.dp3Want),
     );
   await b.close();
   noErrors(errs);
