@@ -450,6 +450,28 @@ export function fenceXSVG({ w = 400, d = 12, h = 200, seed = 1 } = {}) {
   s += `<path d="${z}" fill="none" stroke="${O}" stroke-width="3.6" stroke-linejoin="round"/><path d="${z}" fill="none" stroke="#d6dde0" stroke-width="1.6" stroke-linejoin="round"/>`;
   return wrap(w, d + h, s, defs);
 }
-/* how far a fence's top leans, and which way: out, away from the middle of the map, mapW wide. Its drawing (shapes.js)
-   and the flashlights (l4dd.js) both ask */
-export const fenceLean = (p, mapW) => (p.x < mapW / 2 ? -1 : 1) * p.h * 0.6;
+/* where two fences meet at a corner of the map (the owner's, Nov 28 04:58Z: "corners of stone or something, or some kind
+   of pillar in between to connect them"; 05:21Z: "actual corners of a different material that wasn't fence, like some
+   kind of pillar or solid or rock, stone"): a square stone pillar as wide as the side fence leans, so both fences' ends
+   meet it, laid in blocks with a cap on top. Drawn into (lean + 8) × (h + d); its foot at y h + d / 2, as fenceXSVG's */
+export function fenceCornerSVG({ d = 12, h = 200, lean = 54 } = {}) {
+  const W = lean + 8,
+    cap = 12, // (the cap's top, then its front)
+    foot = h + d / 2,
+    row = 22; // (a course of blocks)
+  let s = F`<rect x="1" y="${cap}" width="${W - 2}" height="${foot - cap}" fill="#767c84"/>`;
+  for (let y = foot - row, k = 0; y > cap; y -= row, k++) {
+    s += F`<path d="M1 ${y}H${W - 1}" stroke="#4d525a" stroke-width="2"/>`; // (the mortar under each course)
+    for (let x = k % 2 ? W / 3 : (2 * W) / 3; x < W - 4; x += W / 1.5)
+      s += F`<path d="M${n1(x)} ${y}V${Math.min(foot, y + row)}" stroke="#4d525a" stroke-width="2"/>`;
+    s += F`<path d="M3 ${y + 3}H${W - 3}" stroke="#9aa1a9" stroke-width="2" opacity=".6"/>`; // (each course's lit top edge)
+  }
+  s += F`<rect x="1" y="${cap}" width="5" height="${foot - cap}" fill="#5c6169" opacity=".7"/>`; // (its shaded side)
+  s += F`<rect x="0" y="0" width="${W}" height="${cap}" fill="#a7adb4"/><rect x="0" y="${cap - 4}" width="${W}" height="4" fill="#80868e"/>`;
+  s += F`<rect x="1" y="1" width="${W - 2}" height="${foot - 1}" fill="none" ${ln(2.4)}/>`;
+  return wrap(W, h + d, s);
+}
+/* how far a fence's top leans, and which way: out, away from the middle of the map, mapW wide. Its drawing (shapes.js),
+   the flashlights and a zombie climbing it (l4dd.js) all ask. 0.36 of its height: the lean it has been drawn with since
+   the map went to 60% */
+export const fenceLean = (p, mapW) => (p.x < mapW / 2 ? -1 : 1) * p.h * 0.36;

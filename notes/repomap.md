@@ -314,18 +314,18 @@ rubberducks.js 183 the little rubber ducks in
 rules.js 88 Hangout's rules: s.hang and the
 seats.js 440 the couches, the campfire's logs,
 shadowduck.js 254 the shadow duck
-shapes.js 931 Duck Cabin's props, drawn: art.js's
+shapes.js 954 Duck Cabin's props, drawn: art.js's
 shapesbase.js 54 Duck Cabin's props, drawn: the
 shapesground.js 423 Duck Cabin's props, drawn: the
 shapeswalls.js 317 Duck Cabin's props, drawn: walls,
 soccer.js 508 soccer: one ball on the
 sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
-stationart.js 50 Downpour's things: the drawings
+stationart.js 51 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 513 Downpour's drawings: the cars, the
-stationmap.js 1308 Dead Ducks Arcade's second map:
-stationparts.js 455 Downpour's drawings: the gas station's
+stationmap.js 1271 Dead Ducks Arcade's second map:
+stationparts.js 477 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
 stationtrees.js 599 Downpour's drawings: the swamp's trees
 trampoline.js 142 the trampoline

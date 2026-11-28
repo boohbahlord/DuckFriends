@@ -10,6 +10,7 @@ export {
   SPLINTER,
   canopySVG,
   counterSVG,
+  fenceCornerSVG,
   fenceLean,
   fenceSVG,
   fenceXSVG,

@@ -130,10 +130,10 @@
       }
       const sp = L.spawnAt(0),
         duck = fill([[sp.x, sp.y]], false);
-      /* the zombies' ground: from just inside each fence's climbing spot (the forest line stops nobody now: the owner's,
+      /* the zombies' ground: from just inside the road's two open ends (the forest line stops nobody now: the owner's,
          Nov 17 03:34Z, so a zombie walks the forest too) */
       const zomb = fill(
-        GS.FENCES.map((f) => [f.x - f.out * 80, (f.climb[0] + f.climb[1]) / 2]),
+        [GS.RIM.x0 + 50, GS.RIM.x1 - 50].map((x) => [x, GS.ROAD.mid]),
         true,
       );
       g.fillStyle = COL.reach;
@@ -212,17 +212,6 @@
           rect(r, "#c98a3a");
         } else if (p.layer !== "none" && p.solid) rect(r, COL.thing);
       }
-      // where zombies climb the fences
-      for (const f of GS.FENCES)
-        rect(
-          [
-            f.x + f.out * 40 - 14,
-            f.climb[0],
-            f.x + f.out * 40 + 14,
-            f.climb[1],
-          ],
-          "#ff9a3a",
-        );
       // the power box parts' spots
       g.font = `bold ${70 * GS.K}px sans-serif`;
       g.textAlign = "center";
