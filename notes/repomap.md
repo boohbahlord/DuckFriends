@@ -268,7 +268,7 @@ who.js 3 who this player is beyond
 wounds.js 500 
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 332 the zombies' walk over Downpour's
-zombies.js 1818 the zombies: one module for
+zombies.js 1824 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the
