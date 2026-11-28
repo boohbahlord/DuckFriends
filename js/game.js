@@ -3859,7 +3859,7 @@ function autoPress(e) {
   autoDid = true;
   if (drawHold(hand.held, true)) return; // (a grenade: cooked while held, gamehand.js)
   holdTrigger(() => {
-    if (!R || !repeats(hand.held) || !onBoardPhase()) return 0;
+    if (!R || !repeats(hand.held) || !onBoardPhase() || meterOn()) return 0;
     fire(hand.held);
     return Math.max(60, coolFor(hand.held) / grCool(R.state, R.me)); // (Sandbox: a group's Cooldown speed)
   });
@@ -3875,7 +3875,7 @@ function l4Press(e) {
   if (cooks(w) && drawHold(w, true)) return; // (gamehand.js)
   if (draws(w)) return void fire(w);
   holdTrigger(() => {
-    if (!R || !isL4dd(R.state)) return 0;
+    if (!R || !isL4dd(R.state) || meterOn()) return 0; // (a Flyer took hold while I held the button: one strike a click from now)
     const w = heldNow();
     if (w) fire(w);
     return Math.max(60, l4Cool(R.state, R.me, w));

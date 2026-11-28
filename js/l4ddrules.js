@@ -4067,6 +4067,7 @@ function meleeHits(s, now) {
       if (k.hit.includes(z.i)) continue;
       const held = z.st === 9; // (a Flyer on a duck: at any height, as a friend's swing reaches that duck; the held duck strikes it on its meter, flyHit)
       if (!held && !overlapH(hz, h, zOf(z, "zombie"))) continue;
+      if (held && z.fy && z.fy[0] === k.by) continue; // (my own swing, begun before it took hold: only my meter strikes it)
       if (Math.hypot(z.x - bx, z.y - by) > R) continue; // (a round bubble: as far up and down as to the sides, the owner's, Nov 18 15:18Z "Make sure melee weapons have the same range in any direction". It was squashed up and down, 1.4 times shorter)
       k.hit.push(z.i);
       if (z.st === 3) {

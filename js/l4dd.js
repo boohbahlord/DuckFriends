@@ -1394,6 +1394,15 @@ function litNames(s, ctx, beams) {
 /* a Flyer holding my duck: a light under its meter (flymeter.js), so its lines are as bright in the dark as anywhere.
    Where the meter sits from my glow (board px) is measured once a hold, once the meter shows */
 let flyAt = null;
+/* a Flyer on a duck's back: facing the way that duck faces, RIDE_BACK world px behind it, so both read at once (its
+   height, its ride over the duck: zombies.js zombieZ) */
+const RIDE_BACK = 14;
+function riderBack(o, Wd) {
+  const d = o.j && ducksOn(Wd.board).find((e) => e.dataset.pid === o.j[1]);
+  if (!d) return 0;
+  o.face = d.classList.contains("left") ? -1 : 1;
+  return -o.face * RIDE_BACK;
+}
 function flyLight(Wd, c, holes, q) {
   if (!flyAt || flyAt.i !== myFly.i) {
     const m = Wd.board.querySelector(".gduck.mine .l4-fly:not(.off)");
@@ -3112,17 +3121,19 @@ activity({
       const u = Math.min(1, (t - o.t0) / (o.g || gap));
       o.x = o.fx + (o.tx - o.fx) * u;
       o.y = o.fy + (o.ty - o.fy) * u;
-      const up =
+      const rb = o.st === 9 ? riderBack(o, Wd) : 0,
+        up =
           o.st === 5
             ? fenceZ(o.x, o.y, o.l[2])
             : o.st === 6 ||
                 o.st === 7 ||
                 o.st === 8 ||
+                o.st === 9 ||
                 (o.st === 3 && o.k !== undefined)
               ? zOf(o, "zombie") - heightAt(o.x, o.y)
-              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof, alive or dead)
+              : 0, // (Downpour: up a fence, or dropping off it; up a wall, or on a roof, alive or dead; a Flyer on a duck's back)
         z = heightAt(o.x, o.y) + up,
-        f = Wd.toScreen(o.x, o.y, z),
+        f = Wd.toScreen(o.x + rb, o.y, z),
         door = atBoards(o, Wd.inside),
         hole = !Wd.inside && roofHoleOver(o.x, o.y, z), // (Downpour: seen from outside through a hole in the gas station's roof)
         unseen = !(door || hole || EYES.some((a) => duckSees(a, o.x, o.y, z))),
