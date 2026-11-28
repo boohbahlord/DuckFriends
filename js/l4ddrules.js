@@ -4383,6 +4383,7 @@ export function l4Shots(s, now) {
             now,
             BLAST_HALF * (ang ? ANGEL.GL_RADIUS : 1),
             blastZ(at.x, at.y, at.z),
+            at.z,
           ) || hitAny;
         if (ang) burnAt(s, sh.by, at.x, at.y, now, blastZ(at.x, at.y, at.z)); // (Angelic: a smaller blast, and the ground there on fire)
       },
@@ -4418,12 +4419,12 @@ function burnAt(s, by, x, y, now, z0 = 0) {
   ];
 }
 /* a blast (a grenade, the grenade launcher's, the Angelic pistol's crit) at (bx, by), its feet at bz (left out: the floor
-   there at its shooter's height, sh.hz): every zombie in it dies, and the duck that threw it, in it, loses half its HP;
+   there at its shooter's height, sh.hz; drawn at fz, where it is when it goes off, in the air or on that floor): every zombie in it dies, and the duck that threw it, in it, loses half its HP;
    true when it got any zombie. Who is in it: blast.js, reaching only what the shots' one rule lets it: nothing solid
    between (layout.js slabBetween; the owner's, Nov 17 20:02Z, "IT IS PHYISCALLY RETARDED"), so one on a roof never gets
    anything inside or under it, and one inside never gets anything up on it */
 const blastZ = (x, y, hz) => (dp() ? floorH(x, y, hz) : heightAt(x, y));
-function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
+function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null, fz = null) {
   const gore = [],
     z0 = bz ?? blastZ(bx, by, sh.hz || 0),
     near = reach({
@@ -4529,7 +4530,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     x: +(bx / W).toFixed(4),
     y: +(by / H).toFixed(4),
     hit: [],
-    hz: Math.round(z0), // (where it went off: the roof it landed on, not the thrower's height)
+    hz: Math.round(fz ?? z0), // (where it went off: in the air, or the roof it landed on, not the thrower's height)
     gore: gore.slice(0, 12), // (blood bursting out of each zombie it got: game.js)
     ...(wide !== 1 ? { wide } : {}),
     rr: (REACH * wide) / BLAST_HALF, // (its rings' reach, as the screens draw it)
@@ -4721,6 +4722,7 @@ function l4Tick(s, now) {
   if (s.hang.l4.wait && !isSb(s)) {
     if (waitTick(s, now)) return true;
     const Lw = { ...s.hang.l4 };
+    nukeTick(s, zs, now, ids); // (a Nuke taken in a rest goes off too, on the rest's walkers; walkersTick keeps them)
     walkersTick(s, Lw, zs, now, T, up);
     dropTick(s, Lw, zs, now, T);
     s.hang.l4 = Lw;
@@ -4836,7 +4838,7 @@ function ammoFor(w, M, inf) {
       inf != null
         ? inf || (w === "laser" && M.ammoP >= 100) // (the laser's 100% is unlimited: the owner's, Nov 19 22:55Z)
         : !full; // (an item without a count)
-  if (unl) return full ? [full[0], 9999] : null;
+  if (unl) return full ? (ARMS[w].mag ? [full[0], 9999] : [9999, 0]) : null; // (one with no magazine, the Laser Rifle and the bow, shoots from its first count: never reloaded)
   /* Ammo: a number, or a share where 100% is Dead Ducks Arcade's own; How many you get for an item (a medkit, a zebra
      cake, a chair: its uses) */
   const own = full ? full[0] + full[1] : 100,

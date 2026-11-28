@@ -198,12 +198,19 @@ export function fire(id) {
    (true: the left button, a grenade; "right": the bow, the director plan, Nov 28): the button's coming up anywhere lets
    go, and so does anything that ends a press (game.js' held trigger's list; the right button's own menu doesn't, it
    never opens over the board: game.js drawPress); a key or the phone's attack stick let go themselves (drawLet) */
-let drawing = null; // { w, tm (a grenade's fuse's timer) }: my bow drawn (since when: bowdraw.js myDraw, for the meter)
-const DRAW_END = ["pointerup", "pointercancel", "blur", "contextmenu"];
+let drawing = null; // { w, tm (a grenade's fuse's timer), btn (the mouse button that draws it) }: my bow drawn (since when: bowdraw.js myDraw, for the meter)
+/* mouseup: its own button let go while another is still down (no pointerup comes till the last one is up) */
+const DRAW_END = [
+  "pointerup",
+  "mouseup",
+  "pointercancel",
+  "blur",
+  "contextmenu",
+];
 /** @param {string} w @param {boolean | "right"} [mouse] */
 export function drawHold(w, mouse = false) {
   if (!draws(w) || !R || !onBoardPhase() || drawing) return !!drawing;
-  const d = (drawing = { w, tm: 0 });
+  const d = (drawing = { w, tm: 0, btn: mouse === "right" ? 2 : 0 });
   myDraw(clockNow(), drawMost(w));
   R.send({ t: "draw", w });
   if (cooks(w))
@@ -214,7 +221,10 @@ export function drawHold(w, mouse = false) {
         addEventListener(t, drawUp, true);
   return true;
 }
-const drawUp = () => drawLet();
+const drawUp = (e) => {
+  if (e.type === "mouseup" && drawing && e.button !== drawing.btn) return; // (another button let go: still drawing)
+  drawLet();
+};
 export function drawLet(shoot = true) {
   for (const t of DRAW_END) removeEventListener(t, drawUp, true);
   const d = drawing;

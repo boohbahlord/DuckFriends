@@ -1142,7 +1142,8 @@ function walkAll(zs, c) {
     if (
       z.wk &&
       z.st === 2 &&
-      walkerWatch(z, pls, now, (s.hang && s.hang.l4f) || {})
+      walkerWatch(z, pls, now, (s.hang && s.hang.l4f) || {}) &&
+      !cake
     ) {
       wander(z, v * dt, pls, now);
       continue;

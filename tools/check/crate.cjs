@@ -103,9 +103,10 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
       room.send({ t: "hang", k: "l4", do: "crate", open: true });
       out.op = !!room.state.hang.l4cr.op;
       const has = R.kitOf(room.state, me).sl || [],
-        w =
-          room.state.hang.l4cr.w.find((x) => !has.includes(x)) ||
-          room.state.hang.l4cr.w[0]; // (one it hasn't got: one it has stays in the crate)
+        cr = room.state.hang.l4cr;
+      if (cr.w.every((x) => has.includes(x)))
+        room.state.hang.l4cr = { ...cr, w: ["smg", ...cr.w.slice(1)] }; // (all of it mine already, which a random crate can be: one I haven't got, so a take is seen)
+      const w = room.state.hang.l4cr.w.find((x) => !has.includes(x)); // (one it hasn't got: one it has stays in the crate)
       room.send({ t: "hang", k: "l4", do: "crate", what: w });
       out.took = room.state.hang.l4cr.w.length === out.coming - 1;
       /* the next round, ended with everyone able to buy a refill (no new crate): it's gone */

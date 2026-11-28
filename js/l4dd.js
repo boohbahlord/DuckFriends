@@ -2609,6 +2609,13 @@ function holdStop(el, done) {
 /* what kind of thing it is, under its name */
 const kindWord = (w) =>
   ({ melee: "Melee", ranged: "Gun", special: "Item" })[kindOf(w)] || "";
+/* the shop's tabs: his shop (or the crate's things), or every item in this mode (l4ddcatalog.js) */
+function pickTab(el, name) {
+  for (const t of el.querySelectorAll("[data-tab]"))
+    t.setAttribute("aria-selected", t.dataset.tab === name);
+  for (const p of el.querySelectorAll("[data-pane]"))
+    p.hidden = p.dataset.pane !== name;
+}
 function openShop(ctx, crate = false) {
   if (!shop || shop.open) return;
   shop.open = true;
@@ -2620,6 +2627,7 @@ function openShop(ctx, crate = false) {
     ? "Inside"
     : "Weapons";
   shop.pts.parentElement.hidden = crate;
+  if (crate) pickTab(shop.el, "buy"); // (a crate opens on its things, whatever tab was last picked)
   ctx.world.board.classList.add("l4-shopping");
   shop.sig = "";
   shop.el.hidden = false;
@@ -2669,13 +2677,7 @@ function shopEl(ctx) {
   el.addEventListener("focusout", () => (shopTo = ""));
   el.addEventListener("click", (e) => {
     const tab = e.target.closest("[data-tab]");
-    if (tab) {
-      /* the tabs: his shop, or every item in this mode (l4ddcatalog.js) */
-      for (const t of el.querySelectorAll("[data-tab]"))
-        t.setAttribute("aria-selected", t === tab);
-      for (const p of el.querySelectorAll("[data-pane]"))
-        p.hidden = p.dataset.pane !== tab.dataset.tab;
-    }
+    if (tab) pickTab(el, tab.dataset.tab);
   });
   /* buying: I hold its button 0.4 s while it fills, and letting go early buys nothing (the owner's, Nov 28) */
   const holdGo = (e) => {
@@ -2821,6 +2823,12 @@ function tap(t, ctx) {
 const PW_HOLD = 500;
 let pwHold = 0,
   atBox = false;
+/* the hold ends with no switch: E let go, the game left, or the window losing focus (its keyup never comes) */
+const pwLetGo = () => {
+  clearTimeout(pwHold);
+  pwHold = 0;
+  removeEventListener("blur", pwLetGo);
+};
 const TAPS = ["take", "shop", "crate", "sk", "power", "pump", "angel"];
 function startHold(t, ctx) {
   if (!t) return;
@@ -2989,8 +2997,7 @@ activity({
     hud?.remove();
     over?.remove();
     closeShop();
-    clearTimeout(pwHold); // (an E held as I leave switches nothing)
-    pwHold = 0;
+    pwLetGo(); // (an E held as I leave switches nothing)
     ctx.world.board.classList.remove("l4-waiting");
     for (const e of [
       ptsEl,
@@ -3375,9 +3382,10 @@ activity({
         t = me && holdTarget({ x: me.x * W, y: me.y * H }, ctx);
       if (!t) return false; // (nothing of mine: the world's E, a Sandbox orb too, sblootview.js)
       if (t.kind === "power") {
-        clearTimeout(pwHold);
+        pwLetGo();
+        addEventListener("blur", pwLetGo);
         pwHold = setTimeout(() => {
-          pwHold = 0;
+          pwLetGo();
           pwTap(ctx, true);
         }, PW_HOLD); // (held: the switch; let go before: a tap, l4ddpowerui.js)
         return true;
@@ -3390,8 +3398,7 @@ activity({
   keyup(e, ctx) {
     if (e.code === "KeyE") {
       if (pwHold) {
-        clearTimeout(pwHold);
-        pwHold = 0;
+        pwLetGo();
         pwTap(ctx, false);
       }
       stopHold(ctx);

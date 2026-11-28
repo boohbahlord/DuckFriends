@@ -58,7 +58,13 @@ import {
 
 import { hangTargets, hangHit } from "./hangout/rules.js";
 
-import { inCabin, standable, W as HW, H as HH } from "./hangout/layout.js";
+import {
+  inCabin,
+  standable,
+  floorH,
+  W as HW,
+  H as HH,
+} from "./hangout/layout.js";
 
 import {
   justinHit,
@@ -603,7 +609,8 @@ export function moveShots(s, now) {
     now,
     {
       U: [1, 1],
-      ...FLAT, // (a grenade: no heights here, the board's edges and the cabin's walls its walls)
+      ...FLAT, // (a grenade: the board's edges and the cabin's walls its walls; a board's ground flat)
+      floor: (x, y, z) => (isHang(s) ? floorH(x * HW, y * HH, z) : 0), // (Hangout: the ground it is over, a slope down or a raised floor, or a deck)
       wallAt: (x, y, z, sh) => FLAT.wallAt(x, y) || walled(sh, { x, y }),
       at: shotAt,
       walled,
