@@ -9,6 +9,20 @@ import { openReport, reportLinkHTML } from "./report.js";
 
 export const UPDATES = [
   {
+    id: "v289",
+    version: 289,
+    date: "Nov 28, 2026",
+    title: "Giants and Flyers",
+    news: [
+      "For Dead Ducks Arcade: the Giant throws ducks across the map, tosses zombies at you from afar, shoves the horde aside, climbs twice as fast and sometimes knocks a car into you.",
+      "For Dead Ducks Arcade: when a Flyer grabs you, a meter appears under your duck. Click (or press attack) when the red line meets the flashing white one to hit it for up to 3 HP; its HP shows in the meter. Merchants only knife a Flyer that holds a duck.",
+      "For Dead Ducks Arcade: your duck speeds up and slows down instead of starting at full speed, and your aim sways a little as you walk, more when you sprint. Your stamina bar flashes when you're too tired to sprint.",
+      "For Dead Ducks Arcade: zombies hop onto cars, the far night is fully black, every shot lights up the dark around you, and the gas station's lights and your flashlight flicker now and then.",
+      "For Dead Ducks Arcade: picking up gas tells you to take it to the generator. The generator no longer burns fuel for a round it was off, and a Nuke picked up between rounds goes off.",
+      "Grenades that go off in the air are drawn there, and the bow's right-button draw lets go when you let go.",
+    ],
+  },
+  {
     id: "v288",
     version: 288,
     date: "Nov 28, 2026",
