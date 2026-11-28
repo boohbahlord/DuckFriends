@@ -2672,7 +2672,7 @@ function shopEl(ctx) {
           el.querySelector(`[data-buy="${w}"]`)
         );
         holdStop(el, true);
-        if (!ok || ok.disabled) return;
+        if (!ok || ok.disabled || (!shop.crate && shop.mk !== mk)) return; // (another merchant's page now: the hold ends, nothing bought)
         sfx.holdClick(); // (full: a click, as the Vote button's)
         ctx.send({
           t: "hang",
