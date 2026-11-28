@@ -253,7 +253,7 @@ export const ARMS = {
     kind: "grenade",
     cool: ITEM_COOL,
     far: 300, // (its blast: blast.js rings)
-    start: 4, // (players start with 4: the owner's, Nov 19 19:27Z)
+    start: 0, // (none at the start, bought from the merchant one at a time: the owner's, Nov 28 03:28Z)
     most: 4,
   }, // (r: 50% wider than its first 140, owner 2026-11-04)
   /* the owner's new ones (Stage 3). The sniper's bullet goes through every zombie to the wall, 2 or 3 to each, a bolt

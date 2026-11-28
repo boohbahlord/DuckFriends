@@ -2090,8 +2090,8 @@ export function give(s, id, w, hand0) {
    three line bags, near: { id: 1 } the ducks he greeted standing by him, route: [legs], p: the leg he's on, t: since
    when, tk: his last step } */
 export const MERCH = {
-  NADE: 0.25, // (an item's chance to be grenades instead, NADE_EACH points for each one a duck is missing: the owner's, Nov 23 00:32Z, "sometimes sell grenades in place of items, and buying them just refills however many grenades you have missing. Each grenade only costing, let's say 75 points")
-  NADE_EACH: 75,
+  NADE: 0.25, // (an item's chance to be grenades instead: the owner's, Nov 23 00:32Z, "sometimes sell grenades in place of items")
+  NADE_EACH: 150, // (a grenade a buy, up to ARMS.grenade.most: the owner's, Nov 28 03:28Z, "they buy 1 grenade at a time with a maximum of 4"; Adam's 150)
   MISS: 0.05, // (each rest he didn't come adds this to the next rest's chance: the owner's, Nov 23 00:32Z "a 5% increased chance to show up for every time he doesn't show up")
   COME: 0.5, // (each rest's chance, round zero's too: the owner's, Nov 18 15:35Z "they come in at the rest phase, and it's a 50% chance that they do. It's not guaranteed")
   BOW: 250,
@@ -2135,10 +2135,10 @@ const setMh = (s, o) => {
 export const merchantPrice = (w) =>
   w === "bow" ? MERCH.BOW : MERCH.PRICES[TINTS[w] || "plain"];
 /* what he asks for it now (a Sale halves it, in fives) */
-/* grenades: each one I'm missing, so a buy fills me up (the owner's, Nov 23 00:32Z) */
+/* grenades: one a buy, none once I have them all */
 const lackOf = (w, kit) =>
-  w === "grenade" ? ARMS.grenade.most - ((kit && kit.g) || 0) : 1;
-/* what a buy costs me (w and kit: grenades count the ones I'm missing) */
+  w === "grenade" ? +(((kit && kit.g) || 0) < ARMS.grenade.most) : 1;
+/* what a buy costs me (w and kit: nothing to buy when my grenades are full) */
 export const stockPrice = (s, p, w, kit) =>
   (saleOn(s) ? fives(p / 2, 1) : p) * (w ? lackOf(w, kit) : 1);
 /* a new game: every merchant alive again, his bags new */
@@ -2196,7 +2196,11 @@ function merchantStock(s) {
     stock.push([w, merchantPrice(w)]);
   }
   setMh(s, { bags });
-  return stock.map(([w, p]) => [w, p, howMany()]);
+  return stock.map(([w, p]) => [
+    w,
+    p,
+    w === "grenade" ? ARMS.grenade.most : howMany(),
+  ]); // (grenades: enough for a full belt, one a buy)
 }
 /* his upgrades this visit: one for each duck, from the ones it can still get (the owner's, Nov 18 14:20Z); bought, it's
    there again (buy); { id: upgrade id, or "" (none left) } */
@@ -2660,7 +2664,10 @@ function merchantBuy(s, id, w, mx, my, hand, now) {
     have = kit.sl.includes(w);
   if (price <= 0 || ptsOf(s, id) < price) return false;
   if (w === "grenade") {
-    s.hang.l4a = { ...s.hang.l4a, [id]: { ...kit, g: ARMS.grenade.most } };
+    s.hang.l4a = {
+      ...s.hang.l4a,
+      [id]: { ...kit, g: Math.min(ARMS.grenade.most, (kit.g || 0) + 1) },
+    };
   } else if (have) {
     if (kindOf(w) !== "special" || hasLeft(s, id, w)) return false; // (one I have, or a gun of mine: no ammo from him)
     s.hang.l4a = {
