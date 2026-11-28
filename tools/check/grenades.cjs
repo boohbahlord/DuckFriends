@@ -52,6 +52,10 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     };
     const mine = () =>
       (room.state.shots || []).find((sh) => sh.by === me && sh.tb != null);
+    const boomed = () =>
+      (room.state.fx || []).some(
+        (f) => f.kind === "boom" && f.t >= window.__now - 400,
+      ); // (it went off just now)
     const out = {};
     /* cooked 2 s, then thrown east on open ground */
     const clear = (x, y, far) => {
@@ -85,18 +89,20 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     out.far = lay ? Math.round(lay.x * W - ox) : -1;
     out.lay = !!mine();
     tick(300);
-    out.gone = !mine();
+    out.gone = !mine() && boomed();
     /* thrown under the pump roof: it comes back down off it */
     ready("grenade", 2600 * 0.6, 2100 * 0.6);
     room.send({ t: "draw", w: "grenade" });
     room.send({ t: "use", what: "grenade", ax: 1, ay: 0, face: 1 });
-    let under = 0;
+    let under = 0,
+      seen = 0;
     tick(1500, () => {
       const q = mine();
       if (q) under = Math.max(under, q.hz + nadeAt(q, window.__now).z);
+      if (q) seen++;
     });
     out.under = [
-      Math.round(under),
+      seen === 15 ? Math.round(under) : Infinity, // (thrown, and there at every look before its fuse: else no pass)
       LY.floorH(2600 * 0.6 + 100, 2100 * 0.6, 200),
     ];
     /* held to the end of its fuse */
@@ -124,6 +130,7 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     tick(2000, () => {
       const q = mine();
       if (q && !q.g && !back) back = nadeAt(q, window.__now);
+      if (q && q.vx < 0) out.rev = 1; // (it turned back, off the wall)
     });
     out.wall = back ? Math.round(back.x * W - C.x0) : null;
     /* the launcher, a zombie 120 px in its way */
@@ -143,7 +150,7 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     const L2 = mine();
     out.lfar = L2 ? Math.round(nadeAt(L2, window.__now).x * W - ox) : -1;
     tick(1700);
-    out.lgone = !mine();
+    out.lgone = !mine() && boomed();
     out.range = ARMS.grenade.far;
     out.lrange = ARMS.glauncher.far;
     window.__fake = false;
@@ -162,7 +169,8 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     bad("under the pump roof, it stays under it");
   if (got.hand.left !== got.hand.was - 1 || got.hand.drawn || !got.hand.boom)
     bad("held to the end: it goes off in the hand");
-  if (got.wall === null || !(got.wall < 0)) bad("off the church's wall, back");
+  if (got.wall === null || !(got.wall < 0) || !got.rev)
+    bad("off the church's wall, back");
   if (got.lfuse !== 3000) bad("the launcher's: 3 s");
   if (!got.over) bad("the launcher's flies over a zombie in its way");
   if (!(got.lfar > got.lrange * 0.5) || !got.lgone)

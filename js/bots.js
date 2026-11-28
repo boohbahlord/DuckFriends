@@ -1039,19 +1039,20 @@ export function l4Bot(s, id, now, out) {
 }
 /* no zombie in sight: walk to the merchant and buy the upgrade he offers; true while it's busy with that */
 function shopping(s, id, now, x, y, far, m, send, out) {
-  const k = nearestMerchant(s, x, y),
-    to = k >= 0 ? merchantsOf(s)[k] : null; // (several here: the nearest)
-  if (!to) return false; // (only while a merchant is here and selling)
   const pts = ptsOf(s, id),
     hand = m.sl[1],
     up = upOf(s, id),
-    want = SHOP.find(
-      (it) =>
-        it.id === upOffer(s, id, to) &&
-        (up[it.id] || 0) < it.most &&
-        pts >= priceFor(s, id, it.id, up[it.id] || 0),
-    ); // (only the one the merchant offers it this visit)
-  if (!want) return false;
+    wantAt = (mm) =>
+      SHOP.find(
+        (it) =>
+          it.id === upOffer(s, id, mm) &&
+          (up[it.id] || 0) < it.most &&
+          pts >= priceFor(s, id, it.id, up[it.id] || 0),
+      ), // (only the one that merchant offers it this visit)
+    k = nearestMerchant(s, x, y, (mm) => !!wantAt(mm)),
+    to = k >= 0 ? merchantsOf(s)[k] : null; // (several here: the nearest with one it wants and can pay for)
+  if (!to) return false; // (only while a merchant is here and selling)
+  const want = wantAt(to);
   const act = { t: "hang", k: "l4", do: "buy", what: want.id, id };
   const d = Math.hypot(to.x - x, to.y - y);
   if (d < AT) {

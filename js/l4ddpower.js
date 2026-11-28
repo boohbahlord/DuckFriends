@@ -15,7 +15,7 @@
    s.hang (online):
      pw  { fit: [the box's parts, all of them], on: 1 while the power is on, left: the rounds it still lasts, this one
            included (between rounds: the next one counted too), gas: the row's gas in quarter cans, cr: the round the
-           last jerry can came in, n: the last floor item's number }
+           last jerry can came in, at: the last round it ran in, n: the last floor item's number }
      pk  [{ n, k ("can"), x, y, z (where it's drawn: on the sink, the counter or the couch), px, py (where a duck takes
            it), r (its gas, in quarter cans) }]: what lies about to be taken
    s.hidden.l4seen { zombie: 1 }: the dead ones already rolled for a jerry can. */
@@ -162,7 +162,9 @@ export function powerSetUp(s) {
    generator running dry too), even one switched off with 0 (owner, Nov 20 18:46Z) */
 function setPower(s, on, now, h) {
   s.hang.power = on ? 1 : 0;
-  s.hang.pw = { ...s.hang.pw, on: on ? 1 : 0 };
+  const L = s.hang.l4,
+    at = on && L && !L.wait ? { at: L.r } : {}; // (a round it ran in pays for itself, switched off or not)
+  s.hang.pw = { ...s.hang.pw, on: on ? 1 : 0, ...at };
   if (!on) s.hang.l4f = {};
   else if (!dpOn())
     s.hang.l4f = Object.fromEntries(h.players(s).map((id) => [id, 1])); // (Downpour: the power back on leaves them as they are)
@@ -173,10 +175,10 @@ export function powerRound(s, r, now, h) {
   const pw = s.hang.pw,
     L = s.hang.l4;
   if (!pw || !L || r < 1) return;
-  if (pw.on) {
-    const left = pw.left - 1;
-    s.hang.pw = { ...pw, left };
-    if (left <= 0) setPower(s, false, now, h);
+  if (pw.on || pw.at === r - 1) {
+    const left = Math.max(0, pw.left - 1); // (the round that ended, if it ran in it at all)
+    s.hang.pw = { ...pw, left, ...(pw.on ? { at: r } : {}) };
+    if (pw.on && left <= 0) setPower(s, false, now, h);
   }
   if (canCome(s) && Math.random() < canOdds(s, PW.CAN_ROUND)) {
     const busy = (s.hang.pk || []).map((o) => o.at),

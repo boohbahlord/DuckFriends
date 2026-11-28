@@ -103,6 +103,7 @@ import {
   merchantOf,
   merchantsOf,
   nearestMerchant,
+  slotFor,
   upOffer,
   stockPrice,
   MERCH,
@@ -153,7 +154,7 @@ import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olAway, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { belowBody } from "./below.js";
-import { ducksOn, kept, windowOpen } from "./ui.js";
+import { ducksOn, kept, windowOpen, esc } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
@@ -1838,7 +1839,9 @@ function drawMerchants(ctx, t) {
         }),
       ); // (made once a visit, then kept: nothing new each frame)
     ({ butler, mSig, mAt, mSeen, mPoolAt } = o);
-    drawMerchant(ctx, t, { ...mm, who: merchantById(mm.id) });
+    if (o.src !== mm)
+      [o.src, o.view] = [mm, { ...mm, who: merchantById(mm.id) }]; // (remade only when he changes)
+    drawMerchant(ctx, t, o.view);
     o.butler = butler;
     o.mSig = mSig;
     o.mAt = mAt;
@@ -1988,11 +1991,11 @@ function drawCorpses(ctx) {
     Wd = ctx.world,
     sc = Wd.sc,
     list = Array.isArray(s.hang.l4mc) ? s.hang.l4mc : [],
-    cur = merchantOf(s),
+    here = merchantsOf(s),
     gore = !+s.options.noGore,
     seen = new Set();
   for (const c of list) {
-    if (!c || (cur && cur.v === c.v && cur.st === "dead")) continue; // (the first one lying dead: drawMerchant's)
+    if (!c || here.some((m) => m.v === c.v && m.st === "dead")) continue; // (one lying dead still listed here: drawMerchant's)
     const who = merchantById(c.id);
     if (!who) continue;
     const wc = gore ? c.w || "" : goreFree(c.w || ""),
@@ -2344,8 +2347,8 @@ function coolBar(tag, s, me) {
     el.classList.toggle("off", v === "0");
   }
 }
-/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon, the Laser
-   Rifle: its heat has its own meter) */
+/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon; the Laser
+   Rifle's shots run out too, its heat is its own meter under these) */
 export function l4Ammo(s, me, w) {
   const m = kitOf(s, me),
     now = clockNow();
@@ -2358,7 +2361,7 @@ export function l4Ammo(s, me, w) {
       : { f: rl ? 0 : m.dg / ARMS.handgun.mag, rl, dry: false }; // (its bullets never run out)
   if (w === "grenade")
     return { f: m.g / ARMS.grenade.most, rl: false, dry: m.g <= 0 };
-  if (!w || !ARMS[w] || kindOf(w) !== "ranged" || w === "laser") return null;
+  if (!w || !ARMS[w] || kindOf(w) !== "ranged") return null;
   const c = (m.am || {})[w];
   if (!c) return null;
   if (w === "flamer") return { f: c[0] / ARMS.flamer.all, rl, dry: c[0] <= 0 }; // (its tank)
@@ -2526,8 +2529,8 @@ function shopFill(s, ctx) {
 /* the supply crate opened (the rules' crateTake): its things on the merchant's page, each taken by holding it */
 function crateFill(s, ctx) {
   const w = (s.hang.l4cr && s.hang.l4cr.w) || [],
-    kit = kitOf(s, ctx.me),
-    sig = JSON.stringify(["crate", w, kit && kit.sl, kit && kit.g]);
+    can = w.map((x) => slotFor(s, ctx.me, x) >= 0), // (what give takes: an item I hold used up, yes; one I hold still full, no)
+    sig = JSON.stringify(["crate", w, can]);
   if (sig === shop.sig) return;
   shop.sig = sig;
   shop.who = "";
@@ -2537,10 +2540,11 @@ function crateFill(s, ctx) {
   shop.list.innerHTML = "";
   shop.guns.innerHTML = w.length
     ? w
+        .map(esc) // (the names come over the network: never markup)
         .map(
-          (x) =>
+          (x, i) =>
             `<li class="l4-up l4-buyw" data-item="${x}"><i class="l4-up-ic">${orbHTML(x)}</i><span class="l4-up-t"><b>${weaponName(x)}</b><small>${kindWord(x)}</small>${statLineOf(x) ? `<small class="l4-up-s">${statLineOf(x)}</small>` : ""}</span>${
-              kit && kit.sl.includes(x) && kindOf(x) !== "special"
+              !can[i]
                 ? `<button type="button" class="btn small l4-up-buy" data-buy="${x}" disabled>Owned</button>`
                 : `<button type="button" class="btn small yellow l4-up-buy" data-buy="${x}">Take</button>`
             }</li>`,
@@ -2961,6 +2965,8 @@ activity({
     hud?.remove();
     over?.remove();
     closeShop();
+    clearTimeout(pwHold); // (an E held as I leave switches nothing)
+    pwHold = 0;
     ctx.world.board.classList.remove("l4-waiting");
     for (const e of [
       ptsEl,

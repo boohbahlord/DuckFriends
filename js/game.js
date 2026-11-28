@@ -794,11 +794,13 @@ function readBoxes(now) {
    that duck's hand and fades, as soon as the pin is out, not when it's thrown */
 const PINS = new Set();
 function pinsOut(s, fxl, size, now) {
-  for (const [id, t0] of Object.entries(s.draw || {})) {
+  for (const id in s.draw || {}) {
     const p = s.pos[id],
+      { t: t0, w } = s.draw[id],
       k = id + "@" + t0;
     if (
       !p ||
+      w !== "grenade" ||
       (id === R.me ? heldNow() : p.w) !== "grenade" ||
       PINS.has(k) ||
       now - t0 > 400

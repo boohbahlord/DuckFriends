@@ -6,7 +6,8 @@
    becomes a dark red ... When it reaches max ... it flashes a little white"; 18:05Z: full draw 2.5 s, a sure crit at
    full, before that 25% for each second drawn; 18:16Z: the arrow flies up to 40% faster at full draw. The plan in plain
    English: /mnt/project-files/adam/calibers.md, The bow.
-   How: the press sends { t: "draw" } and the host keeps when it began (s.draw { id: ms }); the release is the use, and
+   How: the press sends { t: "draw" } and the host keeps when it began and with what (s.draw { id: { t: ms, w } }); the
+   release is the use, and
    the host counts the draw from its own clock, so every screen agrees and nobody can claim a longer one. The arrow
    carries its draw (dr, ms) to whatever it hits. Why its own file: one rule for every mode's bow (the boards, Mad God
    Justin, Sandbox, Hangout and Dead Ducks Arcade), and for my screen's meter. The director plan, Nov 28: a click shoots
@@ -21,17 +22,24 @@ export const drawMost = (w) => (cooks(w) ? NADE.FUSE : DRAW.FULL);
 /* the host: duck id starts drawing (action { t: "draw", w }) */
 export function act_draw({ state, s, a, now }) {
   if (!draws(a.w) || !s.pos || !s.pos[a.id]) return state;
-  s.draw = { ...(s.draw || {}), [a.id]: now };
+  s.draw = { ...(s.draw || {}), [a.id]: { t: now, w: a.w } };
   return s;
 }
-/* the host, at the release (the use): how long duck id drew, 0 … most ms (0 with no draw begun), and the draw ends */
-export function drawTaken(s, id, now, most = DRAW.FULL) {
-  const t0 = s.draw && s.draw[id];
-  if (t0 == null) return 0;
-  const d = { ...s.draw };
+/* duck id's draw begun with weapon w, or null (one begun with another weapon isn't w's: a bow drawn, then a grenade
+   picked, pulls no pin) */
+export const drawOf = (s, id, w) => {
+  const d = s.draw && s.draw[id];
+  return d && d.w === w ? d : null;
+};
+/* the host, at the release (the use) of w: how long duck id drew it, 0 … most ms (0 with no draw of it begun), and the
+   draw ends */
+export function drawTaken(s, id, now, most = DRAW.FULL, w) {
+  if (!s.draw || s.draw[id] == null) return 0;
+  const d0 = s.draw[id],
+    d = { ...s.draw };
   delete d[id];
   s.draw = d;
-  return Math.max(0, Math.min(most, now - t0));
+  return w && d0.w !== w ? 0 : Math.max(0, Math.min(most, now - d0.t));
 }
 /* what a draw of dr ms adds: damage (+0.2 each whole step, up to +5), its crit chance (sure at full) and the arrow's
    speed (up to 40% faster): DRAW */

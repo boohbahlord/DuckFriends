@@ -1321,6 +1321,7 @@ function setUp(s, now) {
   s.hang.l4am = null; // (the Angel machine, empty: l4ddangel.js)
   powerSetUp(s); // (the power is cut: the lamps are dark; the fires burn. Its box and its four parts: l4ddpower.js)
   s.hang.l4k = [];
+  s.hang.l4cr = null; // (a crate from the last game doesn't land in this one)
   s.shots = [];
   s.hidden = { ...(s.hidden || {}), l4back: {} }; // (the ducks that left this game: what they had, for when they're back)
   players(s).forEach((id, k) => bringBack(s, id, now, k, true));
@@ -1883,16 +1884,18 @@ function helperDrop(s, id) {
    the one in hand, else the first (ITEM_SLOTS). The hotbar shows it before (l4ddbar.js) */
 export function slotFor(s, id, w, hand0) {
   const kit = kitOf(s, id),
-    kind = kindOf(w);
-  if (!kit || kit.sl.includes(w)) return -1;
-  const hand = kit.sl.includes(hand0) ? hand0 : ((s.pos || {})[id] || {}).w;
-  if (kind === "ranged") return gunSlotFor(kit.sl, w, hand); // (kitslots.js)
-  if (kind !== "special") return kind === "melee" ? 0 : -1;
-  const its = ITEM_SLOTS.filter((i) => i < kit.sl.length),
+    kind = kindOf(w),
     used = (i) => {
       const c = (kit.am || {})[kit.sl[i]];
       return !!c && c[0] + c[1] <= 0;
-    };
+    },
+    mine = kit ? kit.sl.indexOf(w) : -1;
+  if (!kit) return -1;
+  if (mine >= 0) return kind === "special" && used(mine) ? mine : -1; // (an item of mine used up: a new one fills it)
+  const hand = kit.sl.includes(hand0) ? hand0 : ((s.pos || {})[id] || {}).w;
+  if (kind === "ranged") return gunSlotFor(kit.sl, w, hand); // (kitslots.js)
+  if (kind !== "special") return kind === "melee" ? 0 : -1;
+  const its = ITEM_SLOTS.filter((i) => i < kit.sl.length);
   return (
     its.find((i) => !kit.sl[i]) ??
     its.find(used) ??
@@ -2267,8 +2270,11 @@ function bandagesCome(s, now) {
     B = DIRECTOR.BANDAGE,
     rolled =
       ((s.hang.l4cr && s.hang.l4cr.w) || []).includes("bandage") ||
-      merchantsOf(s).some((m) =>
-        (m.stock || []).some(([w]) => w === "bandage"),
+      merchantsOf(s).some(
+        (m) =>
+          m.st !== "out" &&
+          m.st !== "dead" && // (one leaving or killed sells none)
+          (m.stock || []).some(([w]) => w === "bandage"),
       );
   if (!low.length || isSb(s) || rolled) return;
   low.forEach((d) => {
@@ -2289,7 +2295,7 @@ function bandagesCome(s, now) {
 }
 /* the supply crate (DIRECTOR.CRATE): on Downpour, in a rest where some duck is low on ammo and can't afford a refill
    (director.js needsCrate), a helicopter is heard, then it falls on the gas station's roof by the soldier's red flare
-   with a thud (crateSpot) and stays there, solid to ducks and zombies alike (crateSolid), until it's opened; opened, it
+   with a thud (crateSpot) and stays there, solid to ducks and zombies alike (crateSolid), opened or not; opened, it
    goes when the next rest begins (the owner's, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtBUzMwY1XKox5HKv4m8BzaU). E opens it
    and its things are taken by holding them, as the merchant's (l4dd.js; crateTake). Its things roll from the
    fireplace's old slots (BAGS): two for one duck, else one or two for each. s.hang.l4cr = { t: when it lands, w: its
@@ -2347,7 +2353,7 @@ function crateTick(s, now) {
    comes or goes, and the walking grids under it made again (walkgrid.js regrid) */
 let crateKey = "";
 export function crateSolid(s) {
-  const at = (s && s.hang && s.hang.l4cr && s.hang.l4cr.at) || null,
+  const at = (dp() && s && s.hang && s.hang.l4cr && s.hang.l4cr.at) || null, // (on Downpour only: the room gone back to the cabin has none)
     key = at ? at.join() : "";
   if (key === crateKey) return;
   crateKey = key;
@@ -2493,9 +2499,18 @@ const MINE = [
   "sms",
 ];
 const mineOf = (h) => Object.fromEntries(MINE.map((k) => [k, h[k]]));
-/* every merchant here (alive, running, or the first one lying dead) */
-export const merchantsOf = (s) =>
-  [merchantOf(s), ...((s && s.hang && s.hang.l4mx) || [])].filter(Boolean);
+/* every merchant here (alive, running, or lying dead till tidyMerchants), made again only when they change (the
+   screens ask every frame); read it, never change it */
+let mList = [],
+  mFirst = null,
+  mMore = null;
+export function merchantsOf(s) {
+  const a = merchantOf(s),
+    b = (s && s.hang && s.hang.l4mx) || null;
+  if (a !== mFirst || b !== mMore)
+    [mFirst, mMore, mList] = [a, b, [a, ...(b || [])].filter(Boolean)];
+  return mList;
+}
 /* fn run with the k-th merchant here as "the" merchant (0: the first) */
 function asMerchant(s, k, fn) {
   if (!k) return fn();
@@ -2523,13 +2538,13 @@ function eachMerchant(s, fn) {
   }
   return false;
 }
-/* the one here nearest (x, y) and selling, as k (or -1) */
-export function nearestMerchant(s, x, y) {
+/* the one here nearest (x, y) and selling (and ok(m), when given), as k (or -1) */
+export function nearestMerchant(s, x, y, ok = (m) => !!m) {
   let best = -1,
     bd = Infinity;
   merchantsOf(s).forEach((m, k) => {
     const d = Math.hypot(m.x - x, m.y - y);
-    if (m.st === "here" && d < bd) [best, bd] = [k, d];
+    if (m.st === "here" && d < bd && ok(m)) [best, bd] = [k, d];
   });
   return best;
 }
@@ -2637,17 +2652,9 @@ function merchantDrops(s, m, now) {
       guns[rint(0, guns.length - 1)],
     );
   if (Math.random() < MERCH.PURSE_P)
-    s.hang.l4dr = [
-      ...(s.hang.l4dr || []),
-      {
-        n: now,
-        k: "coins",
-        pts: MERCH.PURSE,
-        x: Math.round(m.x) + 30,
-        y: Math.round(m.y),
-        until: now + DROP.LIFE,
-      },
-    ];
+    layDrop(s, "coins", m.x + 30, m.y, now, now + DROP.LIFE, "", {
+      pts: MERCH.PURSE,
+    });
 }
 /* does some duck's screen show him (the zombies' screens, crowd.js seenBy)? */
 const mSeen = (s, m) =>
@@ -2659,14 +2666,17 @@ const mSeen = (s, m) =>
     m.y,
     VIEW,
   );
-/* his knife for a target at (x, y) up close, his handgun out to its reach with nothing between, else "" */
-const mWeapon = (m, x, y) => {
+/* his knife for a target at (x, y) up close, his handgun out to its reach with nothing between, else ""; z: its feet,
+   never one above or below him (on a roof over him, say) */
+const mWeapon = (m, x, y, z = zOf(m)) => {
   const d = Math.hypot(x - m.x, y - m.y);
-  return d <= MERCH.FIGHT.knife.reach
-    ? "knife"
-    : d <= MERCH.FIGHT.handgun.reach && walkable(m.x, m.y, x, y)
-      ? "handgun"
-      : "";
+  return !nearH(z, zOf(m))
+    ? ""
+    : d <= MERCH.FIGHT.knife.reach
+      ? "knife"
+      : d <= MERCH.FIGHT.handgun.reach && walkable(m.x, m.y, x, y)
+        ? "handgun"
+        : "";
 };
 /* inside his building (Downpour's chapel)? */
 const mInside = (x, y) => whereIn(x, y) === whereIn(BUTLER.x, BUTLER.y);
@@ -2683,14 +2693,23 @@ function merchantFire(s, m0, now) {
         : null,
     zs = fp || !mInside(m0.x, m0.y) ? [] : zombies(s),
     z = zs
-      .filter((q) => q.st !== 3 && mInside(q.x, q.y) && mWeapon(m0, q.x, q.y))
+      .filter(
+        (q) =>
+          q.st !== 3 &&
+          mInside(q.x, q.y) &&
+          mWeapon(m0, q.x, q.y, zOf(q, "zombie")),
+      )
       .sort(
         (a, b) =>
           Math.hypot(a.x - m0.x, a.y - m0.y) -
           Math.hypot(b.x - m0.x, b.y - m0.y),
       )[0],
     [tx, ty] = fp || (z ? [z.x, z.y] : [0, 0]),
-    w = fp || z ? mWeapon(m0, tx, ty) : "";
+    w = fp
+      ? mWeapon(m0, tx, ty, zOf(s.pos[m0.foe]))
+      : z
+        ? mWeapon(m0, tx, ty, zOf(z, "zombie"))
+        : "";
   if (!w) return false;
   const F = MERCH.FIGHT[w];
   setMh(s, { stab: now, sms: F.ms }); // (the wait after a swing or a shot is that weapon's, as his bar shows it)
@@ -2716,7 +2735,16 @@ function merchantFire(s, m0, now) {
   } else {
     const ids = ducks(s).map((d) => d.id);
     if (
-      strike(s, z, dmgOf(ARMS[w]), false, ids[rint(0, ids.length - 1)], "", now)
+      strike(
+        s,
+        z,
+        dmgOf(ARMS[w]),
+        false,
+        ids[rint(0, ids.length - 1)],
+        "",
+        now,
+        false,
+      )
     )
       die(z, now - s.hang.l4.t0);
     wound(s, z, w, false);
@@ -2732,7 +2760,8 @@ function merchantFight(s, m0, now, dt) {
   const [fx, fy] = toPx(p);
   if (Math.hypot(fx - m0.x, fy - m0.y) > MERCH.FOE_FAR)
     return merchantRun(s, now);
-  if (merchantFire(s, m0, now) || (mWeapon(m0, fx, fy) && mSeen(s, m0))) return; // (fired, or waiting to)
+  if (merchantFire(s, m0, now) || (mWeapon(m0, fx, fy, zOf(p)) && mSeen(s, m0)))
+    return; // (fired, or waiting to)
   const m = { x: m0.x, y: m0.y },
     aim = walkable(m.x, m.y, fx, fy)
       ? [fx, fy]
@@ -2852,7 +2881,12 @@ function merchantTick1(s, now) {
   const dx = m.x - m0.x;
   if (m0.st === "out") {
     merchantFire(s, m0, now); // (running, he fires back at once, or at a zombie in his building)
-    if (m0.foe && !done && Math.abs(dx) + Math.abs(m.y - m0.y) < 0.5) {
+    if (
+      m0.foe &&
+      standing(s, m0.foe) &&
+      !done &&
+      Math.abs(dx) + Math.abs(m.y - m0.y) < 0.5
+    ) {
       s.hang.l4m = { ...merchantOf(s), st: "fight" }; // (he can't run: he just fights)
       return;
     }
@@ -2943,11 +2977,16 @@ export function tornDown(s) {
 /* a grenade held past its fuse goes off in the hand, its pin out since the press (bowdraw.js; NADE: the director plan,
    Nov 28): thrown with no time left, where the duck stands */
 function cookedOff(s, now) {
-  for (const [id, t0] of Object.entries(s.draw || {}))
-    if (cooks((s.pos[id] || {}).w) && now - t0 >= NADE.FUSE)
+  for (const [id, d] of Object.entries(s.draw || {}))
+    if (cooks(d.w) && cooks((s.pos[id] || {}).w) && now - d.t >= NADE.FUSE)
       l4Use(
         s,
-        { id, what: "grenade", dr: drawTaken(s, id, now, NADE.FUSE), face: 1 },
+        {
+          id,
+          what: "grenade",
+          dr: drawTaken(s, id, now, NADE.FUSE, d.w),
+          face: 1,
+        },
         now,
       );
 }
@@ -3330,7 +3369,7 @@ export function zombieTakes(s, by, w, dr = 0) {
 /* a zombie takes damage from a duck, and the duck gets its points: 5 for each HP it took, or 25 for a headshot. A crit
    doubles the damage; one that kills blows the head off with a CRIT over it (the owner's, Nov 21 17:25Z: "a critical hit
    on any duck will give a headshot effect only if it is the killing blow"); true when it died */
-function strike(s, z, dmg, crit, by, w = "", now = 0) {
+function strike(s, z, dmg, crit, by, w = "", now = 0, mad = true) {
   if (z.st === 3) return false;
   dmg = lootDmg(s, by, w, dmg);
   if (w && w !== "laser" && angelOf(s, by, w)) dmg += angelDmg(w); // (Angelic: by its fire rate, l4ddangel.js; the Laser Rifle has its own, laser)
@@ -3339,7 +3378,7 @@ function strike(s, z, dmg, crit, by, w = "", now = 0) {
     all = !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
     took = all ? z.hp : Math.min(z.hp, dmg);
   z.hp = all ? 0 : hpHurt(z.hp, dmg);
-  if (z.wk && by && s.players[by]) [z.wk, z.wt] = [2, by]; // (a rest's walker hit: it comes for whoever hit it, zombies.js)
+  if (z.wk && by && mad && s.players[by]) [z.wk, z.wt] = [2, by]; // (a rest's walker hit: it comes for whoever hit it, zombies.js; mad false: a merchant hit it, by only gets the points)
   if (z.hp > 0 && now) z.sg = Math.round(now + STAGGER.ms); // (a short stagger: zombies.js walkAll)
   const head = !!crit && z.hp <= 0;
   if (w) wound(s, z, w, crit);
@@ -4193,10 +4232,10 @@ export function l4Shots(s, now) {
         for (const z of big > 1 ? zs : nearby(grid, zs, x, y))
           if (near(z) && !(sh.hit || []).includes(z.i) && !past(sh, w, z)) {
             const sniper = w === "sniper",
-              crit = (sniper && !!sh.crit) || critRoll(s, sh.by, w),
+              crit = (sniper && !!sh.crit) || critRoll(s, sh.by, w, sh),
               dmg = sniper
                 ? Math.max(1, dmgOf(A) - (sh.hit || []).length)
-                : dmgOf(A);
+                : dmgOf(A) + drawDmg(sh.dr); // (an Angelic bow's arrow through them: its draw counts, bowdraw.js)
             if (sniper && crit) sh.crit = 1;
             sh.hit = [...(sh.hit || []), z.i];
             if (strike(s, z, dmg, crit, sh.by, w, now)) die(z, T);
@@ -4424,7 +4463,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
     x: +(bx / W).toFixed(4),
     y: +(by / H).toFixed(4),
     hit: [],
-    hz: sh.hz || 0,
+    hz: Math.round(z0), // (where it went off: the roof it landed on, not the thrower's height)
     gore: gore.slice(0, 12), // (blood bursting out of each zombie it got: game.js)
     ...(wide !== 1 ? { wide } : {}),
     rr: (REACH * wide) / BLAST_HALF, // (its rings' reach, as the screens draw it)
@@ -4438,8 +4477,7 @@ function l4Tick(s, now) {
   if (L.over) return false;
   meleeHits(s, now); // (first: the zombies below are read after it)
   cookedOff(s, now);
-  const T = now - (isSb(s) && L.t0 == null ? 0 : L.t0), // (Sandbox: no round started, its zombies still claw)
-    zs = zombies(s);
+  const T = now - (isSb(s) && L.t0 == null ? 0 : L.t0); // (Sandbox: no round started, its zombies still claw)
   /* the ducks: HP coming back, revives, bleeding out, boards going up, reloads */
   const p4 = { ...(s.hang.l4p || {}) },
     ids = players(s);
@@ -4613,6 +4651,7 @@ function l4Tick(s, now) {
   merchantTick(s, now); // (the merchant walks in or out, and greets)
   crateTick(s, now);
   troopTick(s, now, ids); // (the rests between rounds too)
+  const zs = zombies(s); // (read after the merchants shot: their hits stay)
   /* between rounds: no zombies; the drops still lie there to be taken */
   if (s.hang.l4.wait && !isSb(s)) {
     if (waitTick(s, now)) return true;
@@ -4629,6 +4668,8 @@ function l4Tick(s, now) {
     extra = Math.max(0, ids.length - 1),
     L2 = { ...s.hang.l4 };
   if (L2.wk) {
+    for (let i = zs.length; i--; )
+      if (zs[i].wk && zs[i].st === 3) zs.splice(i, 1); // (the rest's dead go: their time of death was on the rest's clock)
     for (const z of zs) if (z.wk) walkerJoins(z);
     L2.wk = null;
   } // (the rest's walkers still up come with the round)
@@ -4693,10 +4734,10 @@ function l4Tick(s, now) {
   if (L2.made >= L2.n && left.length === bodies.length && T >= 0 && !isSb(s)) {
     s.hang.l4 = { ...L2, wait: { r: L2.r + 1, v: {} } }; // (the next round waits for End turn)
     store(s, bodies, false);
-    restCome(s, now); // (the rest before the next round)
     ids.forEach((id, k) => {
       if (isGhost4(s, id)) bringBack(s, id, now, k, false);
     });
+    restCome(s, now); // (the rest before the next round: after the ghosts are back, at their health)
     return true;
   }
   s.hang.l4 = L2;
