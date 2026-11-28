@@ -2719,6 +2719,7 @@ function merchantFire(s, m0, now) {
       .filter(
         (q) =>
           q.st !== 3 &&
+          q.st !== 9 && // (a Flyer on a duck: only melee reaches it)
           mInside(q.x, q.y) &&
           mWeapon(m0, q.x, q.y, zOf(q, "zombie")),
       )
