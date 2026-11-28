@@ -2637,7 +2637,9 @@ function shopEl(ctx) {
       w,
       at: performance.now(),
       t: setTimeout(() => {
-        const ok = el.querySelector(`[data-buy="${w}"]`);
+        const ok = /** @type {HTMLButtonElement | null} */ (
+          el.querySelector(`[data-buy="${w}"]`)
+        );
         holdStop(el, true);
         if (!ok || ok.disabled) return;
         sfx.holdClick(); // (full: a click, as the Vote button's)
@@ -2829,7 +2831,7 @@ activity({
     over.className = "l4-over";
     over.hidden = true;
     over.addEventListener("click", (e) => {
-      if (e.target.closest("[data-l4='again']"))
+      if (/** @type {Element} */ (e.target).closest("[data-l4='again']"))
         ctx.send({ t: "hang", k: "l4", do: "again" });
     });
     endEl = document.createElement("div");
@@ -2839,7 +2841,7 @@ activity({
       endEl.addEventListener(t, (e) => e.stopPropagation(), { passive: true }); // (a tap on it never walks or attacks)
     endEl.addEventListener("click", (e) => {
       e.stopPropagation();
-      const b = e.target.closest("button");
+      const b = /** @type {Element} */ (e.target).closest("button");
       if (b)
         ctx.send({
           t: "hang",
