@@ -18,24 +18,15 @@ const hash = (n) => {
   return s - Math.floor(s);
 };
 const still = () => document.documentElement.classList.contains("still");
-/* the stutter of the slot `now` is in: { t (its target's place in a list of n), at (ms), n (dips) }; a slot `slot` ms
-   long, its stutter `within` ms into it */
-const slotOf = (now, n, slot = SLOT, within = WITHIN) => {
-  const i = Math.floor(now / slot);
-  return {
-    t: Math.floor(hash(i + 0.1) * n),
-    at: i * slot + hash(i + 0.2) * within,
-    n: 2 + Math.floor(hash(i + 0.3) * 3),
-  };
-};
-function stutter(target, now, list = TARGETS, slot, within) {
+/* the light's strength now: the slot `now` is in (`slot` ms long) picks one target of `list` and a stutter `within` ms
+   into it, of 2 to 4 dips (plain numbers, nothing made: every duck asks every frame) */
+function stutter(target, now, list = TARGETS, slot = SLOT, within = WITHIN) {
   if (!target || still()) return 1;
-  const s = slotOf(now, list.length, slot, within);
-  if (list[s.t] !== target) return 1;
-  const u = now - s.at;
+  const i = Math.floor(now / slot);
+  if (list[Math.floor(hash(i + 0.1) * list.length)] !== target) return 1;
+  const u = now - (i * slot + hash(i + 0.2) * within);
   if (u < 0 || u >= SPAN) return 1;
-  const gap = SPAN / s.n;
-  return u % gap < DIP_MS ? DIP : 1;
+  return u % (SPAN / (2 + Math.floor(hash(i + 0.3) * 3))) < DIP_MS ? DIP : 1;
 }
 /* Downpour (the owner's, Nov 28): some of the gas station's tube lamps stutter now and then, the same way (stationmap.js
    light.stut names them); and very rarely one duck's flashlight, picked by its seat, every BEAM_SLOT at most */
