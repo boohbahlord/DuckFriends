@@ -167,7 +167,8 @@ import {
   angelCrit,
 } from "./l4ddangel.js";
 
-import { NPC_RUN } from "./npcshared.js";
+import { NPC_RUN, NPC_DMG } from "./npcshared.js";
+import { ducks, lowHp, badly } from "./director.js";
 import { grHp, grCool } from "./sbgroups.js";
 import { setGrid, openNear, flowFrom, heading } from "./zombiepath.js";
 import { CELL } from "./walkgrid.js";
@@ -1113,7 +1114,7 @@ function dropTick(s, L, zs, now, T) {
     });
     if (!by) continue;
     dr = dr.filter((x) => x !== d);
-    takeDrop(s, d.k, by, now, ids);
+    takeDrop(s, d.k, by, now, ids, d.pts);
   }
   if (dr.length !== was.length) s.hang.l4dr = dr; // (only when one went: the state stays the same object)
   /* a drop due: the next zombie killed (a Nuke taken just now too) drops it where it fell */
@@ -1141,10 +1142,10 @@ function pickLoot(s, id, mx, my, hand, now) {
   if (!d || (d.w && !give(s, id, d.w, hand))) return false;
   s.hang.l4dr = s.hang.l4dr.filter((x) => x !== d);
   if (d.w) addFx(s, { kind: "l4take", by: id, who: [], w: d.w, t: now });
-  else takeDrop(s, d.k, id, now, players(s));
+  else takeDrop(s, d.k, id, now, players(s), d.pts);
   return true;
 }
-function takeDrop(s, k, by, now, ids) {
+function takeDrop(s, k, by, now, ids, pts = 0) {
   addFx(s, { kind: "l4drop", k, by, who: [], t: now });
   if (k === "kill" || k === "double")
     s.hang.l4on = { ...(s.hang.l4on || {}), [k]: now + DROP.FOR };
@@ -1156,7 +1157,8 @@ function takeDrop(s, k, by, now, ids) {
   } else if (k === "sale") {
     s.hang.l4on = { ...(s.hang.l4on || {}), sale: now + DROP.FOR };
     s.hang.l4sale = { used: {} }; // (a new Sale: every half price can be spent again)
-  } else if (k === "coins") addPts(s, by, POCKET_CHANGE.POINTS);
+  } else if (k === "coins")
+    addPts(s, by, pts || POCKET_CHANGE.POINTS); // (a killed merchant's purse: its own, merchantDrops)
   else if (k === "ammo") maxAmmo(s);
   else if (k === "nuke") s.hang.l4nk = { at: now + NUKE.SWEEP }; // (it goes off once the sweep covers the screen: nukeTick)
 }
@@ -1596,7 +1598,6 @@ function l4Act(s, a, now) {
 /* what a merchant sold, said in the chat by the buyer's tag (the owner's, Nov 19 19:27Z: "what the merchant sells to a
    player should be said in the text chat in the bottom left"); chat.js shows the name as it shows a tag */
 const soldSays = (s, id, text) => {
-  setMh(s, { sold: 1 }); // (bought from: he may come straight back, merchantCome)
   logIn(s, {
     sys: true,
     by: id,
@@ -1932,16 +1933,16 @@ export function give(s, id, w, hand0) {
    balcony in the cabin, over the fence on Downpour. When the next round's zombies come he says a leaving line and runs
    the same way, and the zombies chase him as they do a duck (as they do Justin out there: JCHASE) until he's over the
    fence or off the balcony. He can be killed (by anyone's weapons, or the zombies' claws), and stays dead for the rest
-   of the game, his body left where he fell (the zombies leave it be); no revive. The merchants come in turn from a line
-   (merchantCome): the last one goes to its end, one somebody bought from may come straight back (MERCH.BACK), and one a
-   player hurt never comes back. He has 3 or 4 HP and walks as a duck does, and gets away no faster: the shared slow
+   of the game, his body left where he fell (the zombies leave it be); no revive. Who comes is a weighted pick
+   (merchantCome, MERCH.AGAIN and BUILD): the one who just came is less likely next time; one a player hurt never comes
+   back. Each has his own favorite stock (favStock), the same each visit, full again, plus bandages while a duck is low. He has 3 or 4 HP and walks as a duck does, and gets away no faster: the shared slow
    speed (npcshared.js NPC_RUN, merchantSprints).
    s.hang.l4m (online): { v: the visit, id: who (merchants.js), roll: his look, st: "in" (walking in), "here", "out"
    (running away), "fight" (Phil going after foe, the duck that hurt him), "jump" (off the balcony or over the fence:
    gone in a moment) or "dead", x, y (world px), f: his facing, hits: the times a player hurt him,
    hp, stock: [[weapon, price]], say: { n, t, text } his last line, c: 1 while he's past the zombies' reach }
-   s.hidden.l4mh (the host's): { left: the merchants' line, dead: [ids], ban: [ids] (hurt by a player: never again),
-   cur: the last one to come, sold: 1 once somebody bought from him, bags: his weapon bags (bagRoll), lines: the
+   s.hidden.l4mh (the host's): { pw: { id: his weight in the pick }, fav: { id: his stock }, dead: [ids], ban: [ids]
+   (hurt by a player: never again), cur: the last one to come, bags: his weapon bags (bagRoll), lines: the
    three line bags, near: { id: 1 } the ducks he greeted standing by him, route: [legs], p: the leg he's on, t: since
    when, tk: his last step } */
 export const MERCH = {
@@ -1955,7 +1956,16 @@ export const MERCH = {
   LESS: 0.1, // … each one after it less likely by this …
   EACH: 0.025, // … and more likely by this for each player past the first)
   MORE_OF: 0.5, // (each thing he has: the chance he has a second, then again a third: the owner's, Nov 19 22:25Z, "there's a 50% chance they sell one more ... and there's another 50% chance that's rolled again to see if they sell 3", for "any item that's sold, whether it be gun or otherwise")
-  BACK: 0.2, // (one somebody bought from: the chance he comes again at the very next visit, else the end of the line)
+  /* the director (director.js; the owner's, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtCoUNw94KGwZjNsEiuJRsw8): a rest's chance
+     while some duck is doing badly; who comes is a weighted pick, the one who just came at AGAIN, each one's weight
+     building back up by BUILD each visit he's away, to 1 */
+  BAD: 0.9,
+  AGAIN: 0.25,
+  BUILD: 0.25,
+  /* killed, he drops one gun of his stock GUN of the time, and, apart from that, PURSE points PURSE_P of the time */
+  GUN: 0.05,
+  PURSE: 1000,
+  PURSE_P: 0.05,
   /* each visit's merchant rolls his HP as a zombie's (hp0: the owner's, Nov 19 19:47Z, merchants among those with "the
      same range of health points as the zombies"; at 19:27Z it was "3 to 4 HP") */
   WALK: 1, // (his walk: a duck's, the owner's, Nov 18 14:22Z: "he walks at the speed of any other player and will use his
@@ -2001,7 +2011,8 @@ function merchantSetUp(s) {
   s.hang.l4m = null;
   s.hang.l4mc = []; // (the bodies of the ones killed: a new game, none)
   setMh(s, {
-    left: [],
+    pw: {},
+    fav: {},
     dead: [],
     ban: [],
     cur: "",
@@ -2056,6 +2067,20 @@ function merchantStock(s) {
     p,
     w === "grenade" ? ARMS.grenade.most : howMany(),
   ]); // (grenades: enough for a full belt, one a buy)
+}
+/* merchant id's stock this visit: his own favorite stock, rolled on his first visit this game and the same, full
+   again, each time he comes back; on top of it, a bandage for each duck low on health (the director; the owner's,
+   Nov 28) */
+export function favStock(s, id) {
+  const fav = { ...(mh(s).fav || {}) };
+  if (!fav[id]) fav[id] = merchantStock(s);
+  setMh(s, { fav });
+  const stock = fav[id].map((x) => [...x]),
+    low = ducks(s).filter(lowHp).length,
+    b = stock.find(([w]) => w === "bandage");
+  if (low && b) b[2] = Math.max(b[2], low);
+  else if (low) stock.push(["bandage", merchantPrice("bandage"), low]);
+  return stock;
 }
 /* his upgrades this visit: one for each duck, from the ones it can still get (the owner's, Nov 18 14:20Z); bought, it's
    there again till it's maxed (buy); { id: upgrade id, or "" (none left) } */
@@ -2135,44 +2160,47 @@ function wayOut(x, y) {
     },
   ];
 }
-/* a merchant comes, in a rest (round zero's, or between two rounds), half the time */
+/* a merchant comes, in a rest (round zero's, or between two rounds): half the time, and very likely while some duck
+   is doing badly (the director) */
 function merchantCome(s, now) {
-  const miss = mh(s).miss || 0;
-  if (Math.random() >= MERCH.COME + MERCH.MISS * miss)
-    return setMh(s, { miss: miss + 1 });
+  const miss = mh(s).miss || 0,
+    p = ducks(s).some(badly) ? MERCH.BAD : MERCH.COME + MERCH.MISS * miss;
+  if (Math.random() >= p) return setMh(s, { miss: miss + 1 });
   const m0 = merchantOf(s);
   if (m0 && m0.st !== "dead") return; // (one at a time)
   const h = mh(s),
     dead = h.dead || [],
     ban = [...(h.ban || [])],
     prev = h.cur;
-  /* the line (the owner's, Nov 19 19:27Z): the last one to come goes to the end of it. One a player hurt and who lived
-     never comes back ("Merchants that are shot at go straight to the back of the line forever"); one somebody bought
-     from may come straight back ("they have a 20% chance of coming back, and they're not removed from the shuffle") */
+  /* one a player hurt and who lived never comes back (the owner's, Nov 19 19:27Z: "Merchants that are shot at go
+     straight to the back of the line forever") */
   if (prev && h.hurt && !dead.includes(prev) && !ban.includes(prev))
     ban.push(prev);
   const alive = MERCHANTS.map((m) => m.id).filter(
     (id) => !dead.includes(id) && !ban.includes(id),
   );
   if (!alive.length) return setMh(s, { ban, cur: "" }); // (every one of them killed or shot at)
-  let left = (h.left || []).filter((id) => alive.includes(id));
-  for (const id of shuffled(alive)) if (!left.includes(id)) left.push(id); // (a new game's, or one missing)
-  if (prev && alive.includes(prev)) {
-    left = left.filter((id) => id !== prev);
-    if (h.sold && Math.random() < MERCH.BACK) left.unshift(prev);
-    else left.push(prev);
-  }
-  const id = left[0],
-    [from, route] = wayIn();
+  /* who comes: a weighted pick, not a shuffle; the one who just came is less likely, his weight building back up */
+  const pw = { ...(h.pw || {}) },
+    wOf = (id) => pw[id] ?? 1;
+  let r = Math.random() * alive.reduce((t, id) => t + wOf(id), 0),
+    id = alive[alive.length - 1];
+  for (const x of alive)
+    if ((r -= wOf(x)) < 0) {
+      id = x;
+      break;
+    }
+  for (const x of alive) pw[x] = Math.min(1, wOf(x) + MERCH.BUILD);
+  pw[id] = MERCH.AGAIN;
+  const [from, route] = wayIn();
   const hp = hp0(),
     vn = (h.vn || 0) + 1; // (his visit's number this game: before, it started over at 1 whenever the last one had left)
   setMh(s, {
     miss: 0,
     vn,
-    left,
+    pw,
     ban,
     cur: id,
-    sold: 0,
     lines: {},
     hurt: 0,
     sp: 1,
@@ -2197,7 +2225,7 @@ function merchantCome(s, now) {
     max: hp,
     w: "",
     sp: 1,
-    stock: merchantStock(s),
+    stock: favStock(s, id),
     ups: upOffers(s),
     say: null,
   };
@@ -2256,6 +2284,7 @@ export function merchantHurt(s, by, n, now, w = "", how = "") {
       },
     ]; // (his body, for good: "their corpse stays there permanently", even after the next merchant comes)
     addFx(s, { kind: "l4mdie", by, who: [], t: now, x: m.x, y: m.y });
+    merchantDrops(s, m, now);
     return true;
   }
   const hits = (m.hits || 0) + (by ? 1 : 0);
@@ -2275,6 +2304,35 @@ export function merchantHurt(s, by, n, now, w = "", how = "") {
   }
   if (by && m.st !== "out" && m.st !== "fight") merchantRun(s, now);
   return false;
+}
+/* killed: one gun of his stock now and then, and apart from that a purse of points (MERCH.GUN, MERCH.PURSE), where he
+   fell (the owner's, Nov 28) */
+function merchantDrops(s, m, now) {
+  const guns = ((mh(s).fav || {})[m.id] || [])
+    .map(([w]) => w)
+    .filter((w) => kindOf(w) === "ranged");
+  if (guns.length && Math.random() < MERCH.GUN)
+    layDrop(
+      s,
+      "arm",
+      m.x,
+      m.y,
+      now,
+      now + DROP.LIFE,
+      guns[rint(0, guns.length - 1)],
+    );
+  if (Math.random() < MERCH.PURSE_P)
+    s.hang.l4dr = [
+      ...(s.hang.l4dr || []),
+      {
+        n: now,
+        k: "coins",
+        pts: MERCH.PURSE,
+        x: Math.round(m.x) + 30,
+        y: Math.round(m.y),
+        until: now + DROP.LIFE,
+      },
+    ];
 }
 /* does some duck's screen show him (the zombies' screens, crowd.js seenBy)? */
 const mSeen = (s, m) =>
@@ -2323,7 +2381,7 @@ function merchantFight(s, m0, now, dt) {
     });
     if (Math.random() >= F.miss) {
       const p4 = { ...(s.hang.l4p || {}) };
-      hurtDuck(s, p4, m0.foe, now, w, F.dmg);
+      hurtDuck(s, p4, m0.foe, now, w, F.dmg * NPC_DMG); // (only the duck that angered him; every NPC's half damage)
       s.hang.l4p = p4;
     } else if (w === "handgun")
       addFx(s, { kind: "l4miss", who: [], t: now, x: fx, y: fy }); // (missed: over the duck, as a miss on a zombie)

@@ -119,7 +119,7 @@ l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 312 Dead Ducks Arcade's power box
 l4ddpowerui.js 270 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4395 the rules of Quacky Zombies
+l4ddrules.js 4453 the rules of Quacky Zombies
 l4ddsfx.js 499 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -148,7 +148,7 @@ net.js 127 the room connection
 notes.js 101 Notes : question ideas, written
 npcrules.js 81 what every NPC's brain shares
 npcs.js 49 the characters you can mute:
-npcshared.js 29 what every NPC shares, whatever
+npcshared.js 32 what every NPC shares, whatever
 npcview.js 216 an NPC on a world
 nwk.js 543 Nous Within Kenoma: the map
 offline.js 45 Single Player's files on the
