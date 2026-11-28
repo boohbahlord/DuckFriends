@@ -105,7 +105,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3255 Quacky Zombies on every screen
+l4dd.js 3256 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -266,7 +266,7 @@ who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 314 the zombies' walk over Downpour's
-zombies.js 1293 the zombies: one module for
+zombies.js 1305 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the

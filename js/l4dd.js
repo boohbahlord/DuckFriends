@@ -657,6 +657,7 @@ function goreCanvas(o, w, h) {
       cv.width = c.width; // (set even when it's the same: that clears it)
       cv.height = c.height;
       g.drawImage(c, 0, 0);
+      cv.dataset.ok = "z" + o.i + "@" + k; // (its outline's name: this zombie's, made again with each new wound, outlines.js)
     })
     .catch(() => {});
 }
