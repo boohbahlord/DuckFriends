@@ -2604,7 +2604,8 @@ function merchantWander(s, m0, now, h) {
   let to = h.wt;
   const there = !!to && Math.hypot(to[0] - m0.x, to[1] - m0.y) < 14;
   if (there && !h.wn) return setMh(s, { wn: now + rint(...W0.ms) }); // (his stand starts as he gets there)
-  if (!to || (there && now >= h.wn)) {
+  if (there && now < h.wn) return; // (standing still till it's over)
+  if (!to || there) {
     const a = Math.random() * 2 * Math.PI,
       r = Math.random() * W0.r,
       qx = BUTLER.x + Math.cos(a) * r,
