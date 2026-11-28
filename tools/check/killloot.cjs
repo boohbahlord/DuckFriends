@@ -3,7 +3,8 @@
    chances"; "You only pick them up by clicking E / Same for any loot on the ground now. / you cannot spin for wheel
    WHIle loot is on the ground FROM the slot machine, no player can, it has to fade away first"):
    1. killLoot gives a weapon 0.01% of the time and an item 0.01% (a million rolls), each from the fireplace's bags;
-   2. a drop at my feet stays there however long I stand on it, and E takes it (Max Ammo, for everyone);
+   2. a special drop at my feet (Max Ammo, for everyone) is taken by standing on it, with no Take button (the owner's,
+      Nov 28: no E for special drops);
    3. a weapon a zombie left goes into my slots with E;
    4. nobody spins the fireplace while what it landed on for another duck is still there, and can once it's gone;
    5. a zombie killed with the odds at 1 leaves a weapon where it fell.
@@ -179,9 +180,9 @@ const { url, fail, noErrors } = require("./lib.cjs");
   });
   await b.close();
   noErrors(errs);
-  if (!stays) fail("a drop at my feet was taken without E");
-  if (!label) fail("no Take the Max Ammo button over a drop");
-  if (!gone) fail("E didn't take the drop at my feet");
+  if (stays || !gone)
+    fail("a special drop at my feet wasn't taken by walking over it");
+  if (label) fail("a Take button over a special drop");
   if (!took.sl.includes("ak") || took.left)
     fail("a weapon on the ground with E: " + JSON.stringify(took));
   if (!spin.blocked || !spin.after)

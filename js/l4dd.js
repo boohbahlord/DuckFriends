@@ -2613,8 +2613,8 @@ function holdTarget(pos, ctx) {
       best = { kind: "board", o: o.id, d, n };
   }
   if (best) return best;
-  const lt = lootAt(s, pos.x, pos.y, clockNow()); // (something on the ground: only E takes it, l4ddloot.js)
-  if (lt) return { kind: "take", do: "pick", d: 0, w: lt.w, k: lt.k };
+  const lt = lootAt(s, pos.x, pos.y, clockNow()); // (a weapon or an item on the ground: E takes it; a special drop is walked over, l4ddloot.js)
+  if (lt && lt.w) return { kind: "take", do: "pick", d: 0, w: lt.w, k: lt.k };
   const pt =
     pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
     angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)

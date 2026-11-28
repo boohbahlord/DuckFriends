@@ -112,12 +112,12 @@ l4ddbar.js 324 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
 l4ddcatalog.js 228 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
-l4ddloot.js 41 Dead Ducks Arcade: what lies
+l4ddloot.js 42 Dead Ducks Arcade: what lies
 l4ddmap.js 253 Quacky Zombies' minimap
 l4ddpower.js 329 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4439 the rules of Quacky Zombies
+l4ddrules.js 4456 the rules of Quacky Zombies
 l4ddsfx.js 509 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
