@@ -93,6 +93,7 @@ import {
   standable,
   setTornDown,
   solidsAt,
+  setCrateBlock,
   onPlatform,
   BJ,
   layoutRev,
@@ -110,7 +111,15 @@ import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { kitSlots, gunSlotFor, ITEM_SLOTS } from "./kitslots.js";
 import { drawDmg, drawFast, cooks, drawTaken } from "./bowdraw.js";
-import { hOk, hLock, shotFeet, SAME_FLOOR, zOf, overlapH } from "./heights.js";
+import {
+  hOk,
+  hLock,
+  shotFeet,
+  SAME_FLOOR,
+  zOf,
+  overlapH,
+  nearH,
+} from "./heights.js";
 import { toPx, DUCK } from "./units.js";
 import { blast, reach, hitOf, REACH } from "./blast.js";
 import { carsBlast, carsSwing } from "./carpush.js";
@@ -168,7 +177,7 @@ import { NPC_RUN, NPC_DMG } from "./npcshared.js";
 import { ducks, lowHp, badly, needsCrate, pressure } from "./director.js";
 import { grHp, grCool } from "./sbgroups.js";
 import { setGrid, openNear, flowFrom, heading } from "./zombiepath.js";
-import { CELL } from "./walkgrid.js";
+import { CELL, regrid } from "./walkgrid.js";
 import {
   killLoot,
   bagLoot,
@@ -1599,6 +1608,7 @@ function l4Act(s, a, now) {
   if (a.do === "buy")
     return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
   if (a.do === "pick") return pickLoot(s, id, mx, my, a.hand, now);
+  if (a.do === "crate") return crateTake(s, id, a, mx, my, now);
   if (a.do === "power") return powerAct(s, id, now, mx, my, PH);
   if (a.do === "pump") return powerPump(s, id, now, mx, my, PH);
   if (a.do === "angel") return angelAct(s, id, a, now, mx, my, PH);
@@ -2262,7 +2272,7 @@ function bandagesCome(s, now) {
       );
   if (!low.length || isSb(s) || rolled) return;
   low.forEach((d) => {
-    const { x, y } = s.pos[d.id];
+    const [x, y] = toPx(s.pos[d.id]); // (world px)
     for (let i = 0, n = Math.random() < B.ONE ? 1 : 2; i < n; i++) {
       const bx = x + (i ? B.BY : -B.BY) * (n - 1); // (two: one each side of it)
       layDrop(
@@ -2278,10 +2288,15 @@ function bandagesCome(s, now) {
   });
 }
 /* the supply crate (DIRECTOR.CRATE): on Downpour, in a rest where some duck is low on ammo and can't afford a refill
-   (director.js needsCrate), a helicopter is heard, then it falls by the soldier's red flare (on the ground nearest it:
-   crateSpot) with a thud and its things lie there: two for one duck, else one or two for each. s.hang.l4cr = { t: when it lands, w: its things } */
+   (director.js needsCrate), a helicopter is heard, then it falls on the gas station's roof by the soldier's red flare
+   with a thud (crateSpot) and stays there, solid to ducks and zombies alike (crateSolid), until it's opened; opened, it
+   goes when the next rest begins (the owner's, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtBUzMwY1XKox5HKv4m8BzaU). E opens it
+   and its things are taken by holding them, as the merchant's (l4dd.js; crateTake). Its things roll from the
+   fireplace's old slots (BAGS): two for one duck, else one or two for each. s.hang.l4cr = { t: when it lands, w: its
+   things, at: [x, y, z] once landed, op: 1 once opened } */
 function crateCome(s, now) {
-  if (!dp() || isSb(s) || !needsCrate(s)) return;
+  if (s.hang.l4cr && s.hang.l4cr.op) s.hang.l4cr = null;
+  if (s.hang.l4cr || !dp() || isSb(s) || !needsCrate(s)) return;
   const C = DIRECTOR.CRATE,
     k = ducks(s).length,
     n =
@@ -2296,49 +2311,79 @@ function crateCome(s, now) {
   };
   addFx(s, { kind: "l4heli", who: [], t: now, x: GS.FLARE.x, y: GS.FLARE.y }); // (the helicopter: l4ddsfx.js)
 }
-/* where it lands: the open ground nearest the flare (the flare burns on the gas station's roof, and things lie on the
-   ground: l4dd.js draws drops there), out of every building, where a duck can stand */
+/* where it lands: on the flare's roof, the nearest spot to the flare with room for it, clear of anything standing
+   there: [x, y, the roof's height] */
 let crateAt = null;
 function crateSpot() {
   if (crateAt) return crateAt;
-  const { x: fx, y: fy } = GS.FLARE;
-  for (let r = 0; r < 1200 && !crateAt; r += 30)
+  const { x: fx, y: fy } = GS.FLARE,
+    roof = floorH(fx, fy, 1e4),
+    h = DIRECTOR.CRATE.HALF + 10;
+  for (let r = 50; r < 600 && !crateAt; r += 20)
     for (let k = 0; k < 16 && !crateAt; k++) {
-      const x = fx + Math.cos((k / 16) * 2 * Math.PI) * r,
-        y = fy + Math.sin((k / 16) * 2 * Math.PI) * r;
+      const x = Math.round(fx + Math.cos((k / 16) * 2 * Math.PI) * r),
+        y = Math.round(fy + Math.sin((k / 16) * 2 * Math.PI) * r);
       if (
-        [0, 1, 2, 3, 4].every((i) => {
-          const d = i ? DIRECTOR.CRATE.SPREAD * 2 : 0, // (room round it for all its things, clear of every wall)
-            qx = x + d * Math.round(Math.cos((i * Math.PI) / 2)),
-            qy = y + d * Math.round(Math.sin((i * Math.PI) / 2));
-          return (
-            !whereIn(qx, qy) && !heightAt(qx, qy) && standable(qx, qy, 0, 0)
-          );
-        })
+        [-h, h].every((dx) =>
+          [-h, h].every(
+            (dy) =>
+              floorH(x + dx, y + dy, 1e4) === roof &&
+              !solidsAt(x + dx, y + dy, roof).length,
+          ),
+        )
       )
-        crateAt = [Math.round(x), Math.round(y)];
+        crateAt = [x, y, roof];
     }
-  return crateAt || [fx, fy];
+  return crateAt || [fx, fy, roof];
 }
 function crateTick(s, now) {
   const c = s.hang.l4cr;
-  if (!c || now < c.t) return;
-  s.hang.l4cr = null;
+  if (!c || c.at || now < c.t) return;
+  const at = crateSpot();
+  s.hang.l4cr = { ...c, at };
+  addFx(s, { kind: "l4thud", who: [], t: now, x: at[0], y: at[1] }); // (it lands: l4ddsfx.js, and its message, l4dd.js)
+}
+/* the crate, landed, as a solid box on every device that runs the rules (rules.js reduceStep, as tornDown): only when it
+   comes or goes, and the walking grids under it made again (walkgrid.js regrid) */
+let crateKey = "";
+export function crateSolid(s) {
+  const at = (s && s.hang && s.hang.l4cr && s.hang.l4cr.at) || null,
+    key = at ? at.join() : "";
+  if (key === crateKey) return;
+  crateKey = key;
   const C = DIRECTOR.CRATE,
-    [x, y] = crateSpot();
-  c.w.forEach((w, i) => {
-    const a = (i / c.w.length) * 2 * Math.PI;
-    layDrop(
-      s,
-      "arm",
-      x + Math.cos(a) * C.SPREAD * Math.min(1, i),
-      y + Math.sin(a) * C.SPREAD * Math.min(1, i),
-      now + i,
-      now + DROP.LIFE,
-      w,
-    );
-  });
-  addFx(s, { kind: "l4thud", who: [], t: now, x, y }); // (it lands: l4ddsfx.js)
+    b = at && {
+      x0: at[0] - C.HALF,
+      y0: at[1] - C.HALF,
+      x1: at[0] + C.HALF,
+      y1: at[1] + C.HALF,
+      z0: at[2],
+      top: at[2] + C.TALL,
+    },
+    was = setCrateBlock(b);
+  for (const r of [was, b]) if (r) regrid(r.x0, r.y0, r.x1, r.y1);
+}
+/* a duck at the landed crate (mx, my: its spot): opens it (a.open), or takes one of its things (a.what) into its kit,
+   as one picked up off the ground (give; hand: the ranged one in hand it takes the place of) */
+function crateTake(s, id, a, mx, my, now) {
+  const c = s.hang.l4cr,
+    at = c && c.at;
+  if (
+    !at ||
+    Math.hypot(at[0] - mx, at[1] - my) > DIRECTOR.CRATE.REACH ||
+    !nearH(zOf(s.pos[id]), at[2])
+  )
+    return false;
+  if (a.open) {
+    if (c.op) return false;
+    s.hang.l4cr = { ...c, op: 1 };
+    return true;
+  }
+  const i = c.w.indexOf(String(a.what || ""));
+  if (i < 0 || !give(s, id, c.w[i], a.hand)) return false;
+  s.hang.l4cr = { ...c, op: 1, w: c.w.filter((_, k) => k !== i) };
+  addFx(s, { kind: "l4take", by: id, who: [], w: a.what, t: now });
+  return true;
 }
 /* a merchant comes, in a rest (round zero's, or between two rounds): half the time, and very likely while some duck
    is doing badly (the director); each one that comes brings another MERCH.CHAIN of the time, chained (the owner's,

@@ -69,8 +69,8 @@ game.js 4417 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
-gamedefaults.js 137 the game's own numbers, for
-gamefx.js 691 the board's specials and the
+gamedefaults.js 138 the game's own numbers, for
+gamefx.js 694 the board's specials and the
 gamehand.js 509 the hand: the number-key specials,
 gamemsg.js 93 lines by the chat button:
 gameplace.js 480 where things are put on
@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3294 Quacky Zombies on every screen
+l4dd.js 3387 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
@@ -119,7 +119,7 @@ l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 312 Dead Ducks Arcade's power box
 l4ddpowerui.js 270 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4796 the rules of Quacky Zombies
+l4ddrules.js 4841 the rules of Quacky Zombies
 l4ddsfx.js 510 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -181,7 +181,7 @@ roomrules.js 347 room governance: groups and permissions
 rooms.js 256 Play: create a room, and
 roundline.js 36 Dead Ducks Arcade's round line,
 router.js 112 screens
-rules.js 1668 the rules of Agree or
+rules.js 1669 the rules of Agree or
 sandbox.js 1348 Sandbox: the key windows
 sandboxrules.js 2033 Sandbox: which map it plays
 saybubble.js 78 a duck's speech bubble kept
@@ -297,7 +297,7 @@ flicker.js 83 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
-layout.js 1087 Duck Cabin: the world of
+layout.js 1102 Duck Cabin: the world of
 layoutbase.js 78 Duck Cabin: the world's numbers
 layoutheights.js 396 Duck Cabin: the heights :
 npc.js 495 Duck Cabin's characters: how they

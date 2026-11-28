@@ -115,7 +115,8 @@ import { lootAt } from "./l4ddloot.js";
 import { kindOf, ARMS, loadTo } from "./guns.js";
 import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
-import { hOk, hLock, zOf } from "./heights.js";
+import { hOk, hLock, zOf, nearH } from "./heights.js";
+import { DIRECTOR } from "./gamedefaults.js";
 import { ammoBar, stackBars, noReload, drawBar } from "./meters.js";
 import { myDrawShare } from "./bowdraw.js";
 import { laserMeter } from "./laserfx.js";
@@ -895,6 +896,31 @@ function seeDrops(s) {
     layer.append(el);
     D.set(d.n, { el, n: d.n, kind: d.k, x: d.x, y: d.y, until: d.until });
   }
+}
+/* the supply crate, landed (the rules' crateTick): a wooden box on the gas station's roof, its front's foot at the box's
+   south edge, till it goes (simple shapes until its pixel art is drawn) */
+const CRATE_SVG = `<svg viewBox="0 0 11 13" shape-rendering="crispEdges" aria-hidden="true"><rect y="0" width="11" height="4" fill="#c08a4a"/><rect y="0" width="11" height="1" fill="#d9a766"/><rect y="4" width="11" height="9" fill="#8a5a2b"/><rect y="4" width="1" height="9" fill="#5e3b1a"/><rect x="10" y="4" width="1" height="9" fill="#5e3b1a"/><rect y="4" width="11" height="1" fill="#5e3b1a"/><rect y="12" width="11" height="1" fill="#5e3b1a"/><path d="M1 5h1v1h1v1h1v1h1v1h1v1h1v1h1v1h1v1H8v-1H7v-1H6v-1H5V9H4V8H3V7H2V6H1z" fill="#5e3b1a"/><rect x="4" y="1" width="3" height="2" fill="#e8323c"/></svg>`;
+let crateEl = null;
+function drawCrate(s, Wd, sc) {
+  const at = s.hang && s.hang.l4cr && s.hang.l4cr.at;
+  if (!at || !seenFrom(at[0], at[1], Wd.inside, at[2])) {
+    if (crateEl) crateEl.hidden = true;
+    return;
+  }
+  if (!crateEl) {
+    crateEl = document.createElement("div");
+    crateEl.className = "l4-crate";
+    crateEl.innerHTML = CRATE_SVG;
+    layer.append(crateEl);
+  }
+  const C = DIRECTOR.CRATE,
+    p = Wd.toScreen(at[0], at[1] + C.HALF, at[2]);
+  crateEl.hidden = false;
+  crateEl.style.transform = Wd.boxTr(p.left, p.top);
+  crateEl.style.zIndex = String(
+    Math.round(sortY(at[0], at[1] + C.HALF, at[2])) + 10,
+  );
+  crateEl.style.setProperty("--k", sc.toFixed(3));
 }
 /* a drop's outline on the ground, in its own color, and its arrow when it's a floor away (outlines.js DROP_OL, the
    owner's, Nov 18 13:58Z), so one under a tree's crown, a roof or out of sight isn't missed: its symbol's shape, where
@@ -2429,6 +2455,7 @@ const say = (text) => gameMsg(text); // (what can't be done, and why: a game mes
 
 /* ---------- the merchant's shop: a page over the board, as the guestbook's ---------- */
 function shopFill(s, ctx) {
+  if (shop.crate) return crateFill(s, ctx);
   const me = ctx.me,
     up = upOf(s, me),
     pts = ptsOf(s, me),
@@ -2495,6 +2522,39 @@ function shopFill(s, ctx) {
     shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb c-orange"><i>${jerrySVG(25)}</i></span></i><span class="l4-up-t"><b>Gas</b><small>25% of a jerry can</small></span><button type="button" class="btn small ${full ? "" : "yellow"} l4-up-buy" data-buy="gas"${full || pts < PW.PUMP ? " disabled" : ""}>${full ? "Full" : PW.PUMP}</button></li>`;
   }
 }
+/* the supply crate opened (the rules' crateTake): its things on the merchant's page, each taken by holding it */
+function crateFill(s, ctx) {
+  const w = (s.hang.l4cr && s.hang.l4cr.w) || [],
+    kit = kitOf(s, ctx.me),
+    sig = JSON.stringify(["crate", w, kit && kit.sl, kit && kit.g]);
+  if (sig === shop.sig) return;
+  shop.sig = sig;
+  shop.who = "";
+  shop.title.textContent = "Supply crate";
+  shop.me.innerHTML = "";
+  shop.pts.textContent = ptsOf(s, ctx.me);
+  shop.list.innerHTML = "";
+  shop.guns.innerHTML = w.length
+    ? w
+        .map(
+          (x) =>
+            `<li class="l4-up l4-buyw" data-item="${x}"><i class="l4-up-ic">${orbHTML(x)}</i><span class="l4-up-t"><b>${weaponName(x)}</b><small>${kindWord(x)}</small>${statLineOf(x) ? `<small class="l4-up-s">${statLineOf(x)}</small>` : ""}</span>${
+              kit && kit.sl.includes(x) && kindOf(x) !== "special"
+                ? `<button type="button" class="btn small l4-up-buy" data-buy="${x}" disabled>Owned</button>`
+                : `<button type="button" class="btn small yellow l4-up-buy" data-buy="${x}">Take</button>`
+            }</li>`,
+        )
+        .join("")
+    : '<li class="l4-up l4-sold">Empty</li>';
+}
+/* the landed crate, when I'm at it (on its roof, within reach; far: walked this far off, its page closes) */
+function crateNear(s, ctx, x, y, far = DIRECTOR.CRATE.REACH) {
+  const at = s.hang.l4cr && s.hang.l4cr.at,
+    a = ctx.world.at(ctx.me);
+  return (
+    !!at && !!a && Math.hypot(at[0] - x, at[1] - y) < far && nearH(a.z, at[2])
+  );
+}
 /* a buy being held: which, since when, its timer; it fills the way the Vote button does (css .holding, its sounds,
    game.js holdPaint), on whichever button stands there now, as the list redraws under it */
 const BUY_HOLD = 400;
@@ -2523,9 +2583,17 @@ function holdStop(el, done) {
 /* what kind of thing it is, under its name */
 const kindWord = (w) =>
   ({ melee: "Melee", ranged: "Gun", special: "Item" })[kindOf(w)] || "";
-function openShop(ctx) {
+function openShop(ctx, crate = false) {
   if (!shop || shop.open) return;
   shop.open = true;
+  shop.crate = crate; // (the supply crate's things, not a merchant's: crateFill)
+  shop.el.querySelector('[data-tab="buy"]').textContent = crate
+    ? "Crate"
+    : "Shop";
+  shop.el.querySelector(".l4-shop-h").textContent = crate
+    ? "Inside"
+    : "Weapons";
+  shop.pts.parentElement.hidden = crate;
   ctx.world.board.classList.add("l4-shopping");
   shop.sig = "";
   shop.el.hidden = false;
@@ -2598,7 +2666,13 @@ function shopEl(ctx) {
         holdStop(el, true);
         if (!ok || ok.disabled) return;
         sfx.holdClick(); // (full: a click, as the Vote button's)
-        ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand: heldFn() }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
+        ctx.send({
+          t: "hang",
+          k: "l4",
+          do: shop.crate ? "crate" : "buy",
+          what: w,
+          hand: heldFn(),
+        }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
       }, BUY_HOLD),
     };
     sfx.holdFill(BUY_HOLD); // (a sound rising as it fills)
@@ -2620,7 +2694,7 @@ function shopEl(ctx) {
   /* let go before it's full: a tap says to hold it (a game message; tapped again, it blinks and dings again: gamemsg.js) */
   const letGo = () => {
     if (buyHold && performance.now() - buyHold.at < BUY_HOLD)
-      gameMsg("Hold to buy");
+      gameMsg(shop.crate ? "Hold to take" : "Hold to buy");
     holdStop(el);
   };
   el.addEventListener("pointerup", letGo);
@@ -2635,6 +2709,7 @@ function shopEl(ctx) {
   return {
     el,
     open: false,
+    crate: false,
     sig: "",
     pts: el.querySelector(".l4-shop-pts b"),
     list: el.querySelector(".l4-shop-ups"),
@@ -2678,6 +2753,11 @@ function holdTarget(pos, ctx) {
     pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
     angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)
   if (pt) return pt;
+  if (
+    crateNear(s, ctx, pos.x, pos.y) ||
+    (shop && shop.open && shop.crate && crateNear(s, ctx, pos.x, pos.y, AWAY))
+  )
+    return { kind: "crate", d: 0 }; // (the supply crate: E opens it)
   const k = nearestMerchant(s, pos.x, pos.y);
   if (k < 0) return null;
   const m = merchantsOf(s)[k],
@@ -2691,6 +2771,12 @@ function tap(t, ctx) {
   if (t.kind === "shop") return shop.open ? closeShop() : openShop(ctx);
   const s = ctx.state(),
     me = ctx.me;
+  if (t.kind === "crate") {
+    if (shop.open) return closeShop();
+    if (!s.hang.l4cr.op)
+      ctx.send({ t: "hang", k: "l4", do: "crate", open: true });
+    return openShop(ctx, true);
+  }
   if (t.kind === "take")
     ctx.send({ t: "hang", k: "l4", do: t.do, hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
   else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
@@ -2701,7 +2787,7 @@ function tap(t, ctx) {
     ctx.send({ t: "hang", k: "l4", do: "pump" });
   } else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
 }
-const TAPS = ["take", "shop", "sk", "power", "pump", "angel"];
+const TAPS = ["take", "shop", "crate", "sk", "power", "pump", "angel"];
 function startHold(t, ctx) {
   if (!t) return;
   holding = t;
@@ -2726,6 +2812,7 @@ function holdLabel(t, s, ctx, now) {
   if (t.kind === "take")
     return `Take the ${t.w ? weaponName(t.w) : dropName(t.k)}`;
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
+  if (t.kind === "crate") return shop && shop.open ? "Close" : "Open the crate";
   if (t.kind === "sk") return "Get up (Safe Keeping)";
   if (t.kind === "power") return pwLabel(s);
   if (t.kind === "pump") return pumpLabel(s);
@@ -2841,6 +2928,7 @@ activity({
     Z.clear();
     B.clear();
     D.clear();
+    crateEl = null; // (the old screen's went with its layer)
     overShown = endSig = drawn = slotSig = onSig = litSig = "";
     roundShown = -1;
     rline.reset();
@@ -2854,6 +2942,8 @@ activity({
     for (const o of Z.values()) o.el.remove();
     for (const b of B.values()) b.el.remove();
     for (const o of D.values()) o.el.remove();
+    crateEl?.remove();
+    crateEl = null;
     Z.clear();
     B.clear();
     D.clear();
@@ -2932,9 +3022,11 @@ activity({
       if (
         shop.open &&
         (!up(ctx.state(), ctx.me) ||
-          !ctx.world.inside ||
-          !mm ||
-          Math.hypot(mm.x - x, mm.y - y) > AWAY)
+          (shop.crate
+            ? !crateNear(ctx.state(), ctx, x, y, AWAY)
+            : !ctx.world.inside ||
+              !mm ||
+              Math.hypot(mm.x - x, mm.y - y) > AWAY))
       )
         closeShop(); // (walked off, down, or he ran: it closes)
       if (holding) {
@@ -3167,6 +3259,7 @@ activity({
         o.el.dataset.end = end;
       }
     }
+    drawCrate(ctx.state(), Wd, sc);
     seeOn(ctx.state());
     restSquares(ctx.state(), ctx);
     seePool(ctx.state(), ctx);
