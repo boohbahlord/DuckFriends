@@ -1440,8 +1440,9 @@ function paint(now, ctx) {
     if (on(p.left * q, p.top * q, r))
       holes.push([p.left * q, p.top * q, r, FIRE_LIGHT.k]);
   }
-  for (const [id, until] of Object.entries(fire.p || {})) {
-    const a = until > tn && Wd.at(id);
+  for (const id in fire.p || {}) {
+    if (id !== ctx.me && invOn(s, id)) continue; // (invisible: no light to anyone else, as its glow)
+    const a = fire.p[id] > tn && Wd.at(id);
     if (!a || !seenFrom(a.x, a.y, Wd.inside, a.z)) continue;
     const p = Wd.toScreen(a.x, a.y, a.z + 30),
       r = FIRE_LIGHT.r * sc;
