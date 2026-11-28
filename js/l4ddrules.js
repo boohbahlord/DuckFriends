@@ -2343,18 +2343,16 @@ function merchantFight(s, m0, now, dt) {
     f: fx < m.x ? -1 : 1,
   };
 }
+/* what merchant m wears that stops hits (wounds.js armorHit): Brah's motorcycle helmet */
+const merchantArmor = (m) =>
+  helmeted(merchantLook(merchantById(m.id), m.roll)) ? "helmet" : "";
 /* a shot or a swing at (x, y) by duck `by` with weapon w: on him? (as wildHurt for Justin: 1 HP, a crit 2) */
 function merchantShot(s, by, x, y, now, w, rx, ry, from, dr) {
   const m = merchantOf(s);
   if (!m || m.st === "dead" || m.st === "jump" || !s.players[by]) return false;
   if (Math.hypot((m.x - x) / rx, (m.y - y) / ry) >= 1) return false;
   if (from && slabBetween(...from, m.x, m.y, heightAt(m.x, m.y))) return false;
-  const ar = armorHit(
-      helmeted(merchantLook(merchantById(m.id), m.roll)) ? "helmet" : "",
-      w,
-      1,
-      Math.random() < critOf(w, dr),
-    ), // (Brah's motorcycle helmet turns a crit away)
+  const ar = armorHit(merchantArmor(m), w, 1, Math.random() < critOf(w, dr)), // (Brah's motorcycle helmet turns a crit away)
     n = ar.crit ? 2 : 1, // (a crit doubles it; dr: a drawn arrow's draw)
     head = n > 1 && m.hp <= n;
   if (ar.defl) deflected(s, by, m, now); // (a crit that kills him: his head bursts as a zombie's does, game.js draws it)
@@ -3820,9 +3818,10 @@ export function l4Shots(s, now) {
         if (w === "handgun" && angelOf(s, sh.by, w)) {
           /* the Angelic pistol: every bullet kills at once, and a crit sets off a grenade's blast there (its shooter
              isn't hurt by it: no sh.k) */
-          const crit = critRoll(s, sh.by, w);
+          const crit = critRoll(s, sh.by, w),
+            defl = armorHit(zArmor(z.l), w, 0, crit).defl; // (a crit a helmet turned away sets nothing off)
           if (strike(s, z, z.hp, crit, sh.by, w, now)) die(z, T); // (SWAT gear takes only half of it)
-          if (crit)
+          if (crit && !defl)
             boom(
               s,
               { by: sh.by, hz: sh.hz },
@@ -3977,15 +3976,18 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       () =>
         [merchantOf(s)].filter((m) => m && m.st !== "dead" && m.st !== "jump"),
       (m) => [m.x, m.y, heightAt(m.x, m.y)],
-      (m, n) =>
+      (m, n) => {
+        const ar = armorHit(merchantArmor(m), "", n.dmg, n.crit, true); // (a helmet turns the middle ring's crit away, as a zombie's)
+        if (ar.defl) deflected(s, sh.by, m, now);
         merchantHurt(
           s,
           s.players[sh.by] ? sh.by : null,
-          hitOf(n).dmg,
+          hitOf(ar).dmg,
           now,
           "grenade",
           "blast",
-        ),
+        );
+      },
     ], // (the merchant: his ring's damage)
     [
       () =>

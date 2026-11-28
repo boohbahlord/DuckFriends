@@ -1,7 +1,7 @@
 /* I want the special zombies' coming checked (zombies.js specialTick, gamedefaults.js SPECIAL_Z; the owner's, Nov 28):
    none before their rounds; on round 8 with every roll a hit the Giant comes and the Flyer waits, as the two are never
    alive together, and comes next round without a roll; once a round; nothing before 30 s or the round's dead mark; a
-   duck doing badly makes both wait a round and go back a step.
+   duck doing badly makes both wait a round and go back a step; a game started on a later round starts their chances there.
    Run: node tools/check/run.mjs zbreeds */
 const fs = require("fs"),
   path = require("path");
@@ -73,6 +73,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
     let zs = [];
     out.r8 = run(s, L, zs, 30000, 0);
     out.r8owed = L.sz.flyer.o;
+    out.r8steps = L.sz.flyer.s; // (a game started on round 8: the Flyer 3 steps up from its round 5)
     out.r8again = run(s, L, zs, 31000, 0).length; // (once a round)
     /* the next round with the Giant dead: the Flyer it owed comes, with no roll (a roll of 0.99 would miss) */
     const sz = L.sz;
@@ -84,7 +85,7 @@ const { url, fail, noErrors } = require("./lib.cjs");
     ({ s, L } = fresh(8));
     L.made = 14;
     out.mark = run(s, L, [], 1000, 0);
-    /* a duck doing badly: both wait, owed, and a step back */
+    /* a duck doing badly: both wait, owed, and a step under this round's (the next round's step up comes after) */
     ({ s, L } = fresh(8));
     s.hang.l4p = {
       ...s.hang.l4p,
@@ -103,6 +104,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
   if (String(got.r8) !== String([B.giant]) || !got.r8owed)
     bad("round 8: the Giant comes, the Flyer waits");
   if (got.r8again !== 1) bad("once a round");
+  if (got.r8steps !== 3)
+    bad("started on round 8: the Flyer's chance from there");
   if (String(got.r9) !== String([B.flyer]))
     bad("the owed Flyer comes next round");
   if (got.early.length) bad("nothing before its moment");
@@ -110,8 +113,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
   if (
     got.bad.length ||
     !got.badSz.giant.o ||
-    got.badSz.giant.s !== -1 ||
-    got.badSz.flyer.s !== -1
+    got.badSz.giant.s !== -2 ||
+    got.badSz.flyer.s !== 1
   )
     bad("doing badly: both wait and go back a step");
 })();

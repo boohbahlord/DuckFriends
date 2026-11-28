@@ -302,7 +302,7 @@ export function specialTick(s, L, zs, T) {
     q = { r: L.r, m: Math.floor(Math.random() * SPECIAL_Z.MARKS.length) };
     for (const k of KINDS) {
       const B = SPECIAL_Z[k],
-        o = (L.sz && L.sz[k]) || { s: -1, o: 0 },
+        o = (L.sz && L.sz[k]) || { s: L.r - B.from - 1, o: 0 }, // (a game started on a later round: its steps up to there)
         top = Math.round((B.most - B.chance) / B.step);
       q[k] = {
         s: L.r >= B.from ? Math.min(top, o.s + 1) : -1, // (its first round 0 steps)
@@ -312,10 +312,11 @@ export function specialTick(s, L, zs, T) {
     }
     L.sz = q;
   }
-  const alive = (k) => zs.some((z) => z.st !== 3 && z.l[8] === Z_BREED[k]),
-    plain = zs.filter((z) => z.st !== 3 && !(z.l[8] >= Z_BREED.flyer)).length,
-    moment = T >= SPECIAL_Z.AT || L.made - plain >= SPECIAL_Z.MARKS[q.m] * L.n;
-  if (!moment || KINDS.every((k) => q[k].d || L.r < SPECIAL_Z[k].from)) return;
+  if (KINDS.every((k) => q[k].d || L.r < SPECIAL_Z[k].from)) return; // (both done this round)
+  let plain = 0; // (the plain ones alive: every heartbeat, so counted, no list made)
+  for (const z of zs) if (z.st !== 3 && !(z.l[8] >= Z_BREED.flyer)) plain++;
+  if (T < SPECIAL_Z.AT && L.made - plain < SPECIAL_Z.MARKS[q.m] * L.n) return; // (not its moment yet)
+  const alive = (k) => zs.some((z) => z.st !== 3 && z.l[8] === Z_BREED[k]);
   q = { ...q };
   for (const k of KINDS) {
     const B = SPECIAL_Z[k];
@@ -332,7 +333,7 @@ export function specialTick(s, L, zs, T) {
     }
     if (badNow(s)) {
       o.o = 1;
-      o.s -= 1; // (the team doing badly: next round, and its chance a step back)
+      o.s -= 2; // (the team doing badly: next round, and its chance a step under this round's, so each wait drops one)
       continue;
     }
     o.o = 0;
@@ -354,10 +355,13 @@ function armorRoll(s) {
     return Math.random() < 0.5 ? Z_BREED.helmet : Z_BREED.moto;
   return 0;
 }
-/* every helmet but on an armored one: any helmet stops crits, so only armorRoll's wear one */
-const HATS = ZHATS.map((_, i) => i).filter(
-  (i) => !ARMOR.HATS.includes(ZHATS[i]),
-);
+/* every helmet but on an armored one: any helmet stops crits, so only armorRoll's wear one (made on first use:
+   l4ddrules.js, which ZHATS is from, may load after this) */
+let HATS;
+const hats = () =>
+  (HATS ||= ZHATS.map((_, i) => i).filter(
+    (i) => !ARMOR.HATS.includes(ZHATS[i]),
+  ));
 /* a new zombie's look, every kind's: [size, build, hat, outfit] (l: its look, after its HP, speed and opening); arm:
    its armor's (armorRoll) */
 function lookOf(arm = 0) {
@@ -368,7 +372,7 @@ function lookOf(arm = 0) {
         : arm
           ? -1
           : dress >= 0 && dress < 0.6
-            ? HATS[rint(0, HATS.length - 1)]
+            ? hats()[rint(0, hats().length - 1)]
             : -1,
     outfit =
       arm === Z_BREED.swat
