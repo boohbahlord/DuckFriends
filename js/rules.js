@@ -77,7 +77,7 @@ import { hangJoin, hangLeft } from "./hangout/rules.js";
 import { useMode } from "./hangout/layout.js";
 import { carsAt } from "./carpush.js";
 
-import { helperOut } from "./l4ddrules.js";
+import { helperOut, crateSolid } from "./l4ddrules.js";
 
 import { ARMS, GUN_BREEDS, BOARD_GUNS } from "./guns.js";
 import { magKey } from "./ammo.js";
@@ -1274,6 +1274,7 @@ export function reduce(state, a, now = Date.now()) {
 function reduceStep(state, a, now) {
   useMode(baseMode(state.options)); // (Duck Cabin as the room's mode has it, or Dead Ducks Arcade's Downpour, or Sandbox on one of them: hangout/layout.js)
   carsAt(state); // (Downpour's cars where the state has them: carpush.js)
+  crateSolid(state); // (Dead Ducks Arcade's supply crate, landed: a box nothing walks through)
   const s = clone(state),
     P = s.players,
     me = P[a.id],

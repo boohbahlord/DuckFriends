@@ -91,8 +91,9 @@ export const DIRECTOR = {
   HP_LOW: 0.4,
   WELL: { hp: 0.7, ammo: 0.5 },
   /* the supply crate (l4ddrules.js crateCome): heard HEAR ms before it lands by the flare; SOLO things for one duck,
-     else 1 or 2 for each duck, one ONE of the time; its things lie up to SPREAD world px from where it landed */
-  CRATE: { HEAR: 6000, SOLO: 2, ONE: 0.6, SPREAD: 70 },
+     else 1 or 2 for each duck, one ONE of the time; a box HALF world px each way from its middle and TALL high, opened
+     from up to REACH from its middle */
+  CRATE: { HEAR: 6000, SOLO: 2, ONE: 0.6, HALF: 22, TALL: 34, REACH: 90 },
   /* bandages (l4ddrules.js bandagesCome): 1 bandage ONE of the time, else 2, BY world px each side of the duck */
   BANDAGE: { ONE: 0.5, BY: 70 },
 };
