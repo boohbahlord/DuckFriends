@@ -1,0 +1,104 @@
+{
+ "board": {
+  "knife": [
+   0,
+   0,
+   0
+  ],
+  "hammer": [
+   0.108,
+   0,
+   0
+  ],
+  "axe": [
+   0.054,
+   0,
+   0
+  ],
+  "sword": [
+   0,
+   0,
+   0
+  ],
+  "pan": [
+   0,
+   0,
+   0
+  ],
+  "grenade 0.3": [
+   0.144,
+   0,
+   0.7
+  ],
+  "grenade 1": [
+   0.144,
+   0,
+   0.2
+  ]
+ },
+ "dda": {
+  "knife zombie": [
+   16,
+   0
+  ],
+  "knife corpse": [
+   0,
+   0
+  ],
+  "hammer zombie": [
+   40,
+   0
+  ],
+  "hammer corpse": [
+   0,
+   0
+  ],
+  "axe zombie": [
+   21,
+   0
+  ],
+  "axe corpse": [
+   0,
+   0
+  ],
+  "sword zombie": [
+   16,
+   0
+  ],
+  "sword corpse": [
+   0,
+   0
+  ],
+  "pan zombie": [
+   16,
+   0
+  ],
+  "pan corpse": [
+   0,
+   0
+  ],
+  "hammer duck": [
+   20.1,
+   -0.1,
+   0
+  ],
+  "hammer car": [
+   1,
+   0
+  ],
+  "grenade zombie": [
+   1,
+   0,
+   2
+  ],
+  "grenade duck": [
+   0,
+   0,
+   0
+  ],
+  "grenade car": [
+   0,
+   31
+  ]
+ }
+}

@@ -470,7 +470,7 @@ export const shotAt = (sh, t) => ({
 /* a grenade going off at (x, y): every duck in its rings takes its ring's damage (blast.js) and is thrown away from it,
    three times as far as the hammer throws one, higher the nearer it was (the owner's, Nov 21 17:48Z: "Explosions should
    change the height of a thing it knocks back based on how close they are"); Justin is knocked down, Duck Cabin's Justin and cats are hit. Every screen draws the blast (the boom fx) */
-function blast(s, sh, x, y, now, o = {}) {
+export function blast(s, sh, x, y, now, o = {}) {
   const hang = isHang(s),
     w = o.w || "grenade",
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
