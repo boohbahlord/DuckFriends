@@ -11832,6 +11832,9 @@ html.sprint-blur .hang-board::after {
   position: absolute;
   background: #05080f;
 } /* (its black: plain boxes all round the building, its notches left open: world.js shadeRects) */
+.hang-shade > i.fade {
+  background: linear-gradient(var(--to), #05080f, #05080f00);
+} /* (a notch's edge fading in from the black) */
 .hang-btn {
   background: var(--yellow, #ffd23f);
   color: #1c1c28;
