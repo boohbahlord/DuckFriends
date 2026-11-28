@@ -194,7 +194,6 @@ const GS_DRAW = {
           d: p.d,
           h: p.h,
           lean: Math.abs(t),
-          dir: Math.sign(t),
         }),
       fenceBox(p, Math.abs(t), Math.sign(t)),
     );
