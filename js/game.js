@@ -655,20 +655,17 @@ export let cam = null; // the bracket's camera: the diagram's corner on the boar
 const SPEED = { x: 0.45, y: 1.0, px: 0.5, py: 0.85, sprint: SPRINT.speed }; // (sprint: the whole game's, gamedefaults.js)
 
 /* ---------- drawing the ducks (every frame: jumps and glides) ---------- */
-/* a duck turned toward where it aims (the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
-   its own drawing, turned in steps of 45 degrees from the side it faces (face: 1 right, -1 left; the flip stays), never
-   more than 90 so it's never upside down; its shadow doesn't turn, and its weapon aims at once. Degrees, clockwise */
-const TILT_STEP = 45,
-  TILT_MOST = 90,
+/* a duck leans toward where it aims, the Enter the Gungeon way (the owner's, Nov 28 06:33Z,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtMGi9p5QVY9Wc7Lmvt6xZ1h): its body only flips left or right (face: 1 right, -1 left) and
+   leans at most TILT_MOST degrees, a straight-up or straight-down aim leaning it all the way, so it's never turned on
+   its side; its weapon turns in its hand to the exact aim, and its shadow doesn't turn. Degrees, clockwise */
+const TILT_MOST = 15,
   TILT_ORG = "50% 55%"; // (about its middle)
 const tiltOf = ([dx, dy], face) =>
-  Math.max(
-    -TILT_MOST,
-    Math.min(
-      TILT_MOST,
-      Math.round((Math.atan2(dy, dx * face) * 180) / Math.PI / TILT_STEP) *
-        TILT_STEP,
-    ),
+  Math.round(
+    (Math.max(-90, Math.min(90, (Math.atan2(dy, dx * face) * 180) / Math.PI)) *
+      TILT_MOST) /
+      90,
   ) || 0;
 const SQ = {
   l: ["0% 100%", 0.8, 1.12],
@@ -1157,13 +1154,15 @@ function drawDucks(now = clockNow()) {
         ? seatOf(s, id)
           ? -1
           : 1
-        : mine && me
-          ? me.face
-          : (hang && world.face(id)) ||
-            (d._x !== undefined && Math.abs(pos.x - d._x) > 0.0005
-              ? Math.sign(pos.x - d._x)
-              : d._face || 1);
+        : d._aimF || // (a weapon in hand: it faces the side it aims at, below)
+          (mine && me
+            ? me.face
+            : (hang && world.face(id)) ||
+              (d._x !== undefined && Math.abs(pos.x - d._x) > 0.0005
+                ? Math.sign(pos.x - d._x)
+                : d._face || 1));
     d._face = face || 1;
+    d._aimF = 0;
     d._x = pos.x;
     const q = mine ? (now - squash.t < 170 ? squash.q : "") : pos.q || "";
     const fx = turned() ? 1 : d._face,
@@ -1684,8 +1683,10 @@ function drawDucks(now = clockNow()) {
           : dk && dk._face < 0
             ? Math.PI
             : 0;
-    if (dk && dir && Math.hypot(dir[0], dir[1]) > 1)
-      dk._tilt = tiltOf(dir, turned() ? 1 : dk._face || 1); // (its body turns toward it: the duck loop above, next frame)
+    if (dk && dir && Math.hypot(dir[0], dir[1]) > 1) {
+      if (Math.abs(dir[0]) > 1) dk._aimF = Math.sign(dir[0]); // (it faces the side it aims at, as in Enter the Gungeon: the duck loop above, next frame)
+      dk._tilt = tiltOf(dir, turned() ? 1 : dk._aimF || dk._face || 1); // (and leans toward it)
+    }
     handed.add(id);
     let h = heldEls.get(id);
     if (h && !heldOn(h, fxl)) h = null;
