@@ -53,6 +53,7 @@ import { nameHTML } from "./name.js";
 import { profile, save } from "./store.js";
 import { statsOf } from "./cheatflag.js";
 import { sfx } from "./sound.js";
+import { watching } from "./spectate.js";
 import { l4Hear, l4Steps, l4Reset } from "./l4ddsfx.js";
 import { now as clockNow } from "./clock.js";
 import {
@@ -492,6 +493,7 @@ function lits() {
 
 /* a zombie coming into any duck's sight fades in (the owner's, Nov 28 01:57Z) */
 const FADE_IN = [{ opacity: 0 }, { opacity: 1 }];
+const EYES = []; // (the ducks whose sight counts, this frame: draw)
 /* a zombie's outline in a Sandbox zone's color (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
    when a wall hides it, or null to ask whether a wall, a roof or a crown drawn over it covers it (zi: the z-index it's
    drawn at, so only what is really drawn over it counts: the owner's, Nov 17 19:11Z). Returns whether something hides
@@ -2930,13 +2932,15 @@ activity({
       myFloor = meAt ? olAway(meAt.x, meAt.y, meAt.z).f : 0, // (for the outlines: a zombie a floor away)
       st0 = ctx.state(),
       sbOl = sbHasOl(st0), // (Sandbox: zones with Outlines)
-      eyes = [
-        ...(meAt ? [meAt] : []),
-        ...st0.seat
-          .filter((id) => id !== ctx.me && standing(st0, id))
-          .map((id) => Wd.at(id))
-          .filter(Boolean),
-      ]; // (every duck standing, and mine, or the one I watch: a zombie none of them sees isn't drawn)
+      wid = watching(st0, ctx.me);
+    /* every duck standing, mine, and the one I watch (down or not): a zombie none of them sees isn't drawn */
+    EYES.length = 0;
+    if (meAt) EYES.push(meAt);
+    for (const id of st0.seat)
+      if (id !== ctx.me && (id === wid || standing(st0, id))) {
+        const a = Wd.at(id);
+        if (a) EYES.push(a);
+      }
     /* the zombies, gliding from where they were to where the host says, one heartbeat's time */
     for (const o of Z.values()) {
       const u = Math.min(1, (t - o.t0) / (o.g || gap));
@@ -2959,7 +2963,7 @@ activity({
         f = Wd.toScreen(o.x + lean, o.y, z),
         door = atBoards(o, Wd.inside),
         hole = !Wd.inside && roofHoleOver(o.x, o.y, z), // (Downpour: seen from outside through a hole in the gas station's roof)
-        unseen = !(door || hole || eyes.some((a) => duckSees(a, o.x, o.y, z))),
+        unseen = !(door || hole || EYES.some((a) => duckSees(a, o.x, o.y, z))),
         zi = door
           ? AT_BOARDS
           : hole
@@ -2974,10 +2978,8 @@ activity({
           (o.diedAt !== undefined && t - o.diedAt > LOW_DEAD && low()); // (Low graphics or Data saving: a body is gone from my screen at 2 s, css/app.css html.low; the rules still keep it its 4 s)
       if (o.el.hidden !== hide) {
         o.el.hidden = hide;
-        if (!hide && o.st !== 3 && o.seenAt !== undefined)
-          o.el.animate(FADE_IN, 400); // (coming into sight: it fades in)
+        if (!hide && o.st !== 3) o.el.animate(FADE_IN, 400); // (coming into sight: it fades in)
       }
-      if (!unseen) o.seenAt = t;
       o.z = z; // (its height as I draw it: shotStop)
       const zc =
         sbOl && o.st !== 3

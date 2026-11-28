@@ -738,10 +738,7 @@ export const wallsSee = (x, y, inside, z, h = here) =>
    building) with no floor between (the sightline: slabBetween) */
 export function duckSees(a, x, y, z) {
   const h = whereIn(a.x, a.y, a.z);
-  return (
-    wallsSee(x, y, variant === "l4gs" ? h > 0 : inCabin(a.x, a.y), z, h) &&
-    !slabBetween(a.x, a.y, a.z, x, y, z)
-  );
+  return wallsSee(x, y, h > 0, z, h) && !slabBetween(a.x, a.y, a.z, x, y, z);
 }
 /* Downpour: someone on a building's floor (x, y, its feet z) seen from outside through a hole in that building's roof:
    the roof's deck (layout.js floorAt's), or null. The hole is drawn the roof's height up, so through it shows the floor
