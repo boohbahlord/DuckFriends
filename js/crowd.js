@@ -200,11 +200,13 @@ export function surroundAim(z, q, taken, now, rx, ry, ok) {
   let c = taken.get(q.id);
   if (!c) taken.set(q.id, (c = Array(SUR.n).fill(0)));
   if (!z.sr || z.sr[0] !== q.id || z.sr[2] <= now) {
-    if (z.sr && z.sr[0] === q.id) c[z.sr[1]]--;
     let best = -1,
-      bc = Infinity;
+      bc = Infinity,
+      any = false; // (a spot round the duck it could stand on, taken or not)
     for (let k = 0; k < SUR.n; k++) {
-      if (c[k] > 0 || k === z.sx || !ok(...spot(angle(k), SUR.r))) continue;
+      if (k === z.sx || !ok(...spot(angle(k), SUR.r))) continue;
+      any = true;
+      if (c[k] > 0) continue;
       const cost = Math.abs(turnOf(angle(k) - az)); // (the nearest free one round the circle)
       if (cost < bc) [best, bc] = [k, cost];
     }
@@ -212,7 +214,7 @@ export function surroundAim(z, q, taken, now, rx, ry, ok) {
     delete z.sr;
     if (best < 0) {
       const w = spot(az, SUR.wait); // (every spot taken: it waits farther out, on its own side)
-      if (d <= SUR.wait + 0.2) return [z.x, z.y]; // (there: it stands, ready)
+      if (d <= SUR.wait + 0.2) return any ? [z.x, z.y] : null; // (there: it stands, ready; no spot at all, straight at the duck)
       return ok(...w) ? w : null;
     }
     z.sr = [q.id, best, now + SUR.keep];
