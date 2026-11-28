@@ -248,6 +248,7 @@ export const ARMS = {
     life: 420,
   },
   medkit: { kind: "special", cool: ITEM_COOL, all: 1 },
+  bandage: { kind: "special", cool: ITEM_COOL, all: 1, heal: 0.5, least: 1 }, // (half the HP I've lost back, but at least 1 and never more than I lost; one held: the owner's, Nov 28 03:28Z and 04:05Z)
   grenade: {
     kind: "grenade",
     cool: ITEM_COOL,
@@ -512,6 +513,7 @@ export const GUN_NAMES = {
   dagger: "Dagger",
   shotgun: "Pump action shotgun", // (the owner's, Nov 21 17:25Z)
   medkit: "Medkit",
+  bandage: "Bandage",
   safekeep: "Safe Keeping",
   grenade: "Grenade",
   sniper: "Barrett .50 Cal", // (the owner's, Nov 18 12:19Z: named after its look)
@@ -556,7 +558,7 @@ export const WEAPONS = [
   "flamer",
   "laser",
 ];
-const ITEMS = ["medkit", "zebra", "adrenaline", "safekeep", "chair"]; // (no Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
+const ITEMS = ["medkit", "bandage", "zebra", "adrenaline", "safekeep", "chair"]; // (no Jetpack any more: the owner's, Nov 18 12:19Z, "long jump is removed from zombies bag and slots", "normal jaime is removed from all zombie modes", "remove jet pack from the whole game")
 export const POOL = [...WEAPONS, ...ITEMS];
 /* the guns that fire while the button is down, in every mode: ARMS' auto (the Laser Rifle only as a Mad God Justin
    pickup) */

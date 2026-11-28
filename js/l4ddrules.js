@@ -210,7 +210,6 @@ keepOnly(
 /* ---------- the numbers ---------- */
 export const L4 = {
   HP: 3,
-  REGEN: 15000, // ms for 1 HP to come back on its own, a hundredth at a time (hpmath.js regenOf)
   REVIVE: 5000, // ms of holding E by a downed duck (5 s: the owner's, Nov 17 11:07Z; it was 10)
   QUICK: 3000, // … with Quick Revive bought (the Butler's, 750: the owner's, Nov 17 11:19Z)
   BACK_HP: 2, // a revived duck comes up with 2 HP
@@ -318,7 +317,7 @@ export const SLOT_ODDS = { chair: 0.01, special: 0.05, item: 0.2 };
 export const SLOT_BAGS = {
   chair: ["chair"],
   special: ["flamer", "laser"], // (no chain gun: the owner's, Nov 22 19:26Z, "REMOVE CHAIN GUN")
-  item: ["medkit", "zebra", "adrenaline", "safekeep"],
+  item: ["medkit", "bandage", "zebra", "adrenaline", "safekeep"], // (the bandage: the merchant's, 300 points, the owner's, Nov 28 03:28Z)
 };
 export const WEAPON_BAGS = {
   melee: ["axe", "sword", "hammer"],
@@ -352,6 +351,7 @@ const TINTS = {
   adrenaline: "plain",
   bow: "plain",
   medkit: "green",
+  bandage: "plain",
   axe: "green",
   sword: "green",
   hammer: "green",
@@ -1314,6 +1314,7 @@ function maxAmmo(s) {
       if (
         fullAmmo(w) &&
         w !== "medkit" &&
+        w !== "bandage" &&
         !angelOf(s, id, w) // (an Angelic gun never refills, not even here: the owner's, Nov 16 22:21Z)
       )
         m.am[w] = fullFor(s, id, w);
@@ -2792,7 +2793,11 @@ export function l4Use(s, a, now) {
   const c = down ? [m.dg, ARMS.handgun.mag] : m.am[what];
   if (kind === "grenade" ? m.g <= 0 : c && (c[0] <= 0 || m.rw === rw))
     return false; // (empty, or reloading)
-  if (what === "medkit" && (P4(s, id) || {}).hp >= maxHp(s, id)) return false; // (nothing to heal)
+  if (
+    (what === "medkit" || what === "bandage") &&
+    (P4(s, id) || {}).hp >= maxHp(s, id)
+  )
+    return false; // (nothing to heal)
   if (heldBack(s, what, () => laserHeat(s, id, now).over)) return false; // (one zebra cake in the room at a time; the Laser Rifle overheated)
   m.u[what] = now;
   if (m.rw && m.rw !== rw) {
@@ -2861,6 +2866,19 @@ export function l4Use(s, a, now) {
     const p4 = s.hang.l4p || {};
     s.hang.l4p = { ...p4, [id]: { ...p4[id], hp: maxHp(s, id), at: now } };
     if (!spare) m.am.medkit = [0, 0]; // (used up: it stays in its slot, empty, the owner's, Nov 18 12:19Z)
+  } else if (what === "bandage") {
+    const p4 = s.hang.l4p || {},
+      hp = p4[id].hp,
+      most = maxHp(s, id);
+    s.hang.l4p = {
+      ...p4,
+      [id]: {
+        ...p4[id],
+        hp: hpHeal(hp, Math.max(A.least, (most - hp) * A.heal), most),
+        at: now,
+      },
+    };
+    if (!spare) m.am.bandage = [0, 0];
   } else if (what === "adrenaline")
     s.hang.l4ad = { ...(s.hang.l4ad || {}), [id]: now + A.ms };
   else if (what === "zebra") cakeOut(s, id, p, dx, dy, now);
@@ -4199,9 +4217,8 @@ function l4Tick(s, now) {
       continue;
     } // (Sandbox: no next round to wait for, so a ghost is back up a moment later, at a start spot, with its weapons)
     if (p.gh) continue;
-    if (p.hp < maxHp(s, id)) {
-      const w = isWild(s, id),
-        [amt, at] = regenOf(s, p.at, now, w ? WILD.regen : L4.REGEN, w); // (a duck's in hundredths, smoothly; Justin's in whole HP: hpmath.js)
+    if (isWild(s, id) && p.hp < maxHp(s, id)) {
+      const [amt, at] = regenOf(p.at, now, WILD.regen); // (Justin's, in whole HP; a player's never comes back by itself: hpmath.js)
       if (amt) p4[id] = { ...p, hp: hpHeal(p.hp, amt, maxHp(s, id)), at };
     }
   }
