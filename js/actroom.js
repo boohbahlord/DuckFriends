@@ -48,7 +48,7 @@ import { hangLeft } from "./hangout/rules.js";
 
 import { isWorldMap } from "./maps.js";
 
-import { SOLO_MODES } from "./modes.js";
+import { SOLO_MODES, modeOf } from "./modes.js";
 
 import { rainbowJoin } from "./looksrules.js";
 
@@ -183,6 +183,7 @@ export function act_options({ s, a, me, host, boss }) {
   const o = { ...a.options };
   delete o.dod; // (Democracy of Ducklings is set when the room is made, and stays)
   if (s.solo && o.mode && !SOLO_MODES.includes(o.mode)) delete o.mode; // (Single Player: only its games)
+  if (o.mode && modeOf(o.mode).id !== o.mode) delete o.mode; // (an old save slot can hold a mode we took out)
   if (dodOn(s, "vote"))
     for (const k of ["mode", "modePick", "map", "mapPick", "voteBack"])
       delete o[k]; // (Ducks Vote Mode & Game: the votes stay as they are)
