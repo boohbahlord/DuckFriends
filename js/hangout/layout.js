@@ -946,13 +946,19 @@ export function standable(x, y, z, up = STEP, from = null, zombie = false) {
     (b) => !(from && hits(b, from[0], from[1])) && !b.pass,
   );
 }
-/* the second map's boarded holes: a duck never gets through one (zombies do, once the boards are down: l4ddrules.js) */
+/* the second map's boarded holes: a duck never gets through one while a board is up (zombies do, once the boards are
+   down: l4ddrules.js); once the zombies have torn every board down, it walks through (the director plan, Nov 28).
+   setTornDown(ids): those holes, from the state (l4ddrules.js tornDown, every action) */
 const BOARD_DEEP = T + FOOT;
+let torn = new Set();
+export const setTornDown = (ids) => (torn = ids);
 const boardAt = (x, y) =>
-  GS.BOARDED.some((o) =>
-    o.axis === "x"
-      ? x > o.a - FOOT && x < o.b + FOOT && Math.abs(y - o.at) < BOARD_DEEP
-      : y > o.a - FOOT && y < o.b + FOOT && Math.abs(x - o.at) < BOARD_DEEP,
+  GS.BOARDED.some(
+    (o) =>
+      !torn.has(o.id) &&
+      (o.axis === "x"
+        ? x > o.a - FOOT && x < o.b + FOOT && Math.abs(y - o.at) < BOARD_DEEP
+        : y > o.a - FOOT && y < o.b + FOOT && Math.abs(x - o.at) < BOARD_DEEP),
   );
 /* where a duck's feet are drawn in depth: its foot y; on the stage (or the stairs' upper steps) in front of the whole
    stage (its strips sort by its front edge, at most cy + ry) and among themselves by depth, squeezed into the 40 steps

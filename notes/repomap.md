@@ -119,7 +119,7 @@ l4ddmap.js 252 Quacky Zombies' minimap
 l4ddpower.js 312 Dead Ducks Arcade's power box
 l4ddpowerui.js 270 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4801 the rules of Quacky Zombies
+l4ddrules.js 4813 the rules of Quacky Zombies
 l4ddsfx.js 510 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
@@ -181,7 +181,7 @@ roomrules.js 347 room governance: groups and permissions
 rooms.js 256 Play: create a room, and
 roundline.js 36 Dead Ducks Arcade's round line,
 router.js 112 screens
-rules.js 1667 the rules of Agree or
+rules.js 1668 the rules of Agree or
 sandbox.js 1348 Sandbox: the key windows
 sandboxrules.js 2033 Sandbox: which map it plays
 saybubble.js 78 a duck's speech bubble kept
@@ -297,7 +297,7 @@ flicker.js 83 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
-layout.js 1081 Duck Cabin: the world of
+layout.js 1087 Duck Cabin: the world of
 layoutbase.js 78 Duck Cabin: the world's numbers
 layoutheights.js 396 Duck Cabin: the heights :
 npc.js 495 Duck Cabin's characters: how they

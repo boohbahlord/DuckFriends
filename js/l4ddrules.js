@@ -89,6 +89,7 @@ import {
   slabBetween,
   whereIn,
   standable,
+  setTornDown,
   solidsAt,
   onPlatform,
   BJ,
@@ -2885,6 +2886,17 @@ function merchantSprints(s, m, now, dt) {
   }
   setMh(s, { sp, tired });
   return run;
+}
+/* the boarded holes with every board torn down, from the state (rules.js, every action): a duck walks through them
+   (layout.js setTornDown; the director plan, Nov 28) */
+let tornOf;
+export function tornDown(s) {
+  const brd = (s && s.hang && s.hang.brd) || null;
+  if (brd === tornOf) return;
+  tornOf = brd;
+  setTornDown(
+    new Set(GS.BOARDED.filter((o) => brd && brd[o.id] === 0).map((o) => o.id)),
+  );
 }
 /* the boards of opening `o` torn down at once (the merchant on his way in: "breaks the barricade (the wooden
    barricade) IF it is in the way") */
