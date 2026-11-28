@@ -294,10 +294,13 @@ function armorRoll(s) {
     return Math.random() < 0.5 ? Z_ARMOR.helmet : Z_ARMOR.moto;
   return 0;
 }
-/* every helmet but on an armored one: any helmet stops crits, so only armorRoll's wear one */
-const HATS = ZHATS.map((_, i) => i).filter(
-  (i) => !ARMOR.HATS.includes(ZHATS[i]),
-);
+/* every helmet but on an armored one: any helmet stops crits, so only armorRoll's wear one (made on first use:
+   l4ddrules.js, which ZHATS is from, may load after this) */
+let HATS;
+const hats = () =>
+  (HATS ||= ZHATS.map((_, i) => i).filter(
+    (i) => !ARMOR.HATS.includes(ZHATS[i]),
+  ));
 /* a new zombie's look, every kind's: [size, build, hat, outfit] (l: its look, after its HP, speed and opening); arm:
    its armor's (armorRoll) */
 function lookOf(arm = 0) {
@@ -308,7 +311,7 @@ function lookOf(arm = 0) {
         : arm
           ? -1
           : dress >= 0 && dress < 0.6
-            ? HATS[rint(0, HATS.length - 1)]
+            ? hats()[rint(0, hats().length - 1)]
             : -1,
     outfit =
       arm === Z_ARMOR.swat
