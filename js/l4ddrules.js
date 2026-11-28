@@ -1707,12 +1707,12 @@ function buy(s, id, what, mx, my, hand, now) {
   } // (its half price is spent)
   s.hang.l4u = { ...(s.hang.l4u || {}), [id]: { ...up, [what]: n + 1 } };
   soldSays(s, id, `bought ${it.name} from the merchant for ${price}.`);
-  /* he never runs out of upgrades (the owner's, Nov 19 22:25Z: "Upgrades are unlimited in terms of however many there
-     are"): the same one again while I can have more of it, else another I can still get */
+  /* the same one again while I can have more of it; once it's maxed he has no upgrade for me until his next visit
+     (the owner's, Nov 28) */
   const mm = merchantOf(s);
   s.hang.l4m = {
     ...mm,
-    ups: { ...(mm.ups || {}), [id]: n + 1 < it.most ? what : upFor(s, id) },
+    ups: { ...(mm.ups || {}), [id]: n + 1 < it.most ? what : "" },
   };
   if (what === "hp") {
     const p4 = s.hang.l4p || {};
@@ -2220,7 +2220,7 @@ function merchantStock(s) {
   return stock.map(([w, p]) => [w, p, howMany()]);
 }
 /* his upgrades this visit: one for each duck, from the ones it can still get (the owner's, Nov 18 14:20Z); bought, it's
-   there again (buy); { id: upgrade id, or "" (none left) } */
+   there again till it's maxed (buy); { id: upgrade id, or "" (none left) } */
 function upOffers(s) {
   const ups = {};
   for (const id of players(s)) if (!isWild(s, id)) ups[id] = upFor(s, id);
