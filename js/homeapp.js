@@ -1,4 +1,5 @@
-/* ---------- Install Duck Friends (the front page's button, under Updates) ----------
+/* ---------- Download Duck Friends (the front page's button, under Updates, where My Other Website was: the owner's,
+   Nov 28, his book site is down and he couldn't find how to download the game) ----------
    I want installing to be one press from the main menu. Chrome and Edge offer the install once the page qualifies
    (manifest.webmanifest, sw.js): I keep that offer and show it when the button is pressed. Where the browser makes no
    offer (Safari, Firefox, or already installed) the button says how instead. Inside the installed app it's hidden. */
@@ -18,7 +19,7 @@ addEventListener("appinstalled", () => {
 export const installBtnHTML = () =>
   inApp()
     ? ""
-    : '<button type="button" class="btn big ghost site-btn" data-a="install">Install<small>Duck Friends</small></button>';
+    : '<button type="button" class="btn big ghost site-btn" data-a="install">Download<small>Duck Friends</small></button>';
 
 export async function install() {
   if (offer) {
@@ -36,7 +37,7 @@ export async function install() {
     apple
       ? "To install: tap Share, then Add to Home Screen."
       : /Firefox/.test(ua)
-        ? "Firefox can't install it: open this page in Chrome or Edge, then press Install Duck Friends."
+        ? "Firefox can't install it: open this page in Chrome or Edge, then press Download Duck Friends."
         : "Already installed, or your browser isn't ready yet: look for Duck Friends in your apps, or use the browser menu's Install app.",
     6000,
   );
