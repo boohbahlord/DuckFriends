@@ -38,6 +38,7 @@ export function stopped(s, sh, at, hang, now) {
     !r ||
     !((hang && isL4dd(s)) || zb) ||
     sh.k === "grenade" ||
+    sh.tb != null || // (a map's grenade, thrown or launched: it arcs over and lands, weaponuse.js nadeFly)
     sh.k === "laser"
   )
     return false;

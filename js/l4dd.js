@@ -101,12 +101,16 @@ import {
   shotWalled,
   hasLeft,
   merchantOf,
+  merchantsOf,
+  nearestMerchant,
+  merchantKey,
+  slotFor,
   upOffer,
-  selling,
   stockPrice,
   MERCH,
   ZHATS,
   ZOUTFITS,
+  Z_BREED,
   standing,
 } from "./l4ddrules.js";
 import { SLOT_KINDS } from "./kitslots.js";
@@ -114,7 +118,8 @@ import { lootAt } from "./l4ddloot.js";
 import { kindOf, ARMS, loadTo } from "./guns.js";
 import { fenceZ, zombiesOf } from "./zombies.js";
 import { zSortY } from "./zombieroofs.js";
-import { hOk, hLock, zOf } from "./heights.js";
+import { hOk, hLock, zOf, nearH } from "./heights.js";
+import { DIRECTOR } from "./gamedefaults.js";
 import { ammoBar, stackBars, noReload, drawBar } from "./meters.js";
 import { myDrawShare } from "./bowdraw.js";
 import { laserMeter } from "./laserfx.js";
@@ -131,6 +136,7 @@ import {
   pwLabel,
   pumpLabel,
   pwTap,
+  PW_TIP,
 } from "./l4ddpowerui.js";
 import { powerOn, powerNext, PW, gasFull, pumpZone } from "./l4ddpower.js";
 import {
@@ -150,7 +156,7 @@ import { vibrate, hitPx, HIT, again } from "./fxmotion.js";
 import { pixelOn, gridPx, raster, rasterReady } from "./pixel.js";
 import { olAdd, olAway, olRoofed, olPic, DROP_OL } from "./outlines.js";
 import { belowBody } from "./below.js";
-import { ducksOn, kept, windowOpen } from "./ui.js";
+import { ducksOn, kept, windowOpen, esc } from "./ui.js";
 import { angelOf, ANGEL } from "./l4ddangel.js";
 import { angelic, jerrySVG } from "./powerart.js"; // (after l4ddart.js, as game.js imports it)
 import { hashText } from "./pxdom.js";
@@ -201,13 +207,19 @@ const MOON = () => {
   return moon;
 };
 const P4 = (s, id) => ((s && s.hang && s.hang.l4p) || {})[id] || null;
-/* the merchant here now (the rules' s.hang.l4m) and who he is (merchants.js) */
-const merchantNow = (s) => {
-  const m = merchantOf(s);
+/* the merchant here now (the rules' s.hang.l4m; several: the selling one nearest `at`, world px) and who he is
+   (merchants.js) */
+const merchantNow = (s, at = null) => {
+  const k = at ? nearestMerchant(s, at[0], at[1]) : 0,
+    m = merchantsOf(s)[Math.max(0, k)] || null;
   return m ? { ...m, who: merchantById(m.id) } : null;
 };
-const shopName = (s) => {
-  const m = merchantNow(s);
+/* where my duck is (world px), or null */
+const meAt = (ctx) => {
+  const d = ctx.duck();
+  return d ? [d.x * W, d.y * H] : null;
+};
+const shopName = (s, m) => {
   return (m && m.who && !m.who.hideName && m.who.name) || "The Merchant"; // (the soldier's name is never shown: "his name is classified info", the owner's, Nov 18 14:10Z)
 };
 const NEAR = 130; // world px: how near E works at the merchant
@@ -529,10 +541,12 @@ function warmZombies(sc) {
     ...ZHATS.map((_, h) => [h, -1]),
     ...ZOUTFITS.map((_, o) => [-1, o]),
     [-1, -1],
+    [-1, -1, Z_BREED.moto], // (a motorcycle helmet: armor, zombies.js armorRoll)
+    [ZHATS.indexOf("helmet"), ZOUTFITS.indexOf("police"), Z_BREED.swat],
   ];
   for (const size of [-1, 0, 1])
-    for (const [h, o] of looks) {
-      const l = [0, 0, "", size, 0, h, o, 0, 0],
+    for (const [h, o, arm = 0] of looks) {
+      const l = [0, 0, "", size, 0, h, o, 0, arm],
         url = zombieURL(l, 0),
         box = zombieBox(l);
       rasterReady("z" + ukOf(url), url, box.w * sc, box.h * sc);
@@ -889,6 +903,31 @@ function seeDrops(s) {
     D.set(d.n, { el, n: d.n, kind: d.k, x: d.x, y: d.y, until: d.until });
   }
 }
+/* the supply crate, landed (the rules' crateTick): a wooden box on the gas station's roof, its front's foot at the box's
+   south edge, till it goes (simple shapes until its pixel art is drawn) */
+const CRATE_SVG = `<svg viewBox="0 0 11 13" shape-rendering="crispEdges" aria-hidden="true"><rect y="0" width="11" height="4" fill="#c08a4a"/><rect y="0" width="11" height="1" fill="#d9a766"/><rect y="4" width="11" height="9" fill="#8a5a2b"/><rect y="4" width="1" height="9" fill="#5e3b1a"/><rect x="10" y="4" width="1" height="9" fill="#5e3b1a"/><rect y="4" width="11" height="1" fill="#5e3b1a"/><rect y="12" width="11" height="1" fill="#5e3b1a"/><path d="M1 5h1v1h1v1h1v1h1v1h1v1h1v1h1v1h1v1H8v-1H7v-1H6v-1H5V9H4V8H3V7H2V6H1z" fill="#5e3b1a"/><rect x="4" y="1" width="3" height="2" fill="#e8323c"/></svg>`;
+let crateEl = null;
+function drawCrate(s, Wd, sc) {
+  const at = s.hang && s.hang.l4cr && s.hang.l4cr.at;
+  if (!at || !seenFrom(at[0], at[1], Wd.inside, at[2])) {
+    if (crateEl) crateEl.hidden = true;
+    return;
+  }
+  if (!crateEl) {
+    crateEl = document.createElement("div");
+    crateEl.className = "l4-crate";
+    crateEl.innerHTML = CRATE_SVG;
+    layer.append(crateEl);
+  }
+  const C = DIRECTOR.CRATE,
+    p = Wd.toScreen(at[0], at[1] + C.HALF, at[2]);
+  crateEl.hidden = false;
+  crateEl.style.transform = Wd.boxTr(p.left, p.top);
+  crateEl.style.zIndex = String(
+    Math.round(sortY(at[0], at[1] + C.HALF, at[2])) + 10,
+  );
+  crateEl.style.setProperty("--k", sc.toFixed(3));
+}
 /* a drop's outline on the ground, in its own color, and its arrow when it's a floor away (outlines.js DROP_OL, the
    owner's, Nov 18 13:58Z), so one under a tree's crown, a roof or out of sight isn't missed: its symbol's shape, where
    the drop's box is (css .l4-drop: 46 × 46, its foot 16 over the spot), still at the middle of its bob. Gone once taken */
@@ -1006,8 +1045,9 @@ function seeOn(s) {
   const kill = on.kill > now;
   if (killEl && killEl.hidden === kill) killEl.hidden = !kill;
   const sale = saleOn(s);
-  if (butler && butler.el.classList.contains("l4-sale") !== sale)
-    butler.el.classList.toggle("l4-sale", sale);
+  for (const o of MDRAWN.values())
+    if (o.butler && o.butler.el.classList.contains("l4-sale") !== sale)
+      o.butler.el.classList.toggle("l4-sale", sale);
   const sig = JSON.stringify(rows);
   if (sig === onSig) return;
   onSig = sig;
@@ -1025,11 +1065,13 @@ export function l4Got(k) {
   gotEl.innerHTML =
     k === "merchant"
       ? rainbowHTML("The Merchant has Arrived", { seed: 5 }) // (the owner's, Nov 18 13:46Z: "THe text for the merchant arriving is: \"The Merchant has Arrived\"")
-      : k === "sale"
-        ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
-        : k === "nuke"
-          ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
-          : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
+      : k === "merchants"
+        ? rainbowHTML("The Merchants have Arrived", { seed: 5 }) // (several at once: the owner's, Nov 28)
+        : k === "sale"
+          ? '<span class="l4-got-gold">Sale</span>' // (in gold metal letters, the owner's, Nov 16)
+          : k === "nuke"
+            ? '<span class="l4-got-nuke">Nuke</span>' // (crimson blood letters that hold still, the owner's, Nov 16)
+            : `<span class="l4-got-ic">${DROP_ICONS[k] || ""}</span>${rainbowHTML(dropName(k) + "!", { seed: DROPS_SEED[k] || 1 })}`;
   if (k === "ammo")
     for (const b of document.querySelectorAll(".l4s, .sp-slot")) {
       b.classList.remove("l4-flash");
@@ -1039,12 +1081,13 @@ export function l4Got(k) {
   gotEl.classList.remove("on", "nuke", "merchant");
   void gotEl.offsetWidth;
   gotEl.classList.add("on");
-  if (k === "merchant" || k === "help") gotEl.classList.add("merchant"); // (3 s, then a 1 s fade: css l4-got-merchant)
+  if (k === "merchant" || k === "merchants" || k === "help")
+    gotEl.classList.add("merchant"); // (3 s, then a 1 s fade: css l4-got-merchant)
   if (k === "nuke") {
     gotEl.classList.add("nuke");
     nukeScreen(gotEl);
     sfx.nuke();
-  } else if (k !== "merchant") sfx.dropGot(); // (the merchant's arrival has his own bell: l4ddsfx.js)
+  } else if (!k.startsWith("merchant")) sfx.dropGot(); // (the merchant's arrival has his own bell: l4ddsfx.js)
 }
 /* ---------- the Nuke on the screen (owner 2026-11-16) ----------
    Grey pixel static sweeps out from the middle in a circle and covers the screen in a second (NUKE.SWEEP: the zombies
@@ -1384,8 +1427,8 @@ function paint(now, ctx) {
   }
   /* the merchant stands in a little light while he sells */
   if (dp() || Wd.inside) {
-    const mm = merchantOf(s);
-    if (mm && mm.st === "here") {
+    for (const mm of merchantsOf(s)) {
+      if (mm.st !== "here") continue;
       const p = Wd.toScreen(mm.x, mm.y, 30);
       if (
         seenFrom(mm.x, mm.y, Wd.inside) &&
@@ -1778,9 +1821,47 @@ const mWounds = (s, m) => {
   return +s.options.noGore ? goreFree(w) : w;
 };
 const mMax = (m) => Math.max(1, +m.max || 4.5); // (m.max: the HP he rolled, as a zombie's: the rules' hp0)
-function drawMerchant(ctx, t) {
+/* several merchants here (the rules' merchantsOf): each one drawn by drawMerchant in turn, his own drawing kept by his
+   visit (butler, mSig, mAt, mSeen and mPoolAt are the one being drawn's) */
+const MDRAWN = new Map(); // visit → { butler, mSig, mAt, mSeen, mPoolAt, f: the frame it was last drawn }
+let mFrame = 0;
+function drawMerchants(ctx, t) {
+  const list = merchantsOf(ctx.state());
+  mFrame++;
+  for (const mm of list) {
+    let o = MDRAWN.get(mm.v);
+    if (!o)
+      MDRAWN.set(
+        mm.v,
+        (o = {
+          butler: null,
+          mSig: "",
+          mAt: null,
+          mSeen: { v: null, hp: null, alive: false, fx: 0, stab: 0 },
+          mPoolAt: 0,
+          f: 0,
+        }),
+      ); // (made once a visit, then kept: nothing new each frame)
+    ({ butler, mSig, mAt, mSeen, mPoolAt } = o);
+    if (o.src !== mm)
+      [o.src, o.view] = [mm, { ...mm, who: merchantById(mm.id) }]; // (remade only when he changes)
+    drawMerchant(ctx, t, o.view);
+    o.butler = butler;
+    o.mSig = mSig;
+    o.mAt = mAt;
+    o.mSeen = mSeen;
+    o.mPoolAt = mPoolAt;
+    o.f = mFrame;
+  }
+  for (const [v, o] of MDRAWN)
+    if (o.f !== mFrame) {
+      o.butler?.el.remove();
+      MDRAWN.delete(v);
+    }
+  butler = list.length ? MDRAWN.get(list[0].v).butler : null;
+}
+function drawMerchant(ctx, t, m) {
   const s = ctx.state(),
-    m = merchantNow(s),
     Wd = ctx.world,
     sc = Wd.sc,
     dead = !!m && m.st === "dead",
@@ -1860,7 +1941,7 @@ function drawMerchant(ctx, t) {
       !Wd.onView(p.left - 60, p.top - 140, 120, 160);
   if (butler.el.hidden !== hide) butler.el.hidden = hide;
   mHurt(s, m, dead, p, sc, hide);
-  mStabs(s);
+  mStabs(s, m);
   if (hide) return;
   const tr = Wd.boxTr(p.left, p.top);
   if (butler.tr !== tr || butler.dz !== dead) {
@@ -1914,11 +1995,11 @@ function drawCorpses(ctx) {
     Wd = ctx.world,
     sc = Wd.sc,
     list = Array.isArray(s.hang.l4mc) ? s.hang.l4mc : [],
-    cur = merchantOf(s),
+    here = merchantsOf(s),
     gore = !+s.options.noGore,
     seen = new Set();
   for (const c of list) {
-    if (!c || (cur && cur.v === c.v && cur.st === "dead")) continue;
+    if (!c || here.some((m) => m.v === c.v && m.st === "dead")) continue; // (one lying dead still listed here: drawMerchant's)
     const who = merchantById(c.id);
     if (!who) continue;
     const wc = gore ? c.w || "" : goreFree(c.w || ""),
@@ -2021,11 +2102,17 @@ function mHurt(s, m, dead, p, sc, hide) {
 }
 /* his sprint (m.sp, the rules': 0 to 1) and his knife or handgun waiting to go again (the rules' l4mstab fx, f.ms) */
 /* his shots and stabs as they come, heard even while I can't see him */
-function mStabs(s) {
+function mStabs(s, m) {
   const top = fxTop(s);
   if (top > mSeen.fx) {
     for (const f of s.fx || [])
-      if (f && f.n > mSeen.fx && f.kind === "l4mstab" && f.t >= mSeen.stab) {
+      if (
+        f &&
+        f.n > mSeen.fx &&
+        f.kind === "l4mstab" &&
+        (f.v ?? m.v) === m.v &&
+        f.t >= mSeen.stab
+      ) {
         mSeen.stab = f.t || 0;
         mSeen.ms = f.ms || 1200;
         (f.w === "handgun" ? sfx.handgun : sfx.knife)({ x: f.x, y: f.y }); // (his shot or his stab, where he is)
@@ -2264,8 +2351,8 @@ function coolBar(tag, s, me) {
     el.classList.toggle("off", v === "0");
   }
 }
-/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon, the Laser
-   Rifle: its heat has its own meter) */
+/* the ammo of what's in my hand, for the yellow bar (meters.js): { f, rl, dry, nr: a reload can't be done } or null (a melee weapon; the Laser
+   Rifle's shots run out too, its heat is its own meter under these) */
 export function l4Ammo(s, me, w) {
   const m = kitOf(s, me),
     now = clockNow();
@@ -2278,7 +2365,7 @@ export function l4Ammo(s, me, w) {
       : { f: rl ? 0 : m.dg / ARMS.handgun.mag, rl, dry: false }; // (its bullets never run out)
   if (w === "grenade")
     return { f: m.g / ARMS.grenade.most, rl: false, dry: m.g <= 0 };
-  if (!w || !ARMS[w] || kindOf(w) !== "ranged" || w === "laser") return null;
+  if (!w || !ARMS[w] || kindOf(w) !== "ranged") return null;
   const c = (m.am || {})[w];
   if (!c) return null;
   if (w === "flamer") return { f: c[0] / ARMS.flamer.all, rl, dry: c[0] <= 0 }; // (its tank)
@@ -2303,7 +2390,7 @@ function ammoBars(tag, s, me) {
   if (dry && dry !== dryW && w !== "grenade") noReload();
   dryW = dry;
   ammoBar(tag, a);
-  drawBar(tag, myDrawShare(clockNow())); // (the bow drawn: bowdraw.js)
+  drawBar(tag, myDrawShare(clockNow()), w === "grenade"); // (the bow drawn, a grenade cooking: bowdraw.js)
   stackBars(tag);
 }
 /* a slot switch: a small box under my duck, the phone's slider in little (hotbar.js, the same slots in their colors): it
@@ -2376,11 +2463,12 @@ const say = (text) => gameMsg(text); // (what can't be done, and why: a game mes
 
 /* ---------- the merchant's shop: a page over the board, as the guestbook's ---------- */
 function shopFill(s, ctx) {
+  if (shop.crate) return crateFill(s, ctx);
   const me = ctx.me,
     up = upOf(s, me),
     pts = ptsOf(s, me),
     kit = kitOf(s, me),
-    m = merchantNow(s),
+    m = merchantNow(s, meAt(ctx)),
     stock = (m && m.stock) || [],
     sig = JSON.stringify([
       up,
@@ -2392,24 +2480,25 @@ function shopFill(s, ctx) {
       kit && kit.g,
       m && [m.v, m.id, m.roll],
       stock,
-      upOffer(s, me),
+      upOffer(s, me, m),
       gasFull(s),
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
+  shop.mk = merchantKey(m);
   shop.pts.textContent = pts;
   /* who's selling: his name over the page, his picture by his words */
   const who = m && m.who ? [m.v, m.id, m.roll].join() : "";
   if (shop.who !== who) {
     shop.who = who;
-    shop.title.innerHTML = rainbowHTML(shopName(s), { seed: 5 });
+    shop.title.innerHTML = rainbowHTML(shopName(s, m), { seed: 5 });
     shop.me.innerHTML =
       m && m.who
-        ? merchantSVG(m.who, m.roll, { size: 40, title: shopName(s) })
+        ? merchantSVG(m.who, m.roll, { size: 40, title: shopName(s, m) })
         : "";
   }
   /* the one upgrade he offers me this visit (the owner's, Nov 18 14:20Z: "they only sell one per visit") */
-  const offer = SHOP.filter((it) => it.id === upOffer(s, me));
+  const offer = SHOP.filter((it) => it.id === upOffer(s, me, m));
   shop.list.innerHTML = offer.length
     ? offer
         .map((it) => {
@@ -2442,6 +2531,40 @@ function shopFill(s, ctx) {
     shop.guns.innerHTML += `<li class="l4-up l4-buyw"><i class="l4-up-ic"><span class="l4orb c-orange"><i>${jerrySVG(25)}</i></span></i><span class="l4-up-t"><b>Gas</b><small>25% of a jerry can</small></span><button type="button" class="btn small ${full ? "" : "yellow"} l4-up-buy" data-buy="gas"${full || pts < PW.PUMP ? " disabled" : ""}>${full ? "Full" : PW.PUMP}</button></li>`;
   }
 }
+/* the supply crate opened (the rules' crateTake): its things on the merchant's page, each taken by holding it */
+function crateFill(s, ctx) {
+  const w = (s.hang.l4cr && s.hang.l4cr.w) || [],
+    can = w.map((x) => slotFor(s, ctx.me, x) >= 0), // (what give takes: an item I hold used up, yes; one I hold still full, no)
+    sig = JSON.stringify(["crate", w, can]);
+  if (sig === shop.sig) return;
+  shop.sig = sig;
+  shop.who = "";
+  shop.title.textContent = "Supply crate";
+  shop.me.innerHTML = "";
+  shop.pts.textContent = ptsOf(s, ctx.me);
+  shop.list.innerHTML = "";
+  shop.guns.innerHTML = w.length
+    ? w
+        .map(esc) // (the names come over the network: never markup)
+        .map(
+          (x, i) =>
+            `<li class="l4-up l4-buyw" data-item="${x}"><i class="l4-up-ic">${orbHTML(x)}</i><span class="l4-up-t"><b>${weaponName(x)}</b><small>${kindWord(x)}</small>${statLineOf(x) ? `<small class="l4-up-s">${statLineOf(x)}</small>` : ""}</span>${
+              !can[i]
+                ? `<button type="button" class="btn small l4-up-buy" data-buy="${x}" disabled>Owned</button>`
+                : `<button type="button" class="btn small yellow l4-up-buy" data-buy="${x}">Take</button>`
+            }</li>`,
+        )
+        .join("")
+    : '<li class="l4-up l4-sold">Empty</li>';
+}
+/* the landed crate, when I'm at it (on its roof, within reach; far: walked this far off, its page closes) */
+function crateNear(s, ctx, x, y, far = DIRECTOR.CRATE.REACH) {
+  const at = s.hang.l4cr && s.hang.l4cr.at,
+    a = ctx.world.at(ctx.me);
+  return (
+    !!at && !!a && Math.hypot(at[0] - x, at[1] - y) < far && nearH(a.z, at[2])
+  );
+}
 /* a buy being held: which, since when, its timer; it fills the way the Vote button does (css .holding, its sounds,
    game.js holdPaint), on whichever button stands there now, as the list redraws under it */
 const BUY_HOLD = 400;
@@ -2470,9 +2593,17 @@ function holdStop(el, done) {
 /* what kind of thing it is, under its name */
 const kindWord = (w) =>
   ({ melee: "Melee", ranged: "Gun", special: "Item" })[kindOf(w)] || "";
-function openShop(ctx) {
+function openShop(ctx, crate = false) {
   if (!shop || shop.open) return;
   shop.open = true;
+  shop.crate = crate; // (the supply crate's things, not a merchant's: crateFill)
+  shop.el.querySelector('[data-tab="buy"]').textContent = crate
+    ? "Crate"
+    : "Shop";
+  shop.el.querySelector(".l4-shop-h").textContent = crate
+    ? "Inside"
+    : "Weapons";
+  shop.pts.parentElement.hidden = crate;
   ctx.world.board.classList.add("l4-shopping");
   shop.sig = "";
   shop.el.hidden = false;
@@ -2534,7 +2665,8 @@ function shopEl(ctx) {
   const holdGo = (e) => {
     const b = e.target.closest && e.target.closest("[data-buy]");
     if (!b || b.disabled || buyHold) return;
-    const w = b.dataset.buy;
+    const w = b.dataset.buy,
+      mk = shop.mk; // (the merchant the hold began at: a nearer one coming on the page mid-hold doesn't take the buy)
     buyHold = {
       w,
       at: performance.now(),
@@ -2543,9 +2675,16 @@ function shopEl(ctx) {
           el.querySelector(`[data-buy="${w}"]`)
         );
         holdStop(el, true);
-        if (!ok || ok.disabled) return;
+        if (!ok || ok.disabled || (!shop.crate && shop.mk !== mk)) return; // (another merchant's page now: the hold ends, nothing bought)
         sfx.holdClick(); // (full: a click, as the Vote button's)
-        ctx.send({ t: "hang", k: "l4", do: "buy", what: w, hand: heldFn() }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
+        ctx.send({
+          t: "hang",
+          k: "l4",
+          do: shop.crate ? "crate" : "buy",
+          what: w,
+          hand: heldFn(),
+          ...(shop.crate ? {} : { mk }), // (the merchant whose page it is, l4ddrules.js buy)
+        }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
       }, BUY_HOLD),
     };
     sfx.holdFill(BUY_HOLD); // (a sound rising as it fills)
@@ -2567,7 +2706,7 @@ function shopEl(ctx) {
   /* let go before it's full: a tap says to hold it (a game message; tapped again, it blinks and dings again: gamemsg.js) */
   const letGo = () => {
     if (buyHold && performance.now() - buyHold.at < BUY_HOLD)
-      gameMsg("Hold to buy");
+      gameMsg(shop.crate ? "Hold to take" : "Hold to buy");
     holdStop(el);
   };
   el.addEventListener("pointerup", letGo);
@@ -2582,6 +2721,7 @@ function shopEl(ctx) {
   return {
     el,
     open: false,
+    crate: false,
     sig: "",
     pts: el.querySelector(".l4-shop-pts b"),
     list: el.querySelector(".l4-shop-ups"),
@@ -2589,6 +2729,7 @@ function shopEl(ctx) {
     title: el.querySelector(".hang-book-title"),
     me: el.querySelector(".l4-shop-me"),
     who: "",
+    mk: "", // (whose page it is: l4ddrules.js merchantKey)
   };
 }
 
@@ -2625,9 +2766,15 @@ function holdTarget(pos, ctx) {
     pwTarget(pos, s, NEAR) || // (the power box, on the balcony: l4ddpowerui.js)
     angelTarget(pos, s, NEAR); // (the Angel machine, on the stage: l4ddangelui.js)
   if (pt) return pt;
-  const m = merchantOf(s);
-  if (!selling(s)) return null;
-  const ds = Math.hypot(m.x - pos.x, m.y - pos.y);
+  if (
+    crateNear(s, ctx, pos.x, pos.y) ||
+    (shop && shop.open && shop.crate && crateNear(s, ctx, pos.x, pos.y, AWAY))
+  )
+    return { kind: "crate", d: 0 }; // (the supply crate: E opens it)
+  const k = nearestMerchant(s, pos.x, pos.y);
+  if (k < 0) return null;
+  const m = merchantsOf(s)[k],
+    ds = Math.hypot(m.x - pos.x, m.y - pos.y);
   if (ds < NEAR || (shop && shop.open && ds < AWAY))
     return { kind: "shop", d: ds };
   return null;
@@ -2637,6 +2784,12 @@ function tap(t, ctx) {
   if (t.kind === "shop") return shop.open ? closeShop() : openShop(ctx);
   const s = ctx.state(),
     me = ctx.me;
+  if (t.kind === "crate") {
+    if (shop.open) return closeShop();
+    if (!s.hang.l4cr.op)
+      ctx.send({ t: "hang", k: "l4", do: "crate", open: true });
+    return openShop(ctx, true);
+  }
   if (t.kind === "take")
     ctx.send({ t: "hang", k: "l4", do: t.do, hand: heldFn() }); // (a ranged weapon takes the place of the one in hand, else the first)
   else if (t.kind === "sk") ctx.send({ t: "hang", k: "l4", do: "sk" });
@@ -2647,7 +2800,12 @@ function tap(t, ctx) {
     ctx.send({ t: "hang", k: "l4", do: "pump" });
   } else if (t.kind === "angel") angelTap(ctx, heldFn(), say);
 }
-const TAPS = ["take", "shop", "sk", "power", "pump", "angel"];
+/* E at the generator: held PW_HOLD ms, its switch; let go before, a tap; and whether I'm at it (its tip, once each
+   time I come up to it) */
+const PW_HOLD = 500;
+let pwHold = 0,
+  atBox = false;
+const TAPS = ["take", "shop", "crate", "sk", "power", "pump", "angel"];
 function startHold(t, ctx) {
   if (!t) return;
   holding = t;
@@ -2672,6 +2830,7 @@ function holdLabel(t, s, ctx, now) {
   if (t.kind === "take")
     return `Take the ${t.w ? weaponName(t.w) : dropName(t.k)}`;
   if (t.kind === "shop") return shop && shop.open ? "Close" : "Shop";
+  if (t.kind === "crate") return shop && shop.open ? "Close" : "Open the crate";
   if (t.kind === "sk") return "Get up (Safe Keeping)";
   if (t.kind === "power") return pwLabel(s);
   if (t.kind === "pump") return pumpLabel(s);
@@ -2774,6 +2933,7 @@ activity({
     layer.append(poolEl);
     shop = shopEl(ctx);
     butler = null; // (the merchant: drawMerchant makes him when he comes)
+    MDRAWN.clear();
     mSig = "";
     mAt = null;
     mSeen = { v: null, hp: null, alive: false, fx: 0, stab: 0 };
@@ -2786,6 +2946,7 @@ activity({
     Z.clear();
     B.clear();
     D.clear();
+    crateEl = null; // (the old screen's went with its layer)
     overShown = endSig = drawn = slotSig = onSig = litSig = "";
     roundShown = -1;
     rline.reset();
@@ -2799,6 +2960,8 @@ activity({
     for (const o of Z.values()) o.el.remove();
     for (const b of B.values()) b.el.remove();
     for (const o of D.values()) o.el.remove();
+    crateEl?.remove();
+    crateEl = null;
     Z.clear();
     B.clear();
     D.clear();
@@ -2810,6 +2973,8 @@ activity({
     hud?.remove();
     over?.remove();
     closeShop();
+    clearTimeout(pwHold); // (an E held as I leave switches nothing)
+    pwHold = 0;
     ctx.world.board.classList.remove("l4-waiting");
     for (const e of [
       ptsEl,
@@ -2818,7 +2983,7 @@ activity({
       gotEl,
       killEl,
       vitEl,
-      butler && butler.el,
+      ...[...MDRAWN.values()].map((o) => o.butler && o.butler.el),
       egg && egg.el,
       shop && shop.el,
       sqEl,
@@ -2856,11 +3021,10 @@ activity({
       sl.some((w) => w && !had.includes(w)) &&
       !(
         ctx.duck() &&
-        merchantOf(s) &&
-        Math.hypot(
-          ctx.duck().x * W - merchantOf(s).x,
-          ctx.duck().y * H - merchantOf(s).y,
-        ) < 320
+        merchantsOf(s).some(
+          (m) =>
+            Math.hypot(ctx.duck().x * W - m.x, ctx.duck().y * H - m.y) < 320,
+        )
       )
     )
       sfx.done(); // (not for what I bought from the merchant: his till rings)
@@ -2873,15 +3037,16 @@ activity({
     if (me) {
       const x = me.x * W,
         y = me.y * H;
+      const mk = nearestMerchant(ctx.state(), x, y),
+        mm = mk >= 0 ? merchantsOf(ctx.state())[mk] : null; // (several here: the one I'm at)
       if (
         shop.open &&
         (!up(ctx.state(), ctx.me) ||
-          !ctx.world.inside ||
-          !selling(ctx.state()) ||
-          Math.hypot(
-            merchantOf(ctx.state()).x - x,
-            merchantOf(ctx.state()).y - y,
-          ) > AWAY)
+          (shop.crate
+            ? !crateNear(ctx.state(), ctx, x, y, AWAY)
+            : !ctx.world.inside ||
+              !mm ||
+              Math.hypot(mm.x - x, mm.y - y) > AWAY))
       )
         closeShop(); // (walked off, down, or he ran: it closes)
       if (holding) {
@@ -3114,10 +3279,11 @@ activity({
         o.el.dataset.end = end;
       }
     }
+    drawCrate(ctx.state(), Wd, sc);
     seeOn(ctx.state());
     restSquares(ctx.state(), ctx);
     seePool(ctx.state(), ctx);
-    drawMerchant(ctx, t);
+    drawMerchants(ctx, t);
     drawCorpses(ctx);
     const tg = !!(ctx.state().hang.l4 || {}).tg;
     if (ctx.world.board.classList.contains("trooper-gone") !== tg)
@@ -3165,6 +3331,8 @@ activity({
   near(pos, ctx) {
     const t = holdTarget(pos, ctx);
     nearTo = t && t.kind === "take" ? t.w : "";
+    if (!!t && t.kind === "power" && !atBox) gameMsg(PW_TIP); // (each time I come up to it)
+    atBox = !!t && t.kind === "power";
     if (!t) return null;
     const s = ctx.state();
     return {
@@ -3190,6 +3358,14 @@ activity({
       const me = ctx.duck(),
         t = me && holdTarget({ x: me.x * W, y: me.y * H }, ctx);
       if (!t) return false; // (nothing of mine: the world's E, a Sandbox orb too, sblootview.js)
+      if (t.kind === "power") {
+        clearTimeout(pwHold);
+        pwHold = setTimeout(() => {
+          pwHold = 0;
+          pwTap(ctx, true);
+        }, PW_HOLD); // (held: the switch; let go before: a tap, l4ddpowerui.js)
+        return true;
+      }
       (TAPS.includes(t.kind) ? tap : startHold)(t, ctx);
       return true;
     }
@@ -3197,6 +3373,11 @@ activity({
   },
   keyup(e, ctx) {
     if (e.code === "KeyE") {
+      if (pwHold) {
+        clearTimeout(pwHold);
+        pwHold = 0;
+        pwTap(ctx, false);
+      }
       stopHold(ctx);
       return true;
     }

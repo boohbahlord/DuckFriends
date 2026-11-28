@@ -69,7 +69,7 @@ import { profile } from "./store.js";
 import { sfx, hush, OTHERS } from "./sound.js";
 
 import { now as clockNow } from "./clock.js";
-import { draws, myDraw, myDrawShare } from "./bowdraw.js";
+import { draws, cooks, drawMost, myDraw, myDrawShare } from "./bowdraw.js";
 
 import { isQuack, CLUE_GRACE, tileAt } from "./quackrules.js";
 
@@ -194,17 +194,24 @@ export function fire(id) {
   R.send({ t: "use", what: id, face: ax < 0 ? -1 : 1, ax, ay });
   if (bar) setTimeout(() => bar && bar.refresh(), 60); // (the handgun's dots, a cooldown's bar)
 }
-/* the bow (bowdraw.js): a press draws it (the host keeps when), letting go shoots, toward where I aim then. mouse: the
-   left button's coming up anywhere lets go, and so does anything that ends a press (game.js' held trigger's list); a key
-   or the phone's attack stick let go themselves (drawLet) */
-let drawing = null; // { w }: my bow drawn (since when: bowdraw.js myDraw, for the meter)
+/* the bow (bowdraw.js): a press draws it (the host keeps when), letting go shoots, toward where I aim then. mouse
+   (true: the left button, a grenade; "right": the bow, the director plan, Nov 28): the button's coming up anywhere lets
+   go, and so does anything that ends a press (game.js' held trigger's list; the right button's own menu doesn't, it
+   never opens over the board: game.js drawPress); a key or the phone's attack stick let go themselves (drawLet) */
+let drawing = null; // { w, tm (a grenade's fuse's timer) }: my bow drawn (since when: bowdraw.js myDraw, for the meter)
 const DRAW_END = ["pointerup", "pointercancel", "blur", "contextmenu"];
+/** @param {string} w @param {boolean | "right"} [mouse] */
 export function drawHold(w, mouse = false) {
   if (!draws(w) || !R || !onBoardPhase() || drawing) return !!drawing;
-  drawing = { w };
-  myDraw(clockNow());
+  const d = (drawing = { w, tm: 0 });
+  myDraw(clockNow(), drawMost(w));
   R.send({ t: "draw", w });
-  if (mouse) for (const t of DRAW_END) addEventListener(t, drawUp, true);
+  if (cooks(w))
+    d.tm = setTimeout(() => drawing === d && drawLet(false), drawMost(w)); // (a grenade held to its fuse's end went off in my hand: the host's, l4ddrules.js)
+  if (mouse)
+    for (const t of DRAW_END)
+      if (mouse !== "right" || t !== "contextmenu")
+        addEventListener(t, drawUp, true);
   return true;
 }
 const drawUp = () => drawLet();
@@ -212,6 +219,7 @@ export function drawLet(shoot = true) {
   for (const t of DRAW_END) removeEventListener(t, drawUp, true);
   const d = drawing;
   drawing = null;
+  if (d) clearTimeout(d.tm);
   myDraw(null);
   if (d && shoot && heldNow() === d.w) fire(d.w);
 }
@@ -291,7 +299,7 @@ export function handBars(s) {
     }
     sp.classList.toggle("tired", tired);
   }
-  drawBar(tag, myDrawShare(now));
+  drawBar(tag, myDrawShare(now), cooks(hand.held));
   stackBars(tag);
 }
 /* the handgun's shots left in its magazine (for the dots under its key), or another gun's (ammo.js) */

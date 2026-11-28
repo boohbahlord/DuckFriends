@@ -8,6 +8,7 @@
        in hand. Grenades and the bow: how many I have left, shown while I have fewer than all;
      - blue: my sprint, where sprinting runs out (Dead Ducks Arcade).
    The Laser Rifle's heat meter and the slot switch box go under all of them (css/app.css --bt). */
+import { NADE } from "./gamedefaults.js";
 
 /* the yellow bar: a, the ammo of what's in my hand, or null (nothing with ammo): { f: 0 … 1 left, rl: reloading,
    dry: none left to reload, keep: shown even when full (never: a full one fades) } */
@@ -53,8 +54,10 @@ function flashNo(tag) {
 
 /* the bow drawn (bowdraw.js, f: 0 … 1 drawn, -1 not drawing): the white bar fills light red to dark red, and flashes
    white once full (the owner's, Nov 21 17:48Z: "it shows that in your cooldown meter ... a light red as the meter grows
-   and becomes a dark red ... When it reaches max ... it flashes a little white"). Call it after the white bar is set */
-export function drawBar(tag, f) {
+   and becomes a dark red ... When it reaches max ... it flashes a little white"). A grenade cooking (cook: its fuse,
+   bowdraw.js cooks): white, yellow from NADE.YELLOW of it, red from NADE.RED (the director plan, Nov 28). Call it after
+   the white bar is set */
+export function drawBar(tag, f, cook = false) {
   let el = tag.querySelector(".l4-cool");
   if (!el && f < 0) return;
   if (!el) {
@@ -68,7 +71,10 @@ export function drawBar(tag, f) {
   if (el._dr === v && f < 0) return;
   el._dr = v;
   el.classList.toggle("draw", f >= 0);
-  el.classList.toggle("full", f >= 1);
+  el.classList.toggle("full", f >= 1 && !cook);
+  el.classList.toggle("cook", cook && f >= 0);
+  el.classList.toggle("y", cook && f >= NADE.YELLOW && f < NADE.RED);
+  el.classList.toggle("r", cook && f >= NADE.RED);
   if (f >= 0) {
     el.classList.remove("off");
     el.style.setProperty("--cl", v);

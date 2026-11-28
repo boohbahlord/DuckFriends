@@ -10,16 +10,21 @@ import { drawDmg } from "./bowdraw.js";
 import {
   DAGGER_LIFE,
   FASTER,
-  GRENADE_MS,
   boardPhases,
   daggerZ,
-  grenadeZ,
   isHang,
   logLine,
   playing,
 } from "./rules.js";
 
-import { flyShots, swingOn, swinging, swingMisses } from "./weaponuse.js";
+import {
+  flyShots,
+  swingOn,
+  swinging,
+  swingMisses,
+  nadeAt,
+  FLAT,
+} from "./weaponuse.js";
 import { meleePush, blastPush, pushOn, pushAlong, sizeOf } from "./push.js";
 
 import { jumpDodges } from "./jump.js";
@@ -209,7 +214,7 @@ function playerKilled(s, by, id, w) {
 /* a duck knocked flying (a melee hit, a grenade): a push of px world px (push.js) along (ux, uy), a direction in duck
    lengths, over its weight, as far as it goes before a wall, a tree or the edge (Hangout: only on its side of the
    cabin's walls), or the board's edge.
-   pos.kb = { t, x, y: where it was } lets every screen draw it; a grenade's adds ms (how long it flies), h (how high)
+   pos.kb = { t, x, y: where it was, d: how far it went (world px) } lets every screen draw it; a grenade's adds ms (how long it flies), h (how high)
    and l: 0 (it falls at once, not when a swing gets there) */
 /* a shove counted in world px (the maps' own): px world px whichever way (ux, uy: a way in world px), in shove's duck
    lengths */
@@ -243,7 +248,13 @@ export function shove(s, id, ux, uy, px, now, side, more = {}) {
     x: +x.toFixed(4),
     y: +y.toFixed(4),
     j: 0,
-    kb: { t: now, x: p.x, y: p.y, ...more },
+    kb: {
+      t: now,
+      x: p.x,
+      y: p.y,
+      d: Math.round(Math.hypot((x - p.x) * HW, (y - p.y) * HH)), // (how far it threw it, world px: its fall damage, game.js)
+      ...more,
+    },
   };
 }
 /* the knife's stab and the hammer's swing, from duck `by` toward its aim: every duck on the ground in reach plays dead
@@ -449,21 +460,24 @@ export function sizeShots(s) {
 }
 /* how high a swing is, in duck widths over the swinger's feet: their hand, as the screens draw it (game.js bodyAt) */
 const handUp = (s, id) => 0.45 * sizeOf(s, id);
-export const shotAt = (sh, t) => ({
+export const shotAt = (sh, t) =>
+  sh.tb != null ? nadeOn(sh, t) : shotOn(sh, t);
+/* a map's grenade: on its leg (weaponuse.js nadeAt), its height in duck sizes */
+const nadeOn = (sh, t) => {
+  const p = nadeAt(sh, sh.t + t);
+  return { x: p.x, y: p.y, z: p.z / DUCK };
+};
+const shotOn = (sh, t) => ({
   x: sh.x0 + (sh.vx * t) / 1000,
   y: sh.y0 + (sh.vy * t) / 1000,
-  z:
-    (sh.k === "dagger"
-      ? daggerZ(t / 1000)
-      : sh.k === "grenade"
-        ? grenadeZ(t / 1000)
-        : 0.41) * (sh.sc || 1), // (a bigger duck's from higher up: its hand, sizeShots)
+  z: (sh.k === "dagger" ? daggerZ(t / 1000) : 0.41) * (sh.sc || 1), // (a bigger duck's from higher up: its hand, sizeShots)
 });
 /* a grenade going off at (x, y): every duck in its rings takes its ring's damage (blast.js) and is thrown away from it,
    three times as far as the hammer throws one, higher the nearer it was (the owner's, Nov 21 17:48Z: "Explosions should
    change the height of a thing it knocks back based on how close they are"); Justin is knocked down, Duck Cabin's Justin and cats are hit. Every screen draws the blast (the boom fx) */
 export function blast(s, sh, x, y, now, o = {}) {
   const hang = isHang(s),
+    hz = o.z ?? (sh.hz || 0), // (where it went off: a thrown grenade's own height, else its thrower's)
     w = o.w || "grenade",
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
     side = sh.hin || 0,
@@ -475,8 +489,7 @@ export function blast(s, sh, x, y, now, o = {}) {
     rx,
     ry,
     wide: o.wide,
-    ok: (px, py, pz, inSide) =>
-      !hang || (inSide === side && nearH(pz, sh.hz || 0)),
+    ok: (px, py, pz, inSide) => !hang || (inSide === side && nearH(pz, hz)),
   }); // (Hangout: only on its side of the cabin's walls and at about its height)
   boom(near, [
     [
@@ -569,7 +582,7 @@ export function blast(s, sh, x, y, now, o = {}) {
       x: +x.toFixed(4),
       y: +y.toFixed(4),
       hit,
-      ...(hang ? { hz: sh.hz || 0 } : {}),
+      ...(hang ? { hz: Math.round(hz) } : {}),
       ...(o.wide ? { wide: o.wide } : {}),
       rr: BLAST_REACH * (o.wide || 1),
     },
@@ -589,11 +602,12 @@ export function moveShots(s, now) {
     s.shots.filter((sh) => sh.k), // (one fired before aiming: gone)
     now,
     {
-      fuse: GRENADE_MS,
       U: [1, 1],
+      ...FLAT, // (a grenade: no heights here, the board's edges and the cabin's walls its walls)
+      wallAt: (x, y, z, sh) => FLAT.wallAt(x, y) || walled(sh, { x, y }),
       at: shotAt,
       walled,
-      boom: (sh, at) => on() && blast(s, sh, at.x, at.y, now), // (a grenade hits nothing on its way)
+      boom: (sh, at) => on() && blast(s, sh, at.x, at.y, now, { z: at.z }), // (a grenade hits nothing on its way; it goes off at the height it fell to)
       launched: (sh, age) => {
         // the grenade launcher's: straight, and it goes off on the first duck it gets to, a wall, or at its range
         const at = shotAt(sh, Math.min(age, sh.life)),

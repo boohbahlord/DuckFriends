@@ -6,7 +6,7 @@
 import { HANDGUN } from "./gamedefaults.js";
 import { ARM_SPEED, ARM_COOL, ARM_SWING, ARM_RELOAD } from "./armspeed.js";
 import { FLAME } from "./flamer.js";
-import { draws, drawCrit } from "./bowdraw.js";
+import { draws, cooks, drawCrit } from "./bowdraw.js";
 /* the weapons here, each of one kind (its slot): melee, ranged, special or the grenades. Melee swings twice as fast as
    anywhere else and hurts only mid-swing, in a bubble just past it (at: how far, r: how big); the pistol: 72 bullets in
    all, 8 a magazine; the bow: arrows that never run out (the owner's, Nov 18), one every 0.4 s; the dagger is thrown and falls to the floor; the shotgun a
@@ -227,7 +227,8 @@ export const ARMS = {
     cal: "arrow",
     barrel: "none",
     speed: ARM_SPEED.bow,
-  }, // (no `all`: its arrows never run out, as the Laser Rifle's shots: the owner's, Nov 18 15:18Z "Make the bow have unlimited ammo")
+    all: 300,
+  }, // (300 arrows: nothing in a gun slot is endless, the director plan, Nov 28)
   dagger: {
     kind: "ranged",
     cool: ARM_COOL.dagger,
@@ -417,6 +418,7 @@ export const ARMS = {
     far: 3000,
     heat: 5,
     over: 8000,
+    all: 300, // (300 shots, as the bow's arrows: nothing in a gun slot is endless, the director plan, Nov 28)
   },
   /* the new specials: the zebra cake (thrown; every zombie goes for it and bites it until it's gone), the
      adrenaline shot (my duck walks at the game's usual speed for
@@ -489,7 +491,7 @@ const perSecond = (A) =>
 export const shotsOf = (w) =>
   ARMS[w] && ARMS[w].cool ? perSecond(ARMS[w]) : 0;
 export const critOf = (w, dr = 0) => {
-  if (draws(w)) return drawCrit(dr);
+  if (draws(w) && !cooks(w)) return drawCrit(dr);
   const A = ARMS[w];
   if (!A || NO_CRIT.includes(w) || (A.kind !== "melee" && A.kind !== "ranged"))
     return 0;

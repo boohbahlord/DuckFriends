@@ -12,10 +12,42 @@ export const SPRINT = {
   refill: 1.5, // the bar fills this many times as slowly as it drains (2.5 s of sprint: 3.75 s to fill)
 };
 
-/* fall damage, ducks only (heights.js fallHurt; the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
-   measured along the fall's path, in elevations. None under `from`; hp at `mid`, then times `up` for each elevation
-   more, with no cap; under `mid` it drops off fast, `down` times less for each elevation less (0.25 HP at 1) */
-export const FALL = { from: 1, mid: 1.5, hp: 2, up: 2, down: 64 };
+/* the bow drawn (bowdraw.js): full in FULL ms, +PER_STEP damage each whole STEP ms drawn, crit odds CRIT a second
+   (sure at full), the arrow up to FAST faster at full. The owner's, Nov 21 (2.5 s, +0.2 each tenth of a second, so +1
+   each half second, 25% a second); the director plan, Nov 28: the right button draws it in half that time, its damage
+   building the same way (+0.2 each twentieth, so +1 each quarter second, +5 at full; 50% a second) */
+export const DRAW = {
+  FULL: 1250,
+  STEP: 50,
+  PER_STEP: 0.2,
+  CRIT: 0.5,
+  FAST: 0.4,
+};
+/* grenades on the maps (weaponuse.js nadeFly; the director plan, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
+   held, its pin is out and its fuse runs FUSE ms, my meter white, yellow from YELLOW of it, red from RED; let go, it's
+   thrown, and it goes off when its fuse ends: in the hand, in the air or on the ground (so it can be cooked). Thrown,
+   it goes its range (guns.js far) in T ms over an arc PEAK duck heights high, from HAND up: over whatever is lower than
+   it and through the trees' crowns; what's taller (a wall, a car, a building) turns it back with KEEP of its speed (a
+   light thing off a heavy one), and a floor under it stops it. The grenade launcher's: its range (guns.js far, at its
+   speed) over an arc LPEAK high, over a crowd, its fuse LFUSE ms from the shot */
+export const NADE = {
+  FUSE: 5000,
+  YELLOW: 0.5,
+  RED: 0.8,
+  T: 900,
+  PEAK: 1.5,
+  HAND: 0.45,
+  KEEP: 0.5,
+  LPEAK: 3,
+  LFUSE: 3000,
+};
+
+/* fall damage, ducks only (heights.js fallHurt; the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H,
+   moved up half an elevation 07:39Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtWKA8ofj7AENMi1pBK2yGMN): the drop, in elevations
+   (the way across counts only for a duck a hit threw: 07:38Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtLW5YEtHzaRtQz2MurzDnGc).
+   None under `from`; hp at `mid`, then times `up` for each elevation more, with no cap; under `mid` it drops off fast,
+   `down` times less for each elevation less (0.25 HP at 1.5) */
+export const FALL = { from: 1.5, mid: 2, hp: 2, up: 2, down: 64 };
 
 /* a blast's rings (blast.js; the owner's, Nov 21 19:07Z: "the center of a grenade's explosion is at ... the
    intersection of the plus of 4 squares of the pixel hitbox ... it's 4 boxes in the center of the hitbox, those have crit
@@ -82,3 +114,87 @@ export const SPRINT_BLUR_MIN_FPS = 40;
    PER darker for each elevation (heights.js ELEV) I stand over it, on to all dark (below.js; Nov 22 06:24Z: "The first
    recommended options is good ... but darkness keeps going up beyond 60%") */
 export const BELOW = { PER: 0.2, WATER: 20 }; // (WATER: each level of water over a bed counts this many: dpflood.js. 20: the road's whole depth reads about a third darker from its bank, the owner's, Nov 28 04:58Z: "noticeable by pretty fast increments")
+
+/* the director (director.js; the owner approved the plan, Nov 28, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
+   a duck is low on ammo under AMMO_LOW of its guns' rounds and low on health under HP_LOW of its most HP; the team does
+   well over WELL.hp average health and WELL.ammo average ammo */
+export const DIRECTOR = {
+  AMMO_LOW: 0.3,
+  HP_LOW: 0.4,
+  WELL: { hp: 0.7, ammo: 0.5 },
+  /* the supply crate (l4ddrules.js crateCome): heard HEAR ms before it lands by the flare; SOLO things for one duck,
+     else 1 or 2 for each duck, one ONE of the time; a box HALF world px each way from its middle and TALL high, opened
+     from up to REACH from its middle */
+  CRATE: { HEAR: 6000, SOLO: 2, ONE: 0.6, HALF: 22, TALL: 34, REACH: 90 },
+  /* bandages (l4ddrules.js bandagesCome): 1 bandage ONE of the time, else 2, BY world px each side of the duck */
+  BANDAGE: { ONE: 0.5, BY: 70 },
+  /* walkers in a rest (l4ddrules.js walkersTick, zombies.js walkerAt; old Survival's): one turns up every EVERY ms, up to
+     MOST[0] and MOST[1] more for each duck; that pace RATE[0] to RATE[1] times by how the team does (director.js
+     pressure), and with the lights on LIT[0] to LIT[1] times as many as fast (rolled each rest), the horde LIT_HORDE
+     times as big. Each walks the slowest zombie's walk times SLOW, wanders up to ROAM world px at a time and stands IDLE
+     ms; it comes for a duck NEAR duck lengths away, one whose flashlight's close middle (BEAM: world px, radians) is on it
+     SEEN ms, or one that hits it, and forgets one LOSE duck lengths away */
+  WALKERS: {
+    EVERY: 4000,
+    MOST: [4, 3],
+    RATE: [0.7, 1.3],
+    LIT: [1.5, 2],
+    LIT_HORDE: 1.1,
+    SLOW: 0.8,
+    ROAM: 320,
+    IDLE: [1000, 4000],
+    NEAR: 3,
+    LOSE: 9,
+    SEEN: [4000, 6000],
+    BEAM: { far: 336, half: (13.5 * Math.PI) / 180 },
+  },
+};
+
+/* armor (the owner's, Nov 28: cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7 and
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtCoUNw94KGwZjNsEiuJRsw8; wounds.js armorHit). A helmet (HATS, FACES) turns every crit into
+   "Deflected"; SWAT gear also turns away SWAT of every hit's damage, and takes BOOM of a blast's. Neither stops a
+   PIERCE caliber (".50 caliber and desert eagle caliber") or a PIERCE melee ("a heavier melee"). SPAWN: the share of
+   zombies in a helmet and in SWAT gear, from round 1, flat ("there's no increase of chance"), fewer only while ducks do
+   badly: times 1 - 2 x (ducks doing badly / ducks), director.js */
+export const ARMOR = {
+  HATS: ["helmet", "fire"],
+  FACES: ["moto", "scifi"],
+  SWAT: 0.5,
+  BOOM: 0.5,
+  PIERCE: [".50 BMG", ".50 AE", "hammer", "axe"],
+  SPAWN: { helmet: 0.005, swat: 0.005 },
+};
+/* the special zombies (the owner's, Nov 28: cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7,
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H and cmsg_01LTpp6fzv8sfYUR5KoHADKtCoUNw94KGwZjNsEiuJRsw8; zombies.js
+   specialTick). Each from round `from`: its chance a round `chance`, `step` more each round up to `most`, times WELL
+   while the team does well; a round when the team does badly at its moment, it waits for the next round and its chance
+   goes back a step. It comes once a round at most, at AT ms or when MARKS (one picked each round) of the round's
+   zombies are dead, whichever is first; never while the other one is alive (then it waits for the next round). hp, and
+   speed: a share of a duck's walk (the Giant's "as fast as the players"), or none for a zombie's own */
+export const SPECIAL_Z = {
+  flyer: {
+    from: 5,
+    chance: 0.35,
+    step: 0.05,
+    most: 0.6,
+    hp: 5,
+    /* its leap and hold (zombies.js flyerStep): it leaps at a duck on its floor up to `leap` duck rooms away, at `fly`
+       px/s, up to `up` px over the line, rising the first `peak` of the way (fast, then slowing) and falling the rest
+       (slow, then as a falling body); on a duck it rides `ride` px up, bites `dmg` HP every `bite` ms ("every 0.25
+       seconds ... for 0.1-0.2 damage") and tugs it `pull.px` px a random way every `pull.ms` ms, `pull.horde` of the
+       way toward the zombies ("a tiny bias towards the horde"); thrown off or missing, it waits `rest` ms */
+    leap: 6,
+    fly: 360,
+    up: 70,
+    peak: 0.35,
+    ride: 18,
+    dmg: [0.1, 0.2],
+    bite: 250,
+    pull: { ms: 500, px: 12, horde: 0.25 },
+    rest: 1500,
+  },
+  giant: { from: 8, chance: 0.2, step: 0.05, most: 0.5, hp: 150, speed: 1 },
+  WELL: 1.5,
+  AT: 30000,
+  MARKS: [1 / 3, 1 / 2, 2 / 3],
+};
