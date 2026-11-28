@@ -3,9 +3,9 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the profile
-actplay.js 822 a game's actions
+actplay.js 837 a game's actions
 actroom.js 754 the room's actions
-actsb.js 160 Sandbox's windows, saves and maps
+actsb.js 157 Sandbox's windows, saves and maps
 ammo.js 102 THE ONE AMMO RULE, every
 armpage.js 142 a page of Customize's tiles
 armspeed.js 34 how fast the weapons work,
@@ -64,7 +64,7 @@ front.js 151 the front page
 fx.js 1187 the effects, drawn as pixels
 fxart.js 45 the effects' pictures: a duck
 fxmotion.js 233 how a held weapon and
-game.js 4361 the game screen
+game.js 4359 the game screen
 gameact.js 525 the action window and the
 gameannounce.js 187 The cloud's words and what
 gameboard.js 582 the board: each mode's board
@@ -88,7 +88,7 @@ gunparts.js 15 the pieces every weapon's drawing
 guns.js 646 every weapon's numbers: one sheet
 hats.js 1003 hats
 heat.js 83 a gun's heat: the spread
-heights.js 87 a shot's height, Doom's way
+heights.js 93 a shot's height, Doom's way
 hideui.js 30 hide ui
 homeapp.js 43 Install Duck Friends
 hotbar.js 515 the specials on the number
@@ -149,7 +149,7 @@ npcshared.js 29 what every NPC shares, whatever
 npcview.js 216 an NPC on a world
 nwk.js 543 Nous Within Kenoma: the map
 offline.js 45 Single Player's files on the
-online.js 974 online rooms
+online.js 975 online rooms
 outfits.js 990 outfits
 outlines.js 407 the outlines
 perf.js 91 the frame-rate readout
@@ -180,7 +180,7 @@ roundline.js 36 Dead Ducks Arcade's round line,
 router.js 112 screens
 rules.js 1667 the rules of Agree or
 sandbox.js 1348 Sandbox: the key windows
-sandboxrules.js 2039 Sandbox: which map it plays
+sandboxrules.js 2033 Sandbox: which map it plays
 saybubble.js 78 a duck's speech bubble kept
 sbarms.js 124 Sandbox: a made NPC's weapons
 sbaudio.js 211 Sandbox: songs players bring in
@@ -261,7 +261,7 @@ voterules.js 323 the lobby's vote for the
 walkgrid.js 83 the walking grid: which 40-px
 weaponuse.js 104 using a weapon: one module
 who.js 3 who this player is beyond
-wounds.js 482 the wounds a hit leaves
+wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 294 the zombies' walk over Downpour's
 zombies.js 1294 the zombies: one module for
