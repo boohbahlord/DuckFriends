@@ -450,6 +450,32 @@ export function fenceXSVG({ w = 400, d = 12, h = 200, seed = 1 } = {}) {
   s += `<path d="${z}" fill="none" stroke="${O}" stroke-width="3.6" stroke-linejoin="round"/><path d="${z}" fill="none" stroke="#d6dde0" stroke-width="1.6" stroke-linejoin="round"/>`;
   return wrap(w, d + h, s, defs);
 }
-/* how far a fence's top leans, and which way: out, away from the middle of the map, mapW wide. Its drawing (shapes.js)
-   and the flashlights (l4dd.js) both ask */
-export const fenceLean = (p, mapW) => (p.x < mapW / 2 ? -1 : 1) * p.h * 0.6;
+/* where two fences meet at a corner of the map (the owner's, Nov 28 04:58Z: "The corner of the fences are supposed to
+   join together"): the north-south fence's end leans out (fenceLean), the east-west one stands straight, so between their
+   end posts a gap opened at the top. This fills it: chain-link in the triangle between the straight post and the leaning
+   one, the top rail and the barbed wire across. Drawn into (lean + 8) × (h + d); the corner's foot at x 4 (dir 1) or
+   lean + 4 (dir -1), at y h + d / 2, as fenceXSVG's */
+export function fenceCornerSVG({ d = 12, h = 200, lean = 54, dir = 1 } = {}) {
+  const id = uid(),
+    C = 14,
+    W = lean + 8,
+    fx = dir > 0 ? 4 : W - 4,
+    tx = fx + dir * lean,
+    top = d / 2,
+    foot = h + d / 2;
+  const defs =
+    F`<pattern id="${id}" width="${C}" height="${C}" patternUnits="userSpaceOnUse"><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#1c1c28" stroke-width="3.6" opacity=".5"/><path d="M0 ${C / 2}L${C / 2} 0L${C} ${C / 2}L${C / 2} ${C}Z" fill="none" stroke="#b9c3c8" stroke-width="1.8"/></pattern>` +
+    F`<clipPath id="${id}c"><path d="M${fx} ${foot}L${fx} ${top}L${tx} ${top}Z"/></clipPath>`;
+  let s = F`<rect x="0" y="0" width="${W}" height="${foot}" fill="url(#${id})" clip-path="url(#${id}c)"/>`;
+  s += F`<path d="M${fx} ${top + 4}H${tx}" stroke="${O}" stroke-width="6.4"/><path d="M${fx} ${top + 4}H${tx}" stroke="#d6dde0" stroke-width="3.4"/>`;
+  let z = `M${fx} ${top}`;
+  for (let u = 7, k = 1; u <= lean; u += 7, k = -k)
+    z += `L${n1(fx + dir * u)} ${n1(top + k * 4)}`;
+  s += `<path d="${z}" fill="none" stroke="${O}" stroke-width="3.6" stroke-linejoin="round"/><path d="${z}" fill="none" stroke="#d6dde0" stroke-width="1.6" stroke-linejoin="round"/>`;
+  s += F`<path d="M${fx} ${top}V${foot}" stroke="${O}" stroke-width="7" stroke-linecap="round"/><path d="M${fx} ${top}V${foot}" stroke="#9aa6ad" stroke-width="3.6" stroke-linecap="round"/>`;
+  return wrap(W, h + d, s, defs);
+}
+/* how far a fence's top leans, and which way: out, away from the middle of the map, mapW wide. Its drawing (shapes.js),
+   the flashlights and a zombie climbing it (l4dd.js) all ask. 0.36 of its height: the lean it has been drawn with since
+   the map went to 60% */
+export const fenceLean = (p, mapW) => (p.x < mapW / 2 ? -1 : 1) * p.h * 0.36;

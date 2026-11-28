@@ -79,20 +79,12 @@ export const STATION = {
 export const CHAPEL = { x0: 1600, y0: 3650, x1: 3000, y1: 5750, wall: 240 };
 export const TOWER = { x0: 3000, y0: 3650, x1: 3300, y1: 3950, h: 520 };
 const INNER = 120;
-/* the fences across the road's two ends: tall and solid. Zombies climb them like a ladder, at their own walking speed,
-   and drop down the other side from the top (the owner's, Nov 16 23:32Z). x: the fence's line; y0 … y1: how far it
-   runs (into the trees at both ends); climb: where along it a zombie comes over (the open ground); out: the side the
-   zombies come from (-1 west, 1 east) */
 export let FENCE_H = 200;
-export const FENCES = [
-  { x: 60, y0: 2560, y1: 3500, climb: [2680, 3360], out: -1 },
-  { x: 4540, y0: 2700, y1: 3420, climb: [2780, 3320], out: 1 },
-];
 /* the fence round the whole map, where a duck's walking stops (the owner's, Nov 17 11:11Z: "There must be a fence around
-   the whole map WHERE the invisible wall is"): on the road fences' lines west and east, as far in from the north and
-   south edges. The road's two fences are its pieces across the road; zombies only climb those */
+   the whole map WHERE the invisible wall is"), but across the road: that's open (the owner's, Nov 28 04:58Z: "remove the
+   fences on the road. We'll just leave it open"; the road's side fences out past the map's edges went with them: "Why is
+   there just a random fence just laying on the ground ... Remove that") */
 export const RIM = { x0: 60, x1: 4540, y0: 60, y1: 6140 };
-const OUT_ROAD = 300; // (how far past the map's west and east edges the road's own fences go: past what the camera shows)
 /* holes anyone walks through, smashed through the wall like the cabin's, and only where the owner circled them (Nov 17
    05:46Z): the storeroom's north wall at its north-west corner, the north wall over the counter, and the front door,
    which is one big hole (the door gone, and some of the wall and the glass either side with it). Zombies come in by
@@ -735,30 +727,20 @@ function planBuild(b) {
       });
     }
   }
-  /* the fences across the road's ends, in pieces of 200 at most, each on the ground under it */
-  for (const f of FENCES)
-    for (let y = f.y0; y < f.y1; y += 200) {
-      const e = Math.min(f.y1, y + 200);
-      put("fence", f.x - 6, y, 12, e - y, FENCE_H, {
-        solid: true,
-        z: Math.min(groundAt(f.x, y), groundAt(f.x, e - 1)),
-        key: e,
-      });
-    }
-  /* the rest of the fence round the map: west and east (but where the road's fences are), then the north and south
-     sides, seen face on (fencex) */
-  for (const [x, f] of [
-    [RIM.x0, FENCES[0]],
-    [RIM.x1, FENCES[1]],
-  ])
+  /* the rest of the fence round the map: west and east down to the road's edges, then the north and south sides, seen
+     face on (fencex), and where they meet a piece that joins them (fencecorner: the owner's, Nov 28 04:58Z) */
+  for (const x of [RIM.x0, RIM.x1])
     for (const [a, c] of [
-      [RIM.y0, f.y0],
-      [f.y1, RIM.y1],
+      [RIM.y0, ROAD.y0],
+      [ROAD.y1, RIM.y1],
     ])
       for (let y = a; y < c; y += 200) {
         const e = Math.min(c, y + 200);
         put("fence", x - 6, y, 12, e - y, FENCE_H, { solid: true, key: e });
       }
+  for (const x of [RIM.x0, RIM.x1])
+    for (const y of [RIM.y0, RIM.y1])
+      put("fencecorner", x - 6, y - 6, 12, 12, FENCE_H, { key: y + 7 });
   for (const y of [RIM.y0, RIM.y1])
     for (let x = RIM.x0; x < RIM.x1; x += 400) {
       const e = Math.min(RIM.x1, x + 400);
@@ -768,14 +750,6 @@ function planBuild(b) {
         fy: 0, // (feet stop right at its line, north or south of it, where it's drawn standing: the owner's, Nov 28 04:05Z)
       });
     }
-  /* the road on out past the map's edges, a fence along its top on either side, as far as the camera ever shows (the
-     owner's, Nov 17 12:28Z: the fence on either side of the road; nobody gets out there, so they're only drawn) */
-  for (const y of [ROAD.y0, ROAD.y1])
-    for (const [a, c] of [
-      [-OUT_ROAD, RIM.x0],
-      [RIM.x1, GS_W + OUT_ROAD],
-    ])
-      put("fencex", a, y - 6, c - a, 12, FENCE_H, { key: y + 6 });
   /* the chapel: its walls (the wide entrance in the north wall, boarded windows down both sides), the tower, the altar
      with the Angel machine on it, the Priest beside it, and the pews: two rows down each side of the aisle, a few broken
      in half or missing (the owner's plan) */
@@ -1196,18 +1170,7 @@ planBuild({
   wallY: (...a) => CALLS.push(["wallY", ...a]),
   T: 12 / K,
 });
-for (const o of [
-  ROAD,
-  DEEP,
-  SHALLOW,
-  TOP,
-  BOT,
-  STATION,
-  CHAPEL,
-  TOWER,
-  FENCES,
-  RIM,
-])
+for (const o of [ROAD, DEEP, SHALLOW, TOP, BOT, STATION, CHAPEL, TOWER, RIM])
   scaled(o);
 for (const o of [
   WALK_HOLES,
