@@ -54,12 +54,12 @@ export const coneOf = (a0, n, spread) =>
    leaves at once, as the shot */
 export const roundAt = (n, i, now, gap) =>
   i ? { n: n * 10 + i, t: now + i * gap } : {};
-/* 8f-3, flight: every shot in the air, one beat, one loop for every mode. A burst's round still waiting stays; a thrown
-   grenade arcs and goes off where it lands, or where a wall stops it (at its last spot); the launcher's grenade and the
-   bullets fly by each side's hooks, as what they hit differs (ducks on the board; zombies, NPCs and ducks on the maps).
-   F: { fuse (ms), U ([x, y]: a spot's units over a share of the board or world), at(sh, ms), walled(sh, at),
-   boom(sh, at), launched(sh, age), bullet(sh, age) }; each true keeps the shot. What's kept comes back, in order. A
-   map's grenade (sh.tb: the thrown one and the launcher's) flies by nadeFly, with F.wallAt and F.floor */
+/* 8f-3, flight: every shot in the air, one beat, one loop for every mode. A burst's round still waiting stays; a
+   grenade (sh.tb: the thrown one in every mode, and the maps' launcher's) flies by nadeFly, with F.wallAt(x, y, z, sh)
+   and F.floor (FLAT where there are no heights); the board's launcher's grenade and the bullets fly by each side's
+   hooks, as what they hit differs (ducks on the board; zombies, NPCs and ducks on the maps).
+   F: { U ([x, y]: a spot's units over a share of the board or world), at(sh, ms), walled(sh, at), boom(sh, at),
+   launched(sh, age), bullet(sh, age), wallAt, floor }; each true keeps the shot. What's kept comes back, in order */
 export function flyShots(list, now, F) {
   const keep = [];
   for (const sh of list) {
@@ -68,27 +68,19 @@ export function flyShots(list, now, F) {
       age < 0 ||
       (sh.tb != null
         ? nadeFly(sh, now, F)
-        : sh.k === "grenade"
-          ? arc(sh, age, F)
-          : sh.k === "lgren"
-            ? F.launched(sh, age)
-            : F.bullet(sh, age))
+        : sh.k === "lgren"
+          ? F.launched(sh, age)
+          : F.bullet(sh, age))
     )
       keep.push(sh);
   }
   return keep;
 }
-const arc = (sh, age, F) => {
-  const at = F.at(sh, Math.min(age, F.fuse)),
-    [w, h] = F.U,
-    wall = F.walled(sh, at);
-  if (wall || age >= F.fuse) {
-    F.boom(sh, wall ? { x: sh.lx * w, y: sh.ly * h } : at);
-    return false;
-  }
-  sh.lx = at.x / w;
-  sh.ly = at.y / h;
-  return true;
+/* the ground a grenade flies over with no heights (a board, Hangout's floor plan; in shares): flat, its edges its only
+   walls */
+export const FLAT = {
+  floor: () => 0,
+  wallAt: (x, y) => x < 0 || x > 1 || y < 0 || y > 1,
 };
 /* ---------- a map's grenade, thrown or launched (NADE; the director plan, Nov 28) ----------
    The leg it is on, from sh.tb ms: from (x0, y0) (shares) at (vx, vy) (shares a second) across, from zb world px over
@@ -138,9 +130,9 @@ function nadeFly(sh, now, F) {
       at = nadeAt(sh, t2),
       z = sh.hz + at.z;
     if (sh.vx || sh.vy) {
-      const ax = F.wallAt(at.x * w, was.y * h, z),
-        ay = F.wallAt(was.x * w, at.y * h, z);
-      if (ax || ay || F.wallAt(at.x * w, at.y * h, z)) {
+      const ax = F.wallAt(at.x * w, was.y * h, z, sh),
+        ay = F.wallAt(was.x * w, at.y * h, z, sh);
+      if (ax || ay || F.wallAt(at.x * w, at.y * h, z, sh)) {
         const k = turns++ < NADE_BOUNCES ? NADE.KEEP : 0;
         Object.assign(sh, {
           tb: t,

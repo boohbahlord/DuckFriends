@@ -2,9 +2,10 @@
    NADE): held 2 s, one thrown goes off 3 s later; held to its fuse's end, it goes off in the hand; thrown on open
    ground it rises and lands about its range away, and lies there; thrown under the pump roof, it comes back down off it till its fuse ends; thrown at the church's wall,
    taller than its arc, it comes back off it; the launcher's flies over a zombie in its way, lands, and goes off 3 s
-   after the shot.
+   after the shot. The board's is the same: cooked, an arc, off at its fuse's end, even cooked inside its long wait.
    Run: node tools/check/run.mjs grenades */
 const { fail, noErrors, fakedPage } = require("./lib.cjs");
+const NADE_FUSE = 5000; // (gamedefaults.js NADE.FUSE)
 (async () => {
   const { b, p, errs } = await fakedPage();
   const got = await p.evaluate(async () => {
@@ -109,13 +110,31 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     ready("grenade", ox, oy);
     const g0 = R.kitOf(room.state, me).g;
     room.send({ t: "draw", w: "grenade" });
-    tick(NADE.FUSE + 300);
+    const walk = (w) => {
+      const p = room.state.pos[me];
+      room.send({ t: "move", x: p.x, y: p.y, j: 0, w, ax: 1, ay: 0 }); // (moves come all through a hold, as in play)
+    };
+    tick(NADE.FUSE + 300, () => walk("grenade"));
     out.hand = {
       left: R.kitOf(room.state, me).g,
       was: g0,
       drawn: !!(room.state.draw || {})[me],
       boom: (room.state.fx || []).some(
         (f) => f.kind === "boom" && f.t >= window.__now - 400,
+      ),
+    };
+    /* cooking, then another weapon picked: it's put away, no boom, none spent */
+    ready("grenade", ox, oy);
+    const g1 = R.kitOf(room.state, me).g;
+    room.send({ t: "draw", w: "grenade" });
+    tick(1000, () => walk("grenade"));
+    walk("handgun");
+    tick(NADE.FUSE);
+    out.away = {
+      left: R.kitOf(room.state, me).g,
+      was: g1,
+      boom: (room.state.fx || []).some(
+        (f) => f.kind === "boom" && f.t >= window.__now - NADE.FUSE,
       ),
     };
     /* at the church's west wall, 80 px off */
@@ -153,6 +172,58 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     out.lgone = !mine() && boomed();
     out.range = ARMS.grenade.far;
     out.lrange = ARMS.glauncher.far;
+    /* the board's grenade is the same one (Adam's call, Nov 28: one grenade for every mode, its ground flat) */
+    room.leave && room.leave();
+    {
+      const net = await import("./js/net.js"),
+        RU = await import("./js/rules.js"),
+        bd = net.createLocalRoom({ name: "B", test: true, computers: 1 });
+      bd.close();
+      bd.send({ t: "options", options: { modePick: "host", mode: "aod" } });
+      bd.send({ t: "start" });
+      const me2 = bd.me,
+        step = (ms, each) => {
+          for (let t = 0; t < ms; t += 100) {
+            window.__now += 100;
+            bd.send({ t: "tick", id: me2 });
+            if (each) each();
+          }
+        },
+        nade = () =>
+          (bd.state.shots || []).find((q) => q.by === me2 && q.k === "grenade");
+      step(60000); // (past its countdown)
+      const s = bd.state;
+      s.phase = RU.boardPhases(s)[0];
+      s.players[me2].duck = { ...s.players[me2].duck, keys: ["grenade"] };
+      s.pos[me2] = { ...s.pos[me2], x: 0.3, y: 0.5, w: "grenade" };
+      const at = window.__now;
+      bd.send({ t: "draw", w: "grenade" });
+      step(2000);
+      bd.send({ t: "use", what: "grenade", ax: 1, ay: 0, face: 1 });
+      const g = nade();
+      let top = 0;
+      step(3200, () => {
+        const q = nade();
+        if (q) top = Math.max(top, nadeAt(q, window.__now).z);
+      });
+      out.board = {
+        fuse: g && g.tb != null ? g.end - at : -1,
+        top: Math.round(top),
+        gone:
+          !nade() &&
+          (bd.state.fx || []).some(
+            (f) => f.kind === "boom" && f.t >= at + 4900,
+          ),
+      };
+      /* cooked again inside the board's long wait (12 s): held to its fuse's end, it still goes off, and the draw ends */
+      const at2 = window.__now;
+      bd.send({ t: "draw", w: "grenade" });
+      step(NADE.FUSE + 300);
+      out.board.again = (bd.state.fx || []).some(
+        (f) => f.kind === "boom" && f.t >= at2 + NADE.FUSE - 100,
+      );
+      out.board.kept = !!(bd.state.draw || {})[me2];
+    }
     window.__fake = false;
     return out;
   });
@@ -169,10 +240,19 @@ const { fail, noErrors, fakedPage } = require("./lib.cjs");
     bad("under the pump roof, it stays under it");
   if (got.hand.left !== got.hand.was - 1 || got.hand.drawn || !got.hand.boom)
     bad("held to the end: it goes off in the hand");
+  if (got.away.left !== got.away.was || got.away.boom)
+    fail(
+      "grenades: one put away while cooking still went off " +
+        JSON.stringify(got.away),
+    );
   if (got.wall === null || !(got.wall < 0) || !got.rev)
     bad("off the church's wall, back");
   if (got.lfuse !== 3000) bad("the launcher's: 3 s");
   if (!got.over) bad("the launcher's flies over a zombie in its way");
+  if (got.board.fuse !== NADE_FUSE || !(got.board.top > 0) || !got.board.gone)
+    bad("the board's: cooked, an arc, off at its fuse's end");
+  if (!got.board.again || got.board.kept)
+    bad("the board's, cooked inside its wait: off in the hand all the same");
   if (!(got.lfar > got.lrange * 0.5) || !got.lgone)
     bad("the launcher's lands far, then goes off");
 })();

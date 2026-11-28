@@ -110,7 +110,7 @@ import { seenBy } from "./crowd.js";
 import { linesOf } from "./merchantlines.js";
 import { invuln } from "./hangout/death.js";
 import { kitSlots, gunSlotFor, ITEM_SLOTS } from "./kitslots.js";
-import { drawDmg, drawFast, cooks, drawTaken } from "./bowdraw.js";
+import { drawDmg, drawFast, cookedOut } from "./bowdraw.js";
 import {
   hOk,
   hLock,
@@ -1607,7 +1607,16 @@ function l4Act(s, a, now) {
     return true;
   }
   if (a.do === "buy")
-    return buy(s, id, String(a.what || ""), mx, my, a.hand, now);
+    return buy(
+      s,
+      id,
+      String(a.what || ""),
+      mx,
+      my,
+      a.hand,
+      now,
+      String(a.mk || ""),
+    );
   if (a.do === "pick") return pickLoot(s, id, mx, my, a.hand, now);
   if (a.do === "crate") return crateTake(s, id, a, mx, my, now);
   if (a.do === "power") return powerAct(s, id, now, mx, my, PH, !!a.sw);
@@ -1627,8 +1636,13 @@ const soldSays = (s, id, text) => {
 };
 /* the merchant: the one upgrade he offers me this visit (upOffer; the Butler's, SHOP), from beside him while he's
    selling, while I have the points; gas in the cabin (powerGas); or something from his stock (merchantBuy) */
-function buy(s, id, what, mx, my, hand, now) {
-  const k = nearestMerchant(s, mx, my); // (several here: the one I'm at)
+export const merchantKey = (m) => (m ? `${m.v}:${m.id}` : "");
+function buy(s, id, what, mx, my, hand, now, mk) {
+  const k = mk
+    ? merchantsOf(s).findIndex(
+        (m) => m && m.st === "here" && merchantKey(m) === mk,
+      )
+    : nearestMerchant(s, mx, my); // (several here: the one whose page I bought from (mk), else the one I'm at)
   return k >= 0 && asMerchant(s, k, () => buy1(s, id, what, mx, my, hand, now));
 }
 function buy1(s, id, what, mx, my, hand, now) {
@@ -2974,22 +2988,6 @@ export function tornDown(s) {
     new Set(GS.BOARDED.filter((o) => brd && brd[o.id] === 0).map((o) => o.id)),
   );
 }
-/* a grenade held past its fuse goes off in the hand, its pin out since the press (bowdraw.js; NADE: the director plan,
-   Nov 28): thrown with no time left, where the duck stands */
-function cookedOff(s, now) {
-  for (const [id, d] of Object.entries(s.draw || {}))
-    if (cooks(d.w) && cooks((s.pos[id] || {}).w) && now - d.t >= NADE.FUSE)
-      l4Use(
-        s,
-        {
-          id,
-          what: "grenade",
-          dr: drawTaken(s, id, now, NADE.FUSE, d.w),
-          face: 1,
-        },
-        now,
-      );
-}
 /* the boards of opening `o` torn down at once (the merchant on his way in: "breaks the barricade (the wooden
    barricade) IF it is in the way") */
 function breakBoards(s, o, now) {
@@ -3142,6 +3140,7 @@ export function l4Use(s, a, now) {
   const m = { ...m0, u: { ...m0.u }, am: { ...m0.am } };
   finishReload(m, now, infAmmo(s));
   if (
+    !cookedOut(what, a.dr) && // (bowdraw.js)
     waiting(
       GATE_BREEDS.maps,
       { auto: !!A.auto, cool: l4Cool(s, id, what), last: m.u[what] || 0 },
@@ -4476,7 +4475,6 @@ function l4Tick(s, now) {
   if (!L) return false;
   if (L.over) return false;
   meleeHits(s, now); // (first: the zombies below are read after it)
-  cookedOff(s, now);
   const T = now - (isSb(s) && L.t0 == null ? 0 : L.t0); // (Sandbox: no round started, its zombies still claw)
   /* the ducks: HP coming back, revives, bleeding out, boards going up, reloads */
   const p4 = { ...(s.hang.l4p || {}) },

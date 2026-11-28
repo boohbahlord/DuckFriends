@@ -67,6 +67,7 @@ import {
   SHOP,
   merchantsOf,
   nearestMerchant,
+  merchantKey,
   upOffer,
   isHelper,
   laserHeat,
@@ -1053,7 +1054,14 @@ function shopping(s, id, now, x, y, far, m, send, out) {
     to = k >= 0 ? merchantsOf(s)[k] : null; // (several here: the nearest with one it wants and can pay for)
   if (!to) return false; // (only while a merchant is here and selling)
   const want = wantAt(to);
-  const act = { t: "hang", k: "l4", do: "buy", what: want.id, id };
+  const act = {
+    t: "hang",
+    k: "l4",
+    do: "buy",
+    what: want.id,
+    mk: merchantKey(to),
+    id,
+  };
   const d = Math.hypot(to.x - x, to.y - y);
   if (d < AT) {
     send(x, y, hand, to.x - x || 1, to.y - y);

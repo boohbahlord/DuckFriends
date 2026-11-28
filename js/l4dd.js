@@ -103,6 +103,7 @@ import {
   merchantOf,
   merchantsOf,
   nearestMerchant,
+  merchantKey,
   slotFor,
   upOffer,
   stockPrice,
@@ -2481,6 +2482,7 @@ function shopFill(s, ctx) {
     ]);
   if (sig === shop.sig) return;
   shop.sig = sig;
+  shop.mk = merchantKey(m);
   shop.pts.textContent = pts;
   /* who's selling: his name over the page, his picture by his words */
   const who = m && m.who ? [m.v, m.id, m.roll].join() : "";
@@ -2660,7 +2662,8 @@ function shopEl(ctx) {
   const holdGo = (e) => {
     const b = e.target.closest && e.target.closest("[data-buy]");
     if (!b || b.disabled || buyHold) return;
-    const w = b.dataset.buy;
+    const w = b.dataset.buy,
+      mk = shop.mk; // (the merchant the hold began at: a nearer one coming on the page mid-hold doesn't take the buy)
     buyHold = {
       w,
       at: performance.now(),
@@ -2669,7 +2672,7 @@ function shopEl(ctx) {
           el.querySelector(`[data-buy="${w}"]`)
         );
         holdStop(el, true);
-        if (!ok || ok.disabled) return;
+        if (!ok || ok.disabled || (!shop.crate && shop.mk !== mk)) return; // (another merchant's page now: the hold ends, nothing bought)
         sfx.holdClick(); // (full: a click, as the Vote button's)
         ctx.send({
           t: "hang",
@@ -2677,6 +2680,7 @@ function shopEl(ctx) {
           do: shop.crate ? "crate" : "buy",
           what: w,
           hand: heldFn(),
+          ...(shop.crate ? {} : { mk }), // (the merchant whose page it is, l4ddrules.js buy)
         }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
       }, BUY_HOLD),
     };
@@ -2722,6 +2726,7 @@ function shopEl(ctx) {
     title: el.querySelector(".hang-book-title"),
     me: el.querySelector(".l4-shop-me"),
     who: "",
+    mk: "", // (whose page it is: l4ddrules.js merchantKey)
   };
 }
 
