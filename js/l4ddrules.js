@@ -1942,8 +1942,8 @@ export function give(s, id, w, hand0) {
    back. Each has his own favorite stock (favStock), the same each visit, full again, plus bandages while a duck is low. He has 3 or 4 HP and walks as a duck does, and gets away no faster: the shared slow
    speed (npcshared.js NPC_RUN, merchantSprints).
    s.hang.l4m (online): { v: the visit, id: who (merchants.js), roll: his look, st: "in" (walking in), "here", "out"
-   (running away), "fight" (Phil going after foe, the duck that hurt him), "jump" (off the balcony or over the fence:
-   gone in a moment) or "dead", x, y (world px), f: his facing, hits: the times a player hurt him,
+   (running away), "fight" (going after foe where he can't run), "jump" (off the balcony or over the fence: gone in a
+   moment) or "dead", x, y (world px), f: his facing, foe: the duck that hurt him last,
    hp, stock: [[weapon, price]], say: { n, t, text } his last line, c: 1 while he's past the zombies' reach }
    s.hidden.l4mh (the host's): { pw: { id: his weight in the pick }, fav: { id: his stock }, dead: [ids], ban: [ids]
    (hurt by a player: never again), cur: the last one to come, bags: his weapon bags (bagRoll), lines: the
@@ -1981,19 +1981,19 @@ export const MERCH = {
   SPRINT: NPC_RUN, // (getting away: the shared slow speed, npcshared.js; "Merchants should be less fast when they try to escape" (the owner's, Nov 19 19:27Z). His meter still runs as long as a duck's (L4.SPRINT), and as long to fill …
   CHASED: 450, // … used running away when a zombie is this near (world px) or a player just hurt him (HURT_MS)
   HURT_MS: 3000,
-  /* every merchant fights back (the owner's, Nov 28 01:57Z: "weak handguns and a knife", "reasonable difficulty"; 02:07Z:
-     "defend themselves even after one hit if it is up close"): only after a hit from within `close`, or a second hit,
-     and only while some duck's screen shows him. His knife up close, his weak handgun out to its reach; each misses
-     `miss` of the time and takes `dmg` HP, every `ms` */
+  /* every merchant fights back (the owner's, Nov 28 01:57Z: "weak handguns and a knife", "reasonable difficulty"; the
+     director plan, Nov 28: shot at, he runs and fights back at once, and just fights where he can't run; zombies only
+     inside his building), only while some duck's screen shows him. His knife up close, his weak handgun out to its
+     reach; each misses `miss` of the time and takes `dmg` HP from a duck (NPC_DMG of it) or its weapon's from a
+     zombie, every `ms` */
   FIGHT: {
-    close: 160,
     knife: { reach: 70, ms: 1200, miss: 0.5, dmg: 0.35 },
     handgun: { reach: 600, ms: 1600, miss: 0.6, dmg: 0.3 },
   },
   FOE_FAR: 900, // (world px: he lets a duck this far off be, and runs)
   /* selling, he walks about his building (Downpour's chapel), never further than r from his spot, a few seconds at each
      place, at k of his walk; he stands still while a duck is by him */
-  WANDER: { r: 260, ms: [2500, 6000], k: 0.5 },
+  WANDER: { r: 260, ms: [2500, 6000], k: 0.5, clear: 200 }, // (clear: world px he keeps from the entrance and every window)
   GREET: 220, // (world px: a duck this near gets a greeting)
   SAY: 3500, // (ms a line shows: l4dd.js)
   LATE: 25000, // (ms: stuck on his way in, he's at his spot; running away this long, he's gone)
@@ -2113,6 +2113,13 @@ const alongOf = (f, x, y) =>
   Math.max(f.climb[0] + 40, Math.min(f.climb[1] - 40, f.axis === "y" ? y : x));
 /* his way in: [where he starts, legs] (a leg: to [x, y], how: "line" straight or "flow" by the zombies' field, k: speed,
    brk: an opening whose boards he breaks there, c: past the zombies' reach) */
+/* Downpour's chapel entrance, as an opening ({ x, y } on its wall, in and out: a step either side), or none */
+const doorOf = () => {
+  if (!dp()) return [];
+  const x = (GS.CHAPEL_DOOR.a + GS.CHAPEL_DOOR.b) / 2,
+    y = GS.CHAPEL.y0;
+  return [{ x, y, in: [x, y + GS.CHAPEL.wall + 60], out: [x, y - 80] }];
+};
 function wayIn() {
   syncMap();
   const to = [BUTLER.x, BUTLER.y];
@@ -2127,15 +2134,20 @@ function wayIn() {
       ],
     ];
   }
-  const f = fences().reduce((a, b) =>
-      Math.abs(acrossFence(b, ...to)) < Math.abs(acrossFence(a, ...to)) ? b : a,
+  const [d] = doorOf(), // (in by the entrance, never a window: the owner's, Nov 28)
+    f = fences().reduce((a, b) =>
+      Math.abs(acrossFence(b, ...d.out)) < Math.abs(acrossFence(a, ...d.out))
+        ? b
+        : a,
     ),
-    v = alongOf(f, ...to);
+    v = alongOf(f, ...d.out);
   return [
     byFence(f, FENCE.from, v),
     [
       { to: byFence(f, FENCE.out, v), how: "line" },
       { to: byFence(f, FENCE.out - FENCE.across, v), how: "line", k: 0.5 },
+      { to: d.out, how: "flow" },
+      { to: d.in, how: "line" },
       { to, how: "flow" },
     ],
   ];
@@ -2151,11 +2163,20 @@ function wayOut(x, y) {
       { to: [gx, DECK.y1 + 260], how: "line", c: 1, jump: 1 },
     ];
   }
+  const [d] = doorOf(),
+    inside = mInside(x, y); // (out by the entrance, never a window: the owner's, Nov 28)
+  if (inside) [x, y] = d.out;
   const f = fences().reduce((a, b) =>
       acrossFence(b, x, y) > acrossFence(a, x, y) ? b : a,
     ),
     v = alongOf(f, x, y);
   return [
+    ...(inside
+      ? [
+          { to: d.in, how: "flow" },
+          { to: d.out, how: "line" },
+        ]
+      : []),
     {
       to: byFence(f, FENCE.out - FENCE.across - 20, v),
       how: "flow",
@@ -2395,22 +2416,13 @@ export function merchantHurt(s, by, n, now, w = "", how = "") {
     merchantDrops(s, m, now);
     return true;
   }
-  const hits = (m.hits || 0) + (by ? 1 : 0);
   if (by) setMh(s, { hurtAt: now });
-  s.hang.l4m = { ...m, hp, hits, w: wd };
+  s.hang.l4m = { ...m, hp, w: wd, ...(by ? { foe: by } : {}) };
   if (by && !mh(s).hurt) {
     setMh(s, { hurt: 1, ban: [...(mh(s).ban || []), m.id] }); // (shot at and alive: he never comes back, the owner's, Nov 19 19:27Z "Merchants that are shot at go straight to the back of the line forever")
     merchantSays(s, "hurt", now); // ("these are the lines they will say once when they take damage from a player")
   }
-  /* he fights back (MERCH.FIGHT): a hit from up close, or his second, while a duck's screen shows him */
-  const bp = by && s.pos[by] && toPx(s.pos[by]),
-    close = !!bp && Math.hypot(bp[0] - m.x, bp[1] - m.y) < MERCH.FIGHT.close;
-  if (bp && (close || hits >= 2) && mSeen(s, m)) {
-    s.hang.l4m = { ...merchantOf(s), st: "fight", foe: by };
-    setMh(s, { route: null, t: now });
-    return false;
-  }
-  if (by && m.st !== "out" && m.st !== "fight") merchantRun(s, now);
+  if (by && m.st !== "out" && m.st !== "fight") merchantRun(s, now); // (he runs, firing back as he goes: merchantFire)
   return false;
 }
 /* killed: one gun of his stock now and then, and apart from that a purse of points (MERCH.GUN, MERCH.PURSE), where he
@@ -2452,49 +2464,86 @@ const mSeen = (s, m) =>
     m.y,
     VIEW,
   );
-/* fighting: his knife when his foe is near enough, his handgun out to its reach when nothing is between them, else
-   after it (by the zombies' field when there's something in the way); never while no duck's screen shows him. He
-   runs once his foe is down, gone or far off */
+/* his knife for a target at (x, y) up close, his handgun out to its reach with nothing between, else "" */
+const mWeapon = (m, x, y) => {
+  const d = Math.hypot(x - m.x, y - m.y);
+  return d <= MERCH.FIGHT.knife.reach
+    ? "knife"
+    : d <= MERCH.FIGHT.handgun.reach && walkable(m.x, m.y, x, y)
+      ? "handgun"
+      : "";
+};
+/* inside his building (Downpour's chapel)? */
+const mInside = (x, y) => whereIn(x, y) === whereIn(BUTLER.x, BUTLER.y);
+/* he fights back as he goes (MERCH.FIGHT): at foe, the duck that hurt him (his bullets hit no other duck), else at the
+   nearest zombie inside his building while he's in it too, the points for its HP going to a random duck (the owner's
+   hidden rule, Nov 28); never while no duck's screen shows him, and his weapon's wait between. True when he swung or
+   shot */
+function merchantFire(s, m0, now) {
+  const h = mh(s);
+  if (now - (h.stab || 0) < (h.sms || 0) || !mSeen(s, m0)) return false;
+  const fp =
+      m0.foe && s.pos[m0.foe] && standing(s, m0.foe)
+        ? toPx(s.pos[m0.foe])
+        : null,
+    zs = fp || !mInside(m0.x, m0.y) ? [] : zombies(s),
+    z = zs
+      .filter((q) => q.st !== 3 && mInside(q.x, q.y) && mWeapon(m0, q.x, q.y))
+      .sort(
+        (a, b) =>
+          Math.hypot(a.x - m0.x, a.y - m0.y) -
+          Math.hypot(b.x - m0.x, b.y - m0.y),
+      )[0],
+    [tx, ty] = fp || (z ? [z.x, z.y] : [0, 0]),
+    w = fp || z ? mWeapon(m0, tx, ty) : "";
+  if (!w) return false;
+  const F = MERCH.FIGHT[w];
+  setMh(s, { stab: now, sms: F.ms }); // (the wait after a swing or a shot is that weapon's, as his bar shows it)
+  addFx(s, {
+    kind: "l4mstab",
+    v: m0.v, // (which one: several can be here)
+    by: m0.foe || "",
+    w,
+    ms: F.ms,
+    who: [],
+    t: now,
+    x: m0.x,
+    y: m0.y,
+  });
+  s.hang.l4m = { ...merchantOf(s), f: tx < m0.x ? -1 : 1 };
+  if (Math.random() < F.miss) {
+    if (w === "handgun")
+      addFx(s, { kind: "l4miss", who: [], t: now, x: tx, y: ty }); // (missed: over it, as a miss on a zombie)
+  } else if (fp) {
+    const p4 = { ...(s.hang.l4p || {}) };
+    hurtDuck(s, p4, m0.foe, now, w, F.dmg * NPC_DMG); // (every NPC's half damage)
+    s.hang.l4p = p4;
+  } else {
+    const ids = ducks(s).map((d) => d.id);
+    if (
+      strike(s, z, dmgOf(ARMS[w]), false, ids[rint(0, ids.length - 1)], "", now)
+    )
+      die(z, now - s.hang.l4.t0);
+    wound(s, z, w, false);
+    store(s, zs, true);
+  }
+  return true;
+}
+/* fighting where he can't run: at his foe when he can reach him, else after him (by the zombies' field when there's
+   something in the way), never out of his building; he runs once his foe is down, gone or far off */
 function merchantFight(s, m0, now, dt) {
   const p = s.pos[m0.foe];
   if (!p || !standing(s, m0.foe)) return merchantRun(s, now);
-  const [fx, fy] = toPx(p),
-    d = Math.hypot(fx - m0.x, fy - m0.y);
-  if (d > MERCH.FOE_FAR) return merchantRun(s, now);
+  const [fx, fy] = toPx(p);
+  if (Math.hypot(fx - m0.x, fy - m0.y) > MERCH.FOE_FAR)
+    return merchantRun(s, now);
+  if (merchantFire(s, m0, now) || (mWeapon(m0, fx, fy) && mSeen(s, m0))) return; // (fired, or waiting to)
   const m = { x: m0.x, y: m0.y },
-    w =
-      d <= MERCH.FIGHT.knife.reach
-        ? "knife"
-        : d <= MERCH.FIGHT.handgun.reach && walkable(m.x, m.y, fx, fy)
-          ? "handgun"
-          : "",
-    F = MERCH.FIGHT[w],
-    seen = !!w && mSeen(s, m0);
-  if (!seen) {
-    const aim = walkable(m.x, m.y, fx, fy)
+    aim = walkable(m.x, m.y, fx, fy)
       ? [fx, fy]
       : heading(flowFrom([openNear(fx, fy)]), m.x, m.y) || [fx, fy];
-    stepZombie(m, aim, WALK * walkOf(s) * MERCH.WALK * wetK(m.x, m.y) * dt, []);
-  } else if (now - (mh(s).stab || 0) >= (mh(s).sms || 0)) {
-    setMh(s, { stab: now, sms: F.ms }); // (the wait after a swing or a shot is that weapon's, as his bar shows it)
-    addFx(s, {
-      kind: "l4mstab",
-      v: m0.v, // (which one: several can be here)
-      by: m0.foe,
-      w,
-      ms: F.ms,
-      who: [],
-      t: now,
-      x: m0.x,
-      y: m0.y,
-    });
-    if (Math.random() >= F.miss) {
-      const p4 = { ...(s.hang.l4p || {}) };
-      hurtDuck(s, p4, m0.foe, now, w, F.dmg * NPC_DMG); // (only the duck that angered him; every NPC's half damage)
-      s.hang.l4p = p4;
-    } else if (w === "handgun")
-      addFx(s, { kind: "l4miss", who: [], t: now, x: fx, y: fy }); // (missed: over the duck, as a miss on a zombie)
-  }
+  stepZombie(m, aim, WALK * walkOf(s) * MERCH.WALK * wetK(m.x, m.y) * dt, []);
+  if (mInside(m0.x, m0.y) && !mInside(m.x, m.y)) return; // (never out through a window or the door after him)
   s.hang.l4m = {
     ...merchantOf(s),
     x: Math.round(m.x),
@@ -2552,6 +2601,7 @@ function merchantTick1(s, now) {
     setMh(s, { near, tk: now });
     if (greet && now - ((m0.say && m0.say.t) || 0) > 2500)
       merchantSays(s, "greet", now);
+    if (merchantFire(s, m0, now)) return; // (a zombie in his building)
     if (!Object.keys(near).length) merchantWander(s, m0, now, h);
     return;
   }
@@ -2596,14 +2646,19 @@ function merchantTick1(s, now) {
         d < 160 && walkable(m.x, m.y, ...leg.to)
           ? leg.to
           : heading(flowFrom([openNear(...leg.to)]), m.x, m.y) || leg.to;
-      const brd = s.hang.brd || {},
-        bh = dp() && boardsAhead(m, aim, brd);
-      if (bh) breakBoards(s, bh.o.id, now); // (a boarded hole in his way: he breaks it)
-      stepZombie(m, aim, far, []);
+      const bh = dp() && boardsAhead(m, aim, s.hang.brd || {});
+      if (!bh) stepZombie(m, aim, far, []); // (a boarded window he can't pass: the owner's, Nov 28)
     }
   }
   if (done && leg.brk) breakBoards(s, leg.brk, now);
   const dx = m.x - m0.x;
+  if (m0.st === "out") {
+    merchantFire(s, m0, now); // (running, he fires back at once, or at a zombie in his building)
+    if (m0.foe && !done && Math.abs(dx) + Math.abs(m.y - m0.y) < 0.5) {
+      s.hang.l4m = { ...merchantOf(s), st: "fight" }; // (he can't run: he just fights)
+      return;
+    }
+  }
   s.hang.l4m = {
     ...m0,
     x: Math.round(m.x),
@@ -2629,7 +2684,10 @@ function merchantWander(s, m0, now, h) {
       qx = BUTLER.x + Math.cos(a) * r,
       qy = BUTLER.y + Math.sin(a) * r;
     if (
-      whereIn(qx, qy) !== whereIn(BUTLER.x, BUTLER.y) ||
+      !mInside(qx, qy) ||
+      [...OPENINGS, ...doorOf()].some(
+        (o) => Math.hypot(o.x - qx, o.y - qy) < W0.clear,
+      ) || // (away from the entrance and the windows: the owner's, Nov 28)
       !walkable(m0.x, m0.y, qx, qy) ||
       !standable(qx, qy, heightAt(qx, qy), 0) ||
       !walkable(qx, qy, m0.x, m0.y) // (both ways: walkable leaves out its last 30 px, a pew's end there)

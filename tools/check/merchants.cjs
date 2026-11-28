@@ -2,7 +2,8 @@
    1. one comes on round zero's rest (every roll held low), and he is the less likely one next time (MERCH.AGAIN);
    2. his stock is his own: the same again when he comes back, full, plus a bandage for each duck low on health;
    3. several can come at once (MERCH.CHAIN, every roll held low: all of them), each a different one;
-   4. killed, he drops a purse of MERCH.PURSE points (every roll held low), and the duck that takes it gets them.
+   4. he comes in by the chapel's entrance, never a window; shot at, he runs with that duck as his foe;
+   5. killed, he drops a purse of MERCH.PURSE points (every roll held low), and the duck that takes it gets them.
    Run: node tools/check/run.mjs merchants */
 const fs = require("fs"),
   path = require("path");
@@ -53,7 +54,11 @@ const { url, fail, noErrors } = require("./lib.cjs");
       out = {};
     Math.random = rnd;
     if (!m) return { err: "no merchant" };
-    const h = s.hidden.l4mh;
+    const h = s.hidden.l4mh,
+      GS = await import("./js/hangout/stationmap.js");
+    out.door = (h.route || []).some(
+      (l) => Math.abs(l.to[1] - GS.CHAPEL.y0) < 100,
+    );
     out.again = h.pw[m.id];
     const ids = R.merchantsOf(s).map((x) => x.id);
     out.many = ids.length;
@@ -69,6 +74,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
     };
     out.band =
       (R.favStock(s, m.id).find(([w]) => w === "bandage") || [])[2] || 0;
+    R.merchantHurt(s, me, 0.5, (now += 100));
+    out.ran = R.merchantOf(s).st === "out" && R.merchantOf(s).foe === me;
     Math.random = () => 0.01;
     R.merchantHurt(s, me, 99, (now += 100));
     Math.random = rnd;
@@ -84,6 +91,8 @@ const { url, fail, noErrors } = require("./lib.cjs");
   if (got.again !== 0.25) bad("the one who came weighs MERCH.AGAIN");
   if (!got.same || !got.back) bad("his own stock, the same when he comes back");
   if (got.many < 2 || !got.apart) bad("several at once, each a different one");
+  if (!got.door) bad("in by the entrance");
+  if (!got.ran) bad("shot at, he runs with his foe");
   if (got.band < 1) bad("a bandage while a duck is low");
   if (got.purse !== 1000) bad("killed, a purse of 1,000 points");
 })();
