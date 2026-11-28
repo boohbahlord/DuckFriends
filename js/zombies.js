@@ -519,11 +519,13 @@ function tossLand(z, c) {
    throw, GT.grab of the swings: farther and higher). True when the duck is down */
 function giantHit(q, z, c, zs) {
   const ux = q.xy[0] - z.x,
-    uy = q.xy[1] - z.y;
+    uy = q.xy[1] - z.y,
+    h = zOf(z, "zombie");
   for (const o of zs)
     if (
       o !== z &&
       o.st === 2 &&
+      Math.abs(zOf(o, "zombie") - h) < 50 && // (on its floor only)
       room(z.x, z.y, o.x, o.y) < c.reach &&
       (o.x - z.x) * ux + (o.y - z.y) * uy > 0
     )
@@ -562,6 +564,7 @@ function giantCar(z, c) {
       moved = Math.hypot(x0 - b[0], y0 - b[1]);
     for (const q of pls)
       if (
+        moved >= 1 && // (only a car that moved hits anyone)
         !noGo(c, q) &&
         !hit.includes(q.id) &&
         Math.abs(q.zz - h) < 30 &&
@@ -982,7 +985,10 @@ function walkAll(zs, c) {
     rush = T >= ZOMBIE_GRACE, // (off every duck's screen they come twice as fast, but not in a round's first ZOMBIE_GRACE ms)
     fly = c.latch && flyers(zs);
   for (const z of zs) {
-    if (z.st === 3) continue;
+    if (z.st === 3) {
+      if (z.gk && fly) giantCar(z, c); // (a car the Giant knocked slides on after it falls)
+      continue;
+    }
     const o = z.l[2] ? openingById(z.l[2]) : null,
       v =
         z.l[1] *
