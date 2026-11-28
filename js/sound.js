@@ -23,6 +23,7 @@
      loadSounds(group)      "game", "l4dd", "cabin": fetch and decode that group's files ahead of time */
 import { profile, SETTINGS_DEFAULT } from "./store.js";
 import { FILES } from "./sfxlist.js";
+import { MADE } from "./sfxmade.js";
 import { netLevel } from "./settings.js";
 
 /* how loud each sound is, in dB, the owner's to change: 0 plays the file as it is (each file peaks a little under full
@@ -34,6 +35,7 @@ export const VOL = {
   countGo: -15,
   voteTick: -25, // (the votes' seconds: very soft)
   l4round: -14,
+  heli: -12, // (the supply crate's helicopter, made in code: sfxmade.js)
   l4over: -12, // (everyone's down: the game's ending, soft, Nov 19)
   merchantIn: -18, // (the merchant at his spot; merchantOut: running off)
   merchantOut: -20,
@@ -354,6 +356,12 @@ function start() {
     out.gain.value = level();
     out.connect(ceiling(ac, ac.destination));
     for (const n of raw.keys()) decode(n);
+    for (const [n, make] of Object.entries(MADE)) {
+      const x = make(ac.sampleRate),
+        b = ac.createBuffer(1, x.length, ac.sampleRate);
+      b.copyToChannel(x, 0);
+      bufs.set(n, [b]);
+    } // (the sounds made in code, not recorded: made once, here, at the clock's rate, sfxmade.js)
     loadSounds("first");
   }
   if (ac.state === "suspended" && !document.hidden) ac.resume().catch(() => {});
@@ -476,7 +484,7 @@ function drop(v) {
    sound not loaded yet starts loading, and the next one plays) */
 function voice(name, o = {}, loops = false) {
   name = ALIAS[name] || name;
-  if (!FILES[name] || !start() || document.hidden) return null;
+  if ((!FILES[name] && !MADE[name]) || !start() || document.hidden) return null;
   const list = bufs.get(name);
   if (!list) {
     fetchOf(name);
