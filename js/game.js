@@ -217,7 +217,7 @@ import { mountWorld } from "./hangout/world.js";
 
 import { W as HW, H as HH } from "./hangout/layout.js";
 
-import { zOf } from "./heights.js";
+import { zOf, fallHurt } from "./heights.js";
 
 import { hangStill } from "./hangout/rules.js";
 
@@ -2660,10 +2660,11 @@ function hangStep(dt, now) {
   if (isL4dd(R.state)) me.aim = myAim(); // (Quacky Zombies: my flashlight shines where I aim)
   if (ev.whee) sfx.fall(); // off the deck: a slide whistle
   if (ev.thud > 90) sfx.bonk(); // and the landing
-  if (ev.thud >= SB_LAND_MIN)
+  if (ev.thud >= SB_LAND_MIN || (ev.thud > 0 && fallHurt(ev.thud, ev.side) > 0))
     R.send({
       t: "land",
       h: Math.round(ev.thud),
+      s: Math.round(ev.side || 0),
       x: +me.x.toFixed(4),
       y: +me.y.toFixed(4),
       z: Math.round(me.z || 0),

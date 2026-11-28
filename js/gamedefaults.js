@@ -12,6 +12,11 @@ export const SPRINT = {
   refill: 1.5, // the bar fills this many times as slowly as it drains (2.5 s of sprint: 3.75 s to fill)
 };
 
+/* fall damage, ducks only (heights.js fallHurt; the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
+   measured along the fall's path, in elevations. None under `from`; hp at `mid`, then times `up` for each elevation
+   more, with no cap; under `mid` it drops off fast, `down` times less for each elevation less (0.25 HP at 1) */
+export const FALL = { from: 1, mid: 1.5, hp: 2, up: 2, down: 64 };
+
 /* a blast's rings (blast.js; the owner's, Nov 21 19:07Z: "the center of a grenade's explosion is at ... the
    intersection of the plus of 4 squares of the pixel hitbox ... it's 4 boxes in the center of the hitbox, those have crit
    automatically. The outside boxes ... 25% chance of crit ... We can cut off the corners though, to make it more
