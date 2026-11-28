@@ -91,3 +91,18 @@ export const DIRECTOR = {
   HP_LOW: 0.4,
   WELL: { hp: 0.7, ammo: 0.5 },
 };
+
+/* armor (the owner's, Nov 28: cmsg_01LTpp6fzv8sfYUR5KoHADKtLgUjArf16XwsJeAqka2pZ7 and
+   cmsg_01LTpp6fzv8sfYUR5KoHADKtCoUNw94KGwZjNsEiuJRsw8; wounds.js armorHit). A helmet (HATS, FACES) turns every crit into
+   "Deflected"; SWAT gear also turns away SWAT of every hit's damage, and takes BOOM of a blast's. Neither stops a
+   PIERCE caliber (".50 caliber and desert eagle caliber") or a PIERCE melee ("a heavier melee"). SPAWN: the share of
+   zombies in a helmet and in SWAT gear, from round 1, flat ("there's no increase of chance"), fewer only while ducks do
+   badly: times 1 - 2 x (ducks doing badly / ducks), director.js */
+export const ARMOR = {
+  HATS: ["helmet", "fire"],
+  FACES: ["moto", "scifi"],
+  SWAT: 0.5,
+  BOOM: 0.5,
+  PIERCE: [".50 BMG", ".50 AE", "hammer", "axe"],
+  SPAWN: { helmet: 0.005, swat: 0.005 },
+};

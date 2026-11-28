@@ -135,6 +135,8 @@ import {
   pwAdd,
   explodedLook,
   DEATH,
+  armorHit,
+  helmeted,
 } from "./wounds.js";
 /* a line in the chat (as rules.js' logLine) */
 function logIn(s, line) {
@@ -520,7 +522,14 @@ export const zombieLook = (l) => ({
   ...(l[5] >= 0 ? { hat: { id: ZHATS[l[5]] } } : {}),
   ...(l[6] >= 0 ? { outfit: { id: ZOUTFITS[l[6]] } } : {}),
   ...(l[7] ? { face: { id: "glasses" }, outfit: { id: "jeans" } } : {}),
+  ...(l[8] === Z_ARMOR.moto ? { face: { id: "moto" } } : {}),
 });
+/* a zombie's armor (l[8], zombies.js armorRoll): an army helmet, a motorcycle helmet, or SWAT gear (until its own look
+   is drawn, an army helmet and a police uniform) */
+export const Z_ARMOR = { helmet: 1, moto: 2, swat: 3 };
+/* what a zombie of look l wears that stops hits: "", "helmet" or "swat" (wounds.js armorHit) */
+export const zArmor = (l) =>
+  l[8] === Z_ARMOR.swat ? "swat" : helmeted(zombieLook(l)) ? "helmet" : "";
 
 /* ---------- the map: only inside and the deck ----------
    The deck's stairs are boarded at the top (their landing is part of the deck). The openings: where zombies come in,
@@ -2341,8 +2350,15 @@ function merchantShot(s, by, x, y, now, w, rx, ry, from, dr) {
   if (!m || m.st === "dead" || m.st === "jump" || !s.players[by]) return false;
   if (Math.hypot((m.x - x) / rx, (m.y - y) / ry) >= 1) return false;
   if (from && slabBetween(...from, m.x, m.y, heightAt(m.x, m.y))) return false;
-  const n = Math.random() < critOf(w, dr) ? 2 : 1, // (a crit doubles it; dr: a drawn arrow's draw)
-    head = n > 1 && m.hp <= n; // (a crit that kills him: his head bursts as a zombie's does, game.js draws it)
+  const ar = armorHit(
+      helmeted(merchantLook(merchantById(m.id), m.roll)) ? "helmet" : "",
+      w,
+      1,
+      Math.random() < critOf(w, dr),
+    ), // (Brah's motorcycle helmet turns a crit away)
+    n = ar.crit ? 2 : 1, // (a crit doubles it; dr: a drawn arrow's draw)
+    head = n > 1 && m.hp <= n;
+  if (ar.defl) deflected(s, by, m, now); // (a crit that kills him: his head bursts as a zombie's does, game.js draws it)
   if (n > 1)
     addFx(s, {
       kind: "l4crit",
@@ -2859,10 +2875,16 @@ export function zombieTakes(s, by, w, dr = 0) {
 /* a zombie takes damage from a duck, and the duck gets its points: 5 for each HP it took, or 25 for a headshot. A crit
    doubles the damage; one that kills blows the head off with a CRIT over it (the owner's, Nov 21 17:25Z: "a critical hit
    on any duck will give a headshot effect only if it is the killing blow"); true when it died */
-function strike(s, z, dmg, crit, by, w = "", now = 0) {
+function strike(s, z, dmg, crit, by, w = "", now = 0, boom = false) {
   if (z.st === 3) return false;
   dmg = lootDmg(s, by, w, dmg);
   if (w && w !== "laser" && angelOf(s, by, w)) dmg += angelDmg(w); // (Angelic: by its fire rate, l4ddangel.js; the Laser Rifle has its own, laser)
+  if (w || boom) {
+    const ar = armorHit(zArmor(z.l), w, dmg, crit, boom); // (a hit or a blast on a helmet or SWAT gear; burning isn't a hit)
+    dmg = ar.dmg;
+    crit = ar.crit;
+    if (ar.defl) deflected(s, by, z, now);
+  }
   if (crit) dmg *= 2;
   const on = s.hang.l4on || {},
     all = !!on.kill, // (Instant Kill: every hit takes all its HP, 5 points for each)
@@ -2914,6 +2936,19 @@ function mark(s, z, code) {
     had = zw[z.i] || "";
   if (!had.includes(code)) s.hang.zw = { ...zw, [z.i]: had + code };
 }
+/* a crit a helmet turned away: every screen shows "Deflected" over the one wearing it (a zombie, or the merchant), as a
+   miss's "missed" */
+const deflected = (s, by, z, now) =>
+  addFx(s, {
+    kind: "l4miss",
+    d: 1,
+    by,
+    z: z.i,
+    who: [],
+    t: now,
+    x: Math.round(z.x),
+    y: Math.round(z.y),
+  });
 /* a crit, now and then (the weapon's chance, a drawn arrow's its draw's, and the duck's Accuracy): strike doubles it */
 const critRoll = (s, by, w, sh) =>
   Math.random() < headOf(s, by, w, sh && sh.dr);
@@ -3787,8 +3822,7 @@ export function l4Shots(s, now) {
           /* the Angelic pistol: every bullet kills at once, and a crit sets off a grenade's blast there (its shooter
              isn't hurt by it: no sh.k) */
           const crit = critRoll(s, sh.by, w);
-          strike(s, z, z.hp, crit, sh.by, w, now);
-          die(z, T);
+          if (strike(s, z, z.hp, crit, sh.by, w, now)) die(z, T); // (SWAT gear takes only half of it)
           if (crit)
             boom(
               s,
@@ -3903,7 +3937,7 @@ function boom(s, sh, bx, by, zs, T, now, wide = 1, bz = null) {
       (z) => [z.x, z.y, zOf(z, "zombie")],
       (z, n) => {
         const alive = z.st !== 3;
-        if (alive && strike(s, z, n.dmg, n.crit, sh.by, "", now)) {
+        if (alive && strike(s, z, n.dmg, n.crit, sh.by, "", now, true)) {
           die(z, T);
           mark(s, z, "g0"); // (every chunk, cuts and big holes: l4ddart.js)
           gore.push([Math.round(z.x), Math.round(z.y)]);
