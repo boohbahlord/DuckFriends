@@ -498,7 +498,7 @@ function lits() {
 /* a zombie coming into any duck's sight fades in (the owner's, Nov 28 01:57Z) */
 const FADE_IN = [{ opacity: 0 }, { opacity: 1 }];
 const EYES = []; // (the ducks whose sight counts, this frame: draw)
-/* a zombie's outline in a Sandbox zone's color (outlines.js), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
+/* a zombie's outline (outlines.js): red, or a Sandbox zone's color (kind), f: where it stands on the screen, dip: how far it's sunk in the flood, hidden: true
    when a wall hides it, or null to ask whether a wall, a roof or a crown drawn over it covers it (zi: the z-index it's
    drawn at, so only what is really drawn over it counts: the owner's, Nov 17 19:11Z). Returns whether something hides
    it: then it shows only as its line, never its picture (the owner's, Nov 17 17:41Z) */
@@ -509,6 +509,7 @@ function zOutline(Wd, o, f, dip, sc, hidden, z, myFloor, zi, kind) {
     hid =
       hidden ??
       Wd.coverAt(f.left - w * 0.4, f.left + w * 0.4, y + h * 0.1, f.top, zi);
+  if (kind === "zombie" && !hid) return false; // (red: only while something drawn over it hides it)
   olAdd({
     id: "z" + o.i,
     img: o.img,
@@ -3048,20 +3049,23 @@ activity({
               ? WADE_SINK * o.feet
               : 0;
       const olOnly =
-        !!zc &&
         o.st !== 3 &&
-        zOutline(
-          Wd,
-          o,
-          f,
-          dip,
-          sc,
-          (!door && olRoofed(o.x, o.y, z, meAt)) || null, // (under a roof I'm not under: always its line, outlines.js)
-          z,
-          myFloor,
-          zi,
-          zc,
-        ); // (Sandbox: a zone's Outlines, in its own color; really behind a wall, under a roof: its line only)
+        (zc
+          ? zOutline(
+              Wd,
+              o,
+              f,
+              dip,
+              sc,
+              (!door && olRoofed(o.x, o.y, z, meAt)) || null, // (under a roof I'm not under: always its line, outlines.js)
+              z,
+              myFloor,
+              zi,
+              zc,
+            ) // (Sandbox: a zone's Outlines, in its own color; really behind a wall, under a roof: its line only)
+          : !!meAt &&
+            duckSees(meAt, o.x, o.y, z) &&
+            zOutline(Wd, o, f, dip, sc, null, z, myFloor, zi, "zombie")); // (my duck sees it, but a wall's drawing or a crown is over it: its red line only, the owner's, Nov 28)
       if (o.olOnly !== olOnly) {
         o.olOnly = olOnly;
         o.el.classList.toggle("ol-only", olOnly);
