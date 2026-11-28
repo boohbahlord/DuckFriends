@@ -1405,7 +1405,7 @@ function riderBack(o, Wd) {
 }
 /* a Flyer holding my duck: a light under its meter (flymeter.js), so its lines are as bright in the dark as anywhere,
    and the meter kept whole on the board when my duck is near its edge (--fx). Where it sits from my glow (board px)
-   is measured every FLY_LOOK ms, not every frame, as its tugs move me and the screen may change size */
+   is measured every FLY_LOOK ms, not every frame, in case the screen changes size */
 const FLY_LOOK = 400,
   FLY_HOLE = [0, 0, 0, 1];
 let flyAt = null;
@@ -1414,26 +1414,27 @@ function flyLight(Wd, c, holes, q, now) {
     const m = Wd.board.querySelector(".gduck.mine .l4-fly:not(.off)");
     if (!m) return;
     const b = Wd.board.getBoundingClientRect(),
-      r = m.getBoundingClientRect(),
-      was = m._fx || 0,
-      fx = Math.round(
-        Math.max(
-          b.left + 6 - (r.left - was),
-          Math.min(0, b.right - 6 - (r.right - was)),
-        ),
-      );
-    if (fx !== was) m.style.setProperty("--fx", `${(m._fx = fx)}px`);
+      r = m.getBoundingClientRect();
     flyAt = {
       i: myFly.i,
       t: now,
-      dx: r.left - was + fx + r.width / 2 - b.left - c.left,
+      m,
+      cx: r.left - (m._fx || 0) + r.width / 2 - b.left - c.left, // (its middle unshifted, from my glow)
       dy: r.top + r.height / 2 - b.top - c.top,
-      r: r.width * 0.75,
+      w: r.width,
+      bw: b.width,
     };
   }
-  FLY_HOLE[0] = (c.left + flyAt.dx) * q;
-  FLY_HOLE[1] = (c.top + flyAt.dy) * q;
-  FLY_HOLE[2] = flyAt.r * q;
+  /* kept on the board every frame (no measuring: my glow moves with my duck), as I'm tugged or walk to an edge */
+  const A = flyAt,
+    mid = c.left + A.cx,
+    fx = Math.round(
+      Math.max(6 + A.w / 2 - mid, Math.min(0, A.bw - 6 - A.w / 2 - mid)),
+    );
+  if (A.m._fx !== fx) A.m.style.setProperty("--fx", `${(A.m._fx = fx)}px`);
+  FLY_HOLE[0] = (mid + fx) * q;
+  FLY_HOLE[1] = (c.top + A.dy) * q;
+  FLY_HOLE[2] = A.w * 0.75 * q;
   holes.push(FLY_HOLE);
 }
 function paint(now, ctx) {
