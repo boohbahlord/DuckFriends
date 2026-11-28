@@ -23,7 +23,7 @@ boardjustin.js 499 Justin on the boards
 boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
-bots.js 1351 computers
+bots.js 1325 computers
 bowdraw.js 46 the bow, drawn to shoot
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 330 Sandbox: M's Brain builder
@@ -80,15 +80,15 @@ gameshots.js 135 The bullets in the air,
 gfx.js 8 Low graphics
 gmodes.js 272 Sandbox Phase 6: made game
 grenade.js 33 a grenade going off
-ground.js 53 what a duck walks on,
+ground.js 55 what a duck walks on,
 gspreview.js 88 Game Settings: the pictures in
 gssettings.js 747 Game Settings: every setting, its
 gstext.js 200 Game Settings: what a setting
 gunart.js 467 every weapon, drawn: one drawing
 gunparts.js 15 the pieces every weapon's drawing
-guns.js 654 every weapon's numbers: one sheet
+guns.js 656 every weapon's numbers: one sheet
 hats.js 1003 hats
-heat.js 83 a gun's heat: the spread
+heat.js 93 a gun's heat: the spread
 heights.js 95 a shot's height, Doom's way
 hideui.js 30 hide ui
 homeapp.js 44 Download Duck Friends
@@ -105,27 +105,28 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3368 Quacky Zombies on every screen
+l4dd.js 3255 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures
 l4ddbar.js 334 Quacky Zombies' weapons bar
 l4ddbell.js 136 Downpour: the church bell and
-l4ddcatalog.js 231 Quacky Zombies: the Butler's Items
+l4ddcatalog.js 215 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
-l4ddloot.js 42 Dead Ducks Arcade: what lies
-l4ddmap.js 253 Quacky Zombies' minimap
-l4ddpower.js 323 Dead Ducks Arcade's power box
-l4ddpowerui.js 278 Dead Ducks Arcade's power box
+l4ddloot.js 39 Dead Ducks Arcade: what lies
+l4ddmap.js 252 Quacky Zombies' minimap
+l4ddpower.js 312 Dead Ducks Arcade's power box
+l4ddpowerui.js 270 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
-l4ddrules.js 4530 the rules of Quacky Zombies
-l4ddsfx.js 509 Dead Ducks Arcade's sounds
+l4ddrules.js 4395 the rules of Quacky Zombies
+l4ddsfx.js 499 Dead Ducks Arcade's sounds
 l4ddwire.js 74 Dead Ducks Arcade online: the
 langname.js 5 the name of Sandbox's number
 laserart.js 95 the laser gun, drawn
 laserfx.js 135 the Laser Rifle on the
 later.js 66 the rest of the game,
 lawrules.js 360 the rules of Lawyering
+lightlevel.js 32 one rule by level for
 loading.js 404 the start: a slow fade
 loadlines.js 590 the lines under the loading
 lobby.js 614 the lobby, laid out like
@@ -228,10 +229,10 @@ seriatrun.js 1671 Seriat: files that do things
 seriattheme.js 63 Seriat's and the command line's
 seriatwin.js 556 Sandbox: the Seriat window
 settings.js 298 Settings
-sfxlist.js 157 the sound files
+sfxlist.js 156 the sound files
 shared.js 497 Sandbox Phase 7: Shared, the
 slices.js 31 long work cut into slices
-sound.js 891 the game's sounds: real recordings,
+sound.js 889 the game's sounds: real recordings,
 specials.js 851 Specials
 spectate.js 98 Sandbox: watching the others once
 splash.js 71 the start screen: your duck
@@ -265,7 +266,7 @@ who.js 3 who this player is beyond
 wounds.js 483 the wounds a hit leaves
 zombiepath.js 187 the zombies' way to the
 zombieroofs.js 314 the zombies' walk over Downpour's
-zombies.js 1291 the zombies: one module for
+zombies.js 1293 the zombies: one module for
 
 ## js/hangout/
 activities.js 25 every Hangout activity, so the
@@ -287,14 +288,14 @@ characters.js 592 Duck Cabin's characters on the
 death.js 99 how long a knocked-down duck
 doors.js 32 the doors: they swing open
 dpflood.js 89 Downpour's flood over its bed
-dpground.js 323 Downpour's ground
+dpground.js 324 Downpour's ground
 falls.js 118 falling a long way
 fireflies.js 174 fireflies
 flicker.js 83 now and then a light
 ghosts.js 111 Duck Cabin's ghosts
 justin.js 925 Justin: a yellow duck in
 lamp.js 71 the lamps: the example activity
-layout.js 1082 Duck Cabin: the world of
+layout.js 1081 Duck Cabin: the world of
 layoutbase.js 78 Duck Cabin: the world's numbers
 layoutheights.js 396 Duck Cabin: the heights :
 npc.js 495 Duck Cabin's characters: how they
@@ -314,7 +315,7 @@ rubberducks.js 183 the little rubber ducks in
 rules.js 88 Hangout's rules: s.hang and the
 seats.js 440 the couches, the campfire's logs,
 shadowduck.js 254 the shadow duck
-shapes.js 954 Duck Cabin's props, drawn: art.js's
+shapes.js 955 Duck Cabin's props, drawn: art.js's
 shapesbase.js 54 Duck Cabin's props, drawn: the
 shapesground.js 423 Duck Cabin's props, drawn: the
 shapeswalls.js 317 Duck Cabin's props, drawn: walls,
@@ -323,16 +324,16 @@ sounds.js 17 Duck Cabin's sounds
 stage.js 134 the stage: half an oval
 stationart.js 51 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
-stationcars.js 513 Downpour's drawings: the cars, the
-stationmap.js 1271 Dead Ducks Arcade's second map:
+stationcars.js 523 Downpour's drawings: the cars, the
+stationmap.js 1308 Dead Ducks Arcade's second map:
 stationparts.js 477 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
-stationtrees.js 599 Downpour's drawings: the swamp's trees
+stationtrees.js 592 Downpour's drawings: the swamp's trees
 trampoline.js 142 the trampoline
 tv.js 117 the TV: seven channels, the
 vehicles.js 116 what a duck stands on
 water.js 442 the pool: ducks in the
-world.js 1752 Hangout on the screen: the
+world.js 1779 Hangout on the screen: the
 
 ## js/pxm/
 board-light.js 7 the menus' background in the
