@@ -80,7 +80,7 @@ gameshots.js 135 The bullets in the air,
 gfx.js 8 Low graphics
 gmodes.js 272 Sandbox Phase 6: made game
 grenade.js 33 a grenade going off
-ground.js 53 what a duck walks on,
+ground.js 55 what a duck walks on,
 gspreview.js 88 Game Settings: the pictures in
 gssettings.js 747 Game Settings: every setting, its
 gstext.js 200 Game Settings: what a setting
@@ -324,7 +324,7 @@ stage.js 134 the stage: half an oval
 stationart.js 50 Downpour's things: the drawings
 stationbase.js 67 Downpour's drawings: the shared pieces
 stationcars.js 513 Downpour's drawings: the cars, the
-stationmap.js 1312 Dead Ducks Arcade's second map:
+stationmap.js 1350 Dead Ducks Arcade's second map:
 stationparts.js 455 Downpour's drawings: the gas station's
 stationroof.js 340 Downpour's drawings: the roofs, their
 stationtrees.js 592 Downpour's drawings: the swamp's trees
