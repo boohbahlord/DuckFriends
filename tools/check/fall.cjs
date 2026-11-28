@@ -75,9 +75,10 @@ const { chromium } = require("playwright");
   for (const [k, v] of Object.entries(edges))
     if (v !== 0)
       fail(`fall: off the pumps' roof ${k} took ${v} ` + JSON.stringify(edges));
-  /* knocked off the pumps' roof northward (boardfire.js shovePx), steering along, against, or not at all */
+  /* knocked off the pumps' roof southward, away from the station (boardfire.js shovePx; northward the station's wall
+     stops the duck, and steering along it can't move it), steering along, against, or not at all */
   const throws = [];
-  for (const key of ["", "KeyW", "KeyS"]) {
+  for (const key of ["", "KeyS", "KeyW"]) {
     await p.evaluate(async () => {
       const r = window._r,
         L = await import("./js/hangout/layout.js"),
@@ -93,7 +94,7 @@ const { chromium } = require("playwright");
         do: "goto",
         id: r.me,
         x: (d.x0 + d.x1) / 2,
-        y: d.y0 + 40,
+        y: d.y1 - 40,
         z: d.h,
       });
     });
@@ -101,7 +102,7 @@ const { chromium } = require("playwright");
     await p.evaluate(async () => {
       const r = window._r,
         { shovePx } = await import("./js/boardfire.js");
-      shovePx(r.state, r.me, 0, -1, 160, Date.now(), 0);
+      shovePx(r.state, r.me, 0, 1, 160, Date.now(), 0);
       r.send({ t: "tick", id: r.me });
     });
     if (key) await p.keyboard.down(key); // (steered once it's thrown, from the same spot every time)
@@ -114,7 +115,7 @@ const { chromium } = require("playwright");
   const [[none, y0], [along, y1], [against, y2]] = throws.map(
     (t) => t[0] || [],
   );
-  if (y1 === y0 && y2 === y0)
+  if (y1 === y0 || y2 === y0)
     fail("fall: steering in the air moves the duck " + JSON.stringify(throws)); // (the keys walk it: W and S, never the arrows a held weapon aims with)
   if (!(none > 0) || along !== none || against !== none)
     fail(
