@@ -19,6 +19,9 @@ export const cooks = (w) => w === "grenade";
 export const draws = (w) => w === "bow" || cooks(w);
 /* how long a press of w can count, ms: the bow's full draw, a grenade's fuse */
 export const drawMost = (w) => (cooks(w) ? NADE.FUSE : DRAW.FULL);
+/* a grenade cooked dr ms, to its fuse's end: it goes off whatever its wait (it can't be put back; a slow Sandbox
+   cooldown or the board's long one would lose it) */
+export const cookedOut = (w, dr) => cooks(w) && (dr || 0) >= NADE.FUSE;
 /* the host: duck id starts drawing (action { t: "draw", w }) */
 export function act_draw({ state, s, a, now }) {
   if (!draws(a.w) || !s.pos || !s.pos[a.id]) return state;
@@ -35,11 +38,11 @@ export const drawOf = (s, id, w) => {
    maps a grenade in hand isn't kept in s.pos, so the move's own w says what it holds) */
 export function drawSwitched(s, id, w) {
   const d = s.draw && s.draw[id];
-  if (d && cooks(d.w) && w !== d.w) {
-    const o = { ...s.draw };
-    delete o[id];
-    s.draw = o;
-  }
+  if (!d || !cooks(d.w) || w === d.w) return false;
+  const o = { ...s.draw };
+  delete o[id];
+  s.draw = o;
+  return true;
 }
 /* the host, at the release (the use) of w: how long duck id drew it, 0 … most ms (0 with no draw of it begun), and the
    draw ends */
@@ -52,12 +55,22 @@ export function drawTaken(s, id, now, most = DRAW.FULL, w) {
   return w && d0.w !== w ? 0 : Math.max(0, Math.min(most, now - d0.t));
 }
 /* the host's beat, every mode alike: a grenade held to its fuse's end goes off in the hand. use(a) is the mode's own
-   use of it ({ id, what, face }), which takes the draw, all of its fuse cooked (actplay.js act_use) */
+   use of it ({ id, what, face }), which takes the draw, all of its fuse cooked (actplay.js act_use). One that can't go
+   off (its duck down, the round over) ends too, never kept for later. True when one ended */
 export function cookedOff(s, now, use) {
+  let any = false;
   for (const id in s.draw || {}) {
     const d = s.draw[id];
-    if (cooks(d.w) && now - d.t >= NADE.FUSE) use({ id, what: d.w, face: 1 });
+    if (!cooks(d.w) || now - d.t < NADE.FUSE) continue;
+    use({ id, what: d.w, face: 1 });
+    if (s.draw && s.draw[id] === d) {
+      const o = { ...s.draw };
+      delete o[id];
+      s.draw = o;
+    }
+    any = true;
   }
+  return any;
 }
 /* what a draw of dr ms adds: damage (+0.2 each whole step, up to +5), its crit chance (sure at full) and the arrow's
    speed (up to 40% faster): DRAW */

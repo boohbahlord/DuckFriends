@@ -2665,7 +2665,8 @@ function shopEl(ctx) {
   const holdGo = (e) => {
     const b = e.target.closest && e.target.closest("[data-buy]");
     if (!b || b.disabled || buyHold) return;
-    const w = b.dataset.buy;
+    const w = b.dataset.buy,
+      mk = shop.mk; // (the merchant the hold began at: a nearer one coming on the page mid-hold doesn't take the buy)
     buyHold = {
       w,
       at: performance.now(),
@@ -2682,7 +2683,7 @@ function shopEl(ctx) {
           do: shop.crate ? "crate" : "buy",
           what: w,
           hand: heldFn(),
-          ...(shop.crate ? {} : { mk: shop.mk }), // (the merchant whose page it is, l4ddrules.js buy)
+          ...(shop.crate ? {} : { mk }), // (the merchant whose page it is, l4ddrules.js buy)
         }); // (a gun takes the place of the ranged one in hand, as the fireplace's)
       }, BUY_HOLD),
     };

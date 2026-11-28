@@ -3,7 +3,7 @@ file lines job
 
 ## js/
 account.js 397 the Google account: the profile
-actplay.js 867 a game's actions
+actplay.js 871 a game's actions
 actroom.js 754 the room's actions
 actsb.js 157 Sandbox's windows, saves and maps
 ammo.js 98 THE ONE AMMO RULE, every
@@ -24,7 +24,7 @@ boardzombies.js 122 the zombies on a board
 botduck.js 90 a computer's duck: a random
 botlines.js 188 What the computers write and
 bots.js 1337 computers
-bowdraw.js 78 the bow, drawn to shoot
+bowdraw.js 91 the bow, drawn to shoot
 brackets.js 459 Bicker Brackets: what the screen
 brainbuild.js 330 Sandbox: M's Brain builder
 card.js 424 the player card
@@ -106,7 +106,7 @@ jumps.js 48 the jump counter
 justinmoves.js 43 Justin's moves on the board
 keynav.js 204 menus by keyboard
 kitslots.js 56 the walk-around hotbar: which key
-l4dd.js 3421 Quacky Zombies on every screen
+l4dd.js 3422 Quacky Zombies on every screen
 l4ddangel.js 147 Dead Ducks Arcade's Angel machine
 l4ddangelui.js 204 Dead Ducks Arcade's Angel machine
 l4ddart.js 608 Quacky Zombies' pictures

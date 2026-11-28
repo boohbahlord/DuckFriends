@@ -2,7 +2,7 @@
    NADE): held 2 s, one thrown goes off 3 s later; held to its fuse's end, it goes off in the hand; thrown on open
    ground it rises and lands about its range away, and lies there; thrown under the pump roof, it comes back down off it till its fuse ends; thrown at the church's wall,
    taller than its arc, it comes back off it; the launcher's flies over a zombie in its way, lands, and goes off 3 s
-   after the shot. The board's is the same: cooked, an arc, off at its fuse's end.
+   after the shot. The board's is the same: cooked, an arc, off at its fuse's end, even cooked inside its long wait.
    Run: node tools/check/run.mjs grenades */
 const { fail, noErrors, fakedPage } = require("./lib.cjs");
 const NADE_FUSE = 5000; // (gamedefaults.js NADE.FUSE)
@@ -215,6 +215,14 @@ const NADE_FUSE = 5000; // (gamedefaults.js NADE.FUSE)
             (f) => f.kind === "boom" && f.t >= at + 4900,
           ),
       };
+      /* cooked again inside the board's long wait (12 s): held to its fuse's end, it still goes off, and the draw ends */
+      const at2 = window.__now;
+      bd.send({ t: "draw", w: "grenade" });
+      step(NADE.FUSE + 300);
+      out.board.again = (bd.state.fx || []).some(
+        (f) => f.kind === "boom" && f.t >= at2 + NADE.FUSE - 100,
+      );
+      out.board.kept = !!(bd.state.draw || {})[me2];
     }
     window.__fake = false;
     return out;
@@ -243,6 +251,8 @@ const NADE_FUSE = 5000; // (gamedefaults.js NADE.FUSE)
   if (!got.over) bad("the launcher's flies over a zombie in its way");
   if (got.board.fuse !== NADE_FUSE || !(got.board.top > 0) || !got.board.gone)
     bad("the board's: cooked, an arc, off at its fuse's end");
+  if (!got.board.again || got.board.kept)
+    bad("the board's, cooked inside its wait: off in the hand all the same");
   if (!(got.lfar > got.lrange * 0.5) || !got.lgone)
     bad("the launcher's lands far, then goes off");
 })();
