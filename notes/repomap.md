@@ -279,7 +279,7 @@ vdd.js 191 Valentine's Duck Date: what
 vddrules.js 513 the rules of Valentine's
 vellum.js 28 The King's Festival
 vote.js 265 Vote Mode & Map:
-voterules.js 325 the lobby's vote for
+voterules.js 328 the lobby's vote for
 walkgrid.js 83 the walking grid: which
 weaponuse.js 104 using a weapon: one
 who.js 3 who this player is
