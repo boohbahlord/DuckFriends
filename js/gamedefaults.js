@@ -12,6 +12,11 @@ export const SPRINT = {
   refill: 1.5, // the bar fills this many times as slowly as it drains (2.5 s of sprint: 3.75 s to fill)
 };
 
+/* fall damage, ducks only (heights.js fallHurt; the owner's, Nov 28 04:05Z, cmsg_01LTpp6fzv8sfYUR5KoHADKtBFSt5xGqKea6TT5ehvSw7H):
+   measured along the fall's path, in elevations. None under `from`; hp at `mid`, then times `up` for each elevation
+   more, with no cap; under `mid` it drops off fast, `down` times less for each elevation less (0.25 HP at 1) */
+export const FALL = { from: 1, mid: 1.5, hp: 2, up: 2, down: 64 };
+
 /* a blast's rings (blast.js; the owner's, Nov 21 19:07Z: "the center of a grenade's explosion is at ... the
    intersection of the plus of 4 squares of the pixel hitbox ... it's 4 boxes in the center of the hitbox, those have crit
    automatically. The outside boxes ... 25% chance of crit ... We can cut off the corners though, to make it more
@@ -26,6 +31,13 @@ export const WEIGHT = {
   DEAD_FROM: "held", // whose dead weight a duck carries (guns.js DEAD_WEIGHT): "held", what it holds out; "all", its whole kit (B6b: the owner hasn't picked)
   CAR: 15, // a car, in duck weights (carpush.js; a small 80s or 90s car, about 1,000 kg: Adam's OK, Nov 22 03:08Z)
 };
+
+/* the one push (push.js): melee, how many times its weapon's knock (guns.js ARMS, world px) a melee hit pushes; blast,
+   how far a blast pushes at its edge (world px, half that at its middle); lift, how high it throws at its middle (duck
+   sizes). The board's and Hangout's (in duck lengths of 64): the hammer's 40 shoves a duck 3.6 duck lengths (2.4, then
+   50% farther: the owner's, Nov 4); a grenade 4.8 at its edge (twice the old 2.4: Nov 3 17:15Z), 0.9 high; Dead Ducks
+   Arcade's grenade the same (modes.js push) */
+export const KNOCK = { melee: 5.76, blast: 307, lift: 0.9 };
 
 /* water (hangout/layout.js wetK): how fast every walker goes in it, of its walk, by how deep it is there (the owner's, Nov
    22 16:06Z: "if it's really, really shallow, then it doesn't slow down your walking. But it still has all the effects

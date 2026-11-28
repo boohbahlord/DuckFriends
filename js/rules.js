@@ -794,7 +794,7 @@ export const coolEnds = (s, id, sp) =>
         grCool(s, id), // (Sandbox: a loot orb's own wait, sbhot.js; a group's Cooldown speed, sbgroups.js)
     ((s.mag || {})[magKey(id, sp)] || {}).r || 0, // (a reload: ammo.js)
   ); // (a time on the room's clock)
-/* the hammer's knock-back: a duck it hits is shoved (push.js KB_FAR) away from the swing in KB_MS, with a little hop
+/* a melee hit's knock-back: a duck it hits is shoved (push.js meleePush) away from the swing in KB_MS, with a little hop
    (KB_HOP duck sizes high), and lands playing dead; pos.kb = { t, x, y: where it was } lets every screen draw the shove */
 export const KB_MS = 380,
   KB_HOP = 0.3,

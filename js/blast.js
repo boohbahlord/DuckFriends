@@ -20,7 +20,8 @@ export const hitOf = (n) => ({ dmg: n.dmg * (n.crit ? 2 : 1), crit: n.crit });
 
 /* the measure of a blast at (x, y): rx, ry, how far a duck length is each way; wide, its rings that much wider (the
    Angelic pistol's and launcher's smaller ones); ok(x, y, z, side), whether it gets there at all. near(x, y, z, side,
-   big) gives { d (duck lengths, from the corner it snapped to), dx, dy, ring, dmg, crit } for one in it, else null. A
+   big) gives { d (duck lengths, from the corner it snapped to), dx, dy, o (how far out: d over its reach, 0 to 1), ring,
+   dmg, crit } for one in it, else null. A
    body's ring is its nearest tile's, of its body only (the owner's: "hats and outfits do not count as hitbox, only the
    duck does"): a duck's footprint, a duck length across and half a duck deep, times big (a duck over 100%, a Seriat NPC's
    hitbox) */
@@ -42,7 +43,8 @@ export function reach(B) {
       ring = Math.max(1, Math.ceil(Math.hypot(tx - cx / T, ty - cy / T) / w));
     if (ring > RINGS || (B.ok && !B.ok(px, py, pz, side))) return null; // (the ring first: ok can cost)
     const crit = ring === 1 || Math.random() < BLAST.CRIT;
-    return { d, dx, dy, ring, dmg: ringDmg(ring), crit };
+    const o = Math.min(1, d / (RINGS * w * T));
+    return { d, dx, dy, o, ring, dmg: ringDmg(ring), crit };
   };
 }
 

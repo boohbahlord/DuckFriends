@@ -20,14 +20,7 @@ import {
 } from "./rules.js";
 
 import { flyShots, swingOn, swinging, swingMisses } from "./weaponuse.js";
-import {
-  KB_FAR,
-  pushOf,
-  pushAlong,
-  pushTaken,
-  sizeOf,
-  weightOf,
-} from "./push.js";
+import { meleePush, blastPush, pushOn, pushAlong, sizeOf } from "./push.js";
 
 import { jumpDodges } from "./jump.js";
 
@@ -213,18 +206,20 @@ function playerKilled(s, by, id, w) {
   s.pkN = (s.pkN || 0) + 1;
   s.pk = [...(s.pk || []).slice(-19), { n: s.pkN, by, id, w }];
 }
-/* a duck knocked flying (the hammer, a grenade): `far` duck lengths along (ux, uy), a direction in duck lengths, as far
-   as it goes before a wall, a tree or the edge (Hangout: only on its side of the cabin's walls), or the board's edge.
+/* a duck knocked flying (a melee hit, a grenade): a push of px world px (push.js) along (ux, uy), a direction in duck
+   lengths, over its weight, as far as it goes before a wall, a tree or the edge (Hangout: only on its side of the
+   cabin's walls), or the board's edge.
    pos.kb = { t, x, y: where it was } lets every screen draw it; a grenade's adds ms (how long it flies), h (how high)
    and l: 0 (it falls at once, not when a swing gets there) */
-/* a shove counted in world px (Hangout and the maps' own): far world px whichever way, in shove's duck lengths */
-export function shovePx(s, id, ux, uy, far, now, side) {
+/* a shove counted in world px (the maps' own): px world px whichever way (ux, uy: a way in world px), in shove's duck
+   lengths */
+export function shovePx(s, id, ux, uy, px, now, side, more) {
   const dX = 0.006 * HW,
     dY = 0.012 * HH;
-  shove(s, id, ux, (uy * dX) / dY, far / dX, now, side);
+  shove(s, id, ux, (uy * dX) / dY, (px * DUCK) / dX, now, side, more);
 }
-export function shove(s, id, ux, uy, far0, now, side, more = {}) {
-  const far = pushTaken(far0, weightOf(s, id)), // (the ratio: a bigger duck is moved less far, push.js)
+export function shove(s, id, ux, uy, px, now, side, more = {}) {
+  const far = pushOn(s, "duck", id, px) / DUCK, // (in duck lengths, over its weight: a bigger duck is moved less far, push.js)
     p = s.pos[id],
     hang = isHang(s),
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
@@ -316,19 +311,16 @@ function swing(s, by, sp, aim, now, from = s.pos[by], done = []) {
       playerKilled(s, by, h.id, sp);
     } // (the HP: a hit it can take keeps the duck up, still shoved back by a hammer)
     wounded(s, h.id, sp, now, crit); // (its wounds: wounds.js)
-    if (sp === "hammer" || sp === "axe") {
-      // shoved straight back from the swinger (the fire axe half as far: push.js)
-      const k = h.d > 0.05 ? 1 / h.d : 0;
-      shove(
-        s,
-        h.id,
-        h.d > 0.05 ? h.dx * k : ux,
-        h.d > 0.05 ? h.dy * k : uy,
-        pushOf(s, sp) * sizeOf(s, by), // (the mode's own, and a bigger swinger's harder: push.js)
-        now,
-        side,
-      );
-    }
+    const k = h.d > 0.05 ? 1 / h.d : 0;
+    shove(
+      s,
+      h.id,
+      h.d > 0.05 ? h.dx * k : ux,
+      h.d > 0.05 ? h.dy * k : uy,
+      meleePush(s, by, sp),
+      now,
+      side,
+    ); // (shoved straight back from the swinger, by its weapon and its weight: push.js)
   }
   let stab = false;
   if (
@@ -470,7 +462,7 @@ export const shotAt = (sh, t) => ({
 /* a grenade going off at (x, y): every duck in its rings takes its ring's damage (blast.js) and is thrown away from it,
    three times as far as the hammer throws one, higher the nearer it was (the owner's, Nov 21 17:48Z: "Explosions should
    change the height of a thing it knocks back based on how close they are"); Justin is knocked down, Duck Cabin's Justin and cats are hit. Every screen draws the blast (the boom fx) */
-function blast(s, sh, x, y, now, o = {}) {
+export function blast(s, sh, x, y, now, o = {}) {
   const hang = isHang(s),
     w = o.w || "grenade",
     [rx, ry] = hang ? [0.006, 0.012] : boardDuck(s),
@@ -512,16 +504,17 @@ function blast(s, sh, x, y, now, o = {}) {
         } // (the normal game's HP: one hit's worth, and it still flies)
         if (killed && pwOn(s)) pwAdd(s, id, DEATH, now, true); // (killed by it: torn apart, headless and burnt)
         const a = n.d > 0.05 ? null : Math.random() * Math.PI * 2,
-          [tx, ty] = n.d > 0.05 ? [n.dx / n.d, n.dy / n.d] : [0, 0];
+          [tx, ty] = n.d > 0.05 ? [n.dx / n.d, n.dy / n.d] : [0, 0],
+          B = blastPush(s, n.o); // (more sideways the farther out, higher the nearer the middle: push.js)
         shove(
           s,
           id,
           a === null ? tx : Math.cos(a),
           a === null ? ty : Math.sin(a),
-          pushOf(s, "grenade"), // (the mode's own: push.js)
+          B.px,
           now,
           side,
-          { ms: 650, h: 0.9 * Math.max(0, 1 - n.d / BLAST_REACH), l: 0 }, // (the lift: higher nearer the middle)
+          { ms: 650, h: B.h, l: 0 },
         );
         hit.push(id);
       },
@@ -995,9 +988,9 @@ function shotHits(s, sh, at, x0, y0, dx, dy, now) {
         wounded(s, id, sh.k, now, crit); // (its wounds: wounds.js)
         if (sh.k === "chair") {
           const ul = Math.sqrt(len) || 1;
-          if (od > 0.2)
-            shove(s, id, ox / od, oy / od, KB_FAR, now, sh.hin || 0);
-          else shove(s, id, ux / ul, uy / ul, KB_FAR, now, sh.hin || 0);
+          const px = meleePush(s, null, "chair"); // (a thrown thing's: never the thrower's weight, push.js)
+          if (od > 0.2) shove(s, id, ox / od, oy / od, px, now, sh.hin || 0);
+          else shove(s, id, ux / ul, uy / ul, px, now, sh.hin || 0);
         } // (the Chair special's: shoved back, as the hammer does, away from it)
       }
     }
