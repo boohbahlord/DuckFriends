@@ -114,7 +114,7 @@ l4ddcatalog.js 228 Quacky Zombies: the Butler's Items
 l4dddrops.js 63 Quacky Zombies' drops, drawn
 l4ddloot.js 42 Dead Ducks Arcade: what lies
 l4ddmap.js 253 Quacky Zombies' minimap
-l4ddpower.js 329 Dead Ducks Arcade's power box
+l4ddpower.js 337 Dead Ducks Arcade's power box
 l4ddpowerui.js 278 Dead Ducks Arcade's power box
 l4ddrain.js 326 Downpour's rain
 l4ddrules.js 4457 the rules of Quacky Zombies
