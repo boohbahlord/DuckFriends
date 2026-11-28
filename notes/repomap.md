@@ -41,7 +41,7 @@ color.js 165 choosing a color
 corners.js 94 full screen
 court.js 230 Lawyering: what the screen shows
 courtrules.js 17 the courtroom's seats: Lawyering and
-crowd.js 295 crowds: walkers keep out of
+crowd.js 297 crowds: walkers keep out of
 customize.js 1760 Customize: the Armory
 datboi.js 115 here come dat boi
 democracy.js 233 Democracy of Ducklings:
